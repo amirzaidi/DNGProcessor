@@ -48,6 +48,7 @@ uint rawWidth; // Width of raw buffer
 uint rawHeight; // Height of raw buffer
 float3 neutralPoint; // The camera neutral
 float4 toneMapCoeffs; // Coefficients for a polynomial tonemapping curve
+float saturationFactor;
 
 // Interpolate gain map to find per-channel gains at a given pixel
 static float4 getGain(uint x, uint y) {
@@ -68,10 +69,12 @@ static float4 getGain(uint x, uint y) {
     return tl * invFracX * invFracY + tr * fracX * invFracY +
             bl * invFracX * fracY + br * fracX * fracY;
 }
+
 // Apply gamma correction using sRGB gamma curve
 static float gammaEncode(float x) {
     return (x <= 0.0031308f) ? x * 12.92f : 1.055f * pow(x, 0.4166667f) - 0.055f;
 }
+
 // Apply gamma correction to each color channel in RGB pixel
 static float3 gammaCorrectPixel(float3 rgb) {
     float3 ret;
@@ -80,6 +83,7 @@ static float3 gammaCorrectPixel(float3 rgb) {
     ret.z = gammaEncode(rgb.z);
     return ret;
 }
+
 // Apply polynomial tonemapping curve to each color channel in RGB pixel.
 // This attempts to apply tonemapping without changing the hue of each pixel,
 // i.e.:
@@ -95,7 +99,7 @@ static float3 gammaCorrectPixel(float3 rgb) {
 // the RGB and RGB' value at this pixel before and after this tonemapping
 // operation has been applied, respectively.
 static float3 tonemap(float3 rgb) {
-    float3 sorted = clamp(rgb, 0.f, 1.f);
+    float3 sorted = rgb;
     float tmp;
     int permutation = 0;
     // Sort the RGB channels by value
@@ -173,8 +177,9 @@ static float3 tonemap(float3 rgb) {
             LOGD("raw_converter.rs: Logic error in tonemap.", 0);
             break;
     }
-    return clamp(finalRGB, 0.f, 1.f);
+    return finalRGB;
 }
+
 // Apply a colorspace transform to the intermediate colorspace, apply
 // a tonemapping curve, apply a colorspace transform to a final colorspace,
 // and apply a gamma correction curve.
@@ -184,8 +189,9 @@ static float3 applyColorspace(float3 pRGB) {
     pRGB.z = clamp(pRGB.z, 0.f, neutralPoint.z);
     float3 intermediate = rsMatrixMultiply(&sensorToIntermediate, pRGB);
     intermediate = tonemap(intermediate);
-    return gammaCorrectPixel(clamp(rsMatrixMultiply(&intermediateToSRGB, intermediate), 0.f, 1.f));
+    return gammaCorrectPixel(rsMatrixMultiply(&intermediateToSRGB, intermediate));
 }
+
 // Load a 3x3 patch of pixels into the output.
 static void load3x3(uint x, uint y, rs_allocation buf, /*out*/float* outputArray) {
     outputArray[0] = *((ushort *) rsGetElementAt(buf, x - 1, y - 1));
@@ -198,6 +204,7 @@ static void load3x3(uint x, uint y, rs_allocation buf, /*out*/float* outputArray
     outputArray[7] = *((ushort *) rsGetElementAt(buf, x, y + 1));
     outputArray[8] = *((ushort *) rsGetElementAt(buf, x + 1, y + 1));
 }
+
 // Blacklevel subtract, and normalize each pixel in the outputArray, and apply the
 // gain map.
 static void linearizeAndGainmap(uint x, uint y, ushort4 blackLevel, int whiteLevel,
@@ -283,7 +290,8 @@ static void linearizeAndGainmap(uint x, uint y, ushort4 blackLevel, int whiteLev
                     g = gains.x;
                     break;
             }
-            outputArray[kk] = clamp(g * (outputArray[kk] - bl) / (whiteLevel - bl), 0.f, 1.f);
+
+            outputArray[kk] = g * (outputArray[kk] - bl) / (whiteLevel - bl);
             kk++;
         }
     }
@@ -342,21 +350,33 @@ static float3 demosaic(uint x, uint y, uint cfa, float* inputArray) {
     return pRGB;
 }
 
+const static float3 gMonoMult = {0.299f, 0.587f, 0.114f};
+static float3 saturate(float3 rgb) {
+    return mix(dot(rgb, gMonoMult), rgb, saturationFactor);
+}
+
 // Full RAW->ARGB bitmap conversion kernel
 uchar4 RS_KERNEL convert_RAW_To_ARGB(uint x, uint y) {
-    float3 pRGB;
+    float3 pRGB, sRGB;
+
     uint xP = x + offsetX;
     uint yP = y + offsetY;
+
     if (xP == 0) xP = 1;
     if (yP == 0) yP = 1;
     if (xP == rawWidth - 1) xP = rawWidth - 2;
     if (yP == rawHeight - 1) yP = rawHeight  - 2;
+
     float patch[9];
-    // TODO: Once ScriptGroup and RS kernels have been updated to allow for iteration over 3x3 pixel
-    // patches, this can be optimized to avoid re-applying the pre-demosaic steps for each pixel,
-    // potentially achieving a 9x speedup here.
+
     load3x3(xP, yP, inputRawBuffer, /*out*/ patch);
     linearizeAndGainmap(xP, yP, blackLevelPattern, whiteLevel, cfaPattern, /*inout*/patch);
+
     pRGB = demosaic(xP, yP, cfaPattern, patch);
-    return rsPackColorTo8888(applyColorspace(pRGB));
+    sRGB = applyColorspace(pRGB);
+
+    sRGB = saturate(sRGB);
+    sRGB = clamp(sRGB, 0.f, 1.f);
+
+    return rsPackColorTo8888(sRGB);
 }

@@ -7,20 +7,18 @@ import android.renderscript.RenderScript;
 import android.renderscript.ScriptIntrinsicConvolve3x3;
 
 public class BitmapTransformations {
-    private static float[] MATRIX_SHARPEN = { 0, -1, 0,
-                    -1, 5, -1,
-                    0, -1, 0};
-
-    private static float[] MATRIX_BLUR = { 0, 0.2f, 0,
-            0.2f, 0.2f, 0.2f,
-            0, 0.2f, 0};
-
-    public static Bitmap sharpen(RenderScript rs, Bitmap src) {
-        return apply(rs, src, MATRIX_SHARPEN);
+    public static Bitmap sharpen(RenderScript rs, Bitmap src, float intensity) {
+        return apply(rs, src, sharpenMatrix(intensity));
     }
 
-    public static Bitmap blur(RenderScript rs, Bitmap src) {
-        return apply(rs, src, MATRIX_BLUR);
+    private static float[] sharpenMatrix(float intensity) {
+        float mid = 1 + 4 * intensity;
+        float side = -intensity;
+        return new float[] {
+                0, side, 0,
+                side, mid, side,
+                0, side, 0
+        };
     }
 
     private static Bitmap apply(RenderScript rs, Bitmap src, float[] coefficients) {

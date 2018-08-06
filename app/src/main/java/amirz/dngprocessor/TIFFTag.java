@@ -15,10 +15,18 @@ public class TIFFTag {
         return (int) value[0];
     }
 
+    public float getFloat() {
+        return getRational().floatValue();
+    }
+
+    public Rational getRational() {
+        return (Rational) value[0];
+    }
+
     public int[] getIntArray() {
         int[] ints = new int[value.length];
         for (int i = 0; i < ints.length; i++) {
-            if (type == TIFF.TYPE_UInt_16 || type == TIFF.TYPE_UInt_32) {
+            if (type == TIFF.TYPE_Byte || type == TIFF.TYPE_UInt_16 || type == TIFF.TYPE_UInt_32) {
                 ints[i] = (int) value[i];
             } else if (type == TIFF.TYPE_Frac || type == TIFF.TYPE_UFrac) {
                 ints[i] = (int)((Rational) value[i]).floatValue();
@@ -52,7 +60,7 @@ public class TIFFTag {
         StringBuilder buffer = new StringBuilder();
         if (type == TIFF.TYPE_String) {
             for (Object b : value) {
-                buffer.append((char)(byte) b);
+                buffer.append((char) b);
             }
         } else {
             for (int elementNum = 0; elementNum < value.length && elementNum < 20; elementNum++) {

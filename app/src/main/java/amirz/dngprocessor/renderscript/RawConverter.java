@@ -46,7 +46,7 @@ public class RawConverter {
     /**
      * Matrix to convert from CIE XYZ colorspace to sRGB, Bradford-adapted to D65.
      */
-    private static final float[] sXYZtoRGBBradford = new float[] {
+    private static final float[] sXYZtoRGBBradford = new float[]{
             3.1338561f, -1.6168667f, -0.4906146f,
             -0.9787684f, 1.9161415f, 0.0334540f,
             0.0719453f, -0.2289914f, 1.4052427f
@@ -54,7 +54,7 @@ public class RawConverter {
     /**
      * Matrix to convert from the ProPhoto RGB colorspace to CIE XYZ colorspace.
      */
-    private static final float[] sProPhotoToXYZ = new float[] {
+    private static final float[] sProPhotoToXYZ = new float[]{
             0.797779f, 0.135213f, 0.031303f,
             0.288000f, 0.711900f, 0.000100f,
             0.000000f, 0.000000f, 0.825105f
@@ -62,7 +62,7 @@ public class RawConverter {
     /**
      * Matrix to convert from CIE XYZ colorspace to ProPhoto RGB colorspace.
      */
-    private static final float[] sXYZtoProPhoto = new float[] {
+    private static final float[] sXYZtoProPhoto = new float[]{
             1.345753f, -0.255603f, -0.051025f,
             -0.544426f, 1.508096f, 0.020472f,
             0.000000f, 0.000000f, 1.211968f
@@ -71,18 +71,28 @@ public class RawConverter {
      * Coefficients for a 3rd order polynomial, ordered from highest to lowest power.  This
      * polynomial approximates the default tonemapping curve used for ACR3.
      */
-    private static final float[] DEFAULT_ACR3_TONEMAP_CURVE_COEFFS = new float[] {
+    private static final float[] DEFAULT_ACR3_TONEMAP_CURVE_COEFFS = new float[]{
             -0.7836f, 0.8469f, 0.943f, 0.0209f
     };
+
+    /**
+     * Coefficients for a 3rd order polynomial, ordered from highest to lowest power.
+     * Adapted to transform from [0,1] to [0,1]
+     */
+    private static final float[] CUSTOM_ACR3_TONEMAP_CURVE_COEFFS = new float[] {
+            -0.7836f, 0.8469f, 0.9367f, 0f
+    };
+
     /**
      * The D50 whitepoint coordinates in CIE XYZ colorspace.
      */
-    private static final float[] D50_XYZ = new float[] { 0.9642f, 1, 0.8249f };
+    private static final float[] D50_XYZ = new float[]{0.9642f, 1, 0.8249f};
     /**
      * An array containing the color temperatures for standard reference illuminants.
      */
     private static final SparseIntArray sStandardIlluminants = new SparseIntArray();
     private static final int NO_ILLUMINANT = -1;
+
     static {
         sStandardIlluminants.append(CameraMetadata.SENSOR_REFERENCE_ILLUMINANT1_DAYLIGHT, 6504);
         sStandardIlluminants.append(CameraMetadata.SENSOR_REFERENCE_ILLUMINANT1_D65, 6504);
@@ -100,89 +110,90 @@ public class RawConverter {
                 CameraMetadata.SENSOR_REFERENCE_ILLUMINANT1_WHITE_FLUORESCENT, 3450);
         // TODO: Add the rest of the illuminants included in the LightSource EXIF tag.
     }
+
     /**
      * Convert a RAW16 buffer into an sRGB buffer, and write the result into a bitmap.
-     *
+     * <p>
      * <p> This function applies the operations roughly outlined in the Adobe DNG specification
      * using the provided metadata about the image sensor.  Sensor data for Android devices is
      * assumed to be relatively linear, and no extra linearization step is applied here.  The
      * following operations are applied in the given order:</p>
-     *
+     * <p>
      * <ul>
-     *     <li>
-     *         Black level subtraction - the black levels given in the SENSOR_BLACK_LEVEL_PATTERN
-     *         tag are subtracted from the corresponding raw pixels.
-     *     </li>
-     *     <li>
-     *         Rescaling - each raw pixel is scaled by 1/(white level - black level).
-     *     </li>
-     *     <li>
-     *         Lens shading correction - the interpolated gains from the gain map defined in the
-     *         STATISTICS_LENS_SHADING_CORRECTION_MAP are applied to each raw pixel.
-     *     </li>
-     *     <li>
-     *         Clipping - each raw pixel is clipped to a range of [0.0, 1.0].
-     *     </li>
-     *     <li>
-     *         Demosaic - the RGB channels for each pixel are retrieved from the Bayer mosaic
-     *         of raw pixels using a simple bilinear-interpolation demosaicing algorithm.
-     *     </li>
-     *     <li>
-     *         Colorspace transform to wide-gamut RGB - each pixel is mapped into a
-     *         wide-gamut colorspace (in this case ProPhoto RGB is used) from the sensor
-     *         colorspace.
-     *     </li>
-     *     <li>
-     *         Tonemapping - A basic tonemapping curve using the default from ACR3 is applied
-     *         (no further exposure compensation is applied here, though this could be improved).
-     *     </li>
-     *     <li>
-     *         Colorspace transform to final RGB - each pixel is mapped into linear sRGB colorspace.
-     *     </li>
-     *     <li>
-     *         Gamma correction - each pixel is gamma corrected using γ=2.2 to map into sRGB
-     *         colorspace for viewing.
-     *     </li>
-     *     <li>
-     *         Packing - each pixel is scaled so that each color channel has a range of [0, 255],
-     *         and is packed into an Android bitmap.
-     *     </li>
+     * <li>
+     * Black level subtraction - the black levels given in the SENSOR_BLACK_LEVEL_PATTERN
+     * tag are subtracted from the corresponding raw pixels.
+     * </li>
+     * <li>
+     * Rescaling - each raw pixel is scaled by 1/(white level - black level).
+     * </li>
+     * <li>
+     * Lens shading correction - the interpolated gains from the gain map defined in the
+     * STATISTICS_LENS_SHADING_CORRECTION_MAP are applied to each raw pixel.
+     * </li>
+     * <li>
+     * Clipping - each raw pixel is clipped to a range of [0.0, 1.0].
+     * </li>
+     * <li>
+     * Demosaic - the RGB channels for each pixel are retrieved from the Bayer mosaic
+     * of raw pixels using a simple bilinear-interpolation demosaicing algorithm.
+     * </li>
+     * <li>
+     * Colorspace transform to wide-gamut RGB - each pixel is mapped into a
+     * wide-gamut colorspace (in this case ProPhoto RGB is used) from the sensor
+     * colorspace.
+     * </li>
+     * <li>
+     * Tonemapping - A basic tonemapping curve using the default from ACR3 is applied
+     * (no further exposure compensation is applied here, though this could be improved).
+     * </li>
+     * <li>
+     * Colorspace transform to final RGB - each pixel is mapped into linear sRGB colorspace.
+     * </li>
+     * <li>
+     * Gamma correction - each pixel is gamma corrected using γ=2.2 to map into sRGB
+     * colorspace for viewing.
+     * </li>
+     * <li>
+     * Packing - each pixel is scaled so that each color channel has a range of [0, 255],
+     * and is packed into an Android bitmap.
+     * </li>
      * </ul>
-     *
+     * <p>
      * <p> Arguments given here are assumed to come from the values for the corresponding
      * {@link CameraCharacteristics.Key}s defined for the camera that produced this RAW16 buffer.
      * </p>
-     * @param rs a {@link RenderScript} context to use.
-     * @param inputWidth width of the input RAW16 image in pixels.
-     * @param inputHeight height of the input RAW16 image in pixels.
-     * @param inputStride stride of the input RAW16 image in bytes.
-     * @param rawImageInput a byte array containing a RAW16 image.
-     * @param staticMetadata the {@link CameraCharacteristics} for this RAW capture.
+     *
+     * @param rs              a {@link RenderScript} context to use.
+     * @param inputWidth      width of the input RAW16 image in pixels.
+     * @param inputHeight     height of the input RAW16 image in pixels.
+     * @param inputStride     stride of the input RAW16 image in bytes.
+     * @param rawImageInput   a byte array containing a RAW16 image.
+     * @param staticMetadata  the {@link CameraCharacteristics} for this RAW capture.
      * @param dynamicMetadata the {@link CaptureResult} for this RAW capture.
-     * @param outputOffsetX the offset width into the raw image of the left side of the output
-     *                      rectangle.
-     * @param outputOffsetY the offset height into the raw image of the top side of the output
-     *                      rectangle.
-     * @param argbOutput a {@link Bitmap} to output the rendered RAW image into.  The height and
-     *                   width of this bitmap along with the output offsets are used to determine
-     *                   the dimensions and offset of the output rectangle contained in the RAW
-     *                   image to be rendered.
+     * @param outputOffsetX   the offset width into the raw image of the left side of the output
+     *                        rectangle.
+     * @param outputOffsetY   the offset height into the raw image of the top side of the output
+     *                        rectangle.
+     * @param argbOutput      a {@link Bitmap} to output the rendered RAW image into.  The height and
+     *                        width of this bitmap along with the output offsets are used to determine
+     *                        the dimensions and offset of the output rectangle contained in the RAW
+     *                        image to be rendered.
      */
-    public static void convertToSRGB(RenderScript rs, int inputWidth, int inputHeight,
+    /*public static void convertToSRGB(RenderScript rs, int inputWidth, int inputHeight,
                                      int inputStride, byte[] rawImageInput, CameraCharacteristics staticMetadata,
                                      CaptureResult dynamicMetadata, int outputOffsetX, int outputOffsetY,
-            /*out*/Bitmap argbOutput) {
+            /*out*Bitmap argbOutput) {
         int cfa = staticMetadata.get(CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT);
         int[] blackLevelPattern = new int[4];
         staticMetadata.get(CameraCharacteristics.SENSOR_BLACK_LEVEL_PATTERN).
-                copyTo(blackLevelPattern, /*offset*/0);
+                copyTo(blackLevelPattern, /*offset*0);
         int whiteLevel = staticMetadata.get(CameraCharacteristics.SENSOR_INFO_WHITE_LEVEL);
         int ref1 = staticMetadata.get(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1);
         int ref2;
         if (staticMetadata.get(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2) != null) {
             ref2 = staticMetadata.get(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2);
-        }
-        else {
+        } else {
             ref2 = ref1;
         }
         float[] calib1 = new float[9];
@@ -192,8 +203,7 @@ public class RawConverter {
         if (staticMetadata.get(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM2) != null) {
             convertColorspaceTransform(
                     staticMetadata.get(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM2), calib2);
-        }
-        else {
+        } else {
             convertColorspaceTransform(
                     staticMetadata.get(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM1), calib2);
         }
@@ -204,8 +214,7 @@ public class RawConverter {
         if (staticMetadata.get(CameraCharacteristics.SENSOR_COLOR_TRANSFORM2) != null) {
             convertColorspaceTransform(
                     staticMetadata.get(CameraCharacteristics.SENSOR_COLOR_TRANSFORM2), color2);
-        }
-        else {
+        } else {
             convertColorspaceTransform(
                     staticMetadata.get(CameraCharacteristics.SENSOR_COLOR_TRANSFORM1), color2);
         }
@@ -216,8 +225,7 @@ public class RawConverter {
         if (staticMetadata.get(CameraCharacteristics.SENSOR_FORWARD_MATRIX2) != null) {
             convertColorspaceTransform(
                     staticMetadata.get(CameraCharacteristics.SENSOR_FORWARD_MATRIX2), forward2);
-        }
-        else {
+        } else {
             convertColorspaceTransform(
                     staticMetadata.get(CameraCharacteristics.SENSOR_FORWARD_MATRIX1), forward2);
         }
@@ -226,18 +234,20 @@ public class RawConverter {
         convertToSRGB(rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
                 rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
                 forward1, forward2, neutral, shadingMap, outputOffsetX, outputOffsetY, argbOutput);
-    }
+    }*/
+
     /**
      * Convert a RAW16 buffer into an sRGB buffer, and write the result into a bitmap.
      *
      * @see #convertToSRGB
      */
     public static void convertToSRGB(RenderScript rs, int inputWidth, int inputHeight,
-                                      int inputStride, int cfa, int[] blackLevelPattern, int whiteLevel, byte[] rawImageInput,
-                                      int referenceIlluminant1, int referenceIlluminant2, float[] calibrationTransform1,
-                                      float[] calibrationTransform2, float[] colorMatrix1, float[] colorMatrix2,
-                                      float[] forwardTransform1, float[] forwardTransform2, Rational[/*3*/] neutralColorPoint,
-                                      LensShadingMap lensShadingMap, int outputOffsetX, int outputOffsetY,
+                                     int inputStride, int cfa, int[] blackLevelPattern, int whiteLevel, byte[] rawImageInput,
+                                     int referenceIlluminant1, int referenceIlluminant2, float[] calibrationTransform1,
+                                     float[] calibrationTransform2, float[] colorMatrix1, float[] colorMatrix2,
+                                     float[] forwardTransform1, float[] forwardTransform2, Rational[/*3*/] neutralColorPoint,
+                                     LensShadingMap lensShadingMap, int outputOffsetX, int outputOffsetY,
+                                     float[] tonemap, float saturationFactor,
             /*out*/Bitmap argbOutput) {
         // Validate arguments
         if (argbOutput == null || rs == null || rawImageInput == null) {
@@ -319,7 +329,8 @@ public class RawConverter {
         if (DEBUG) Log.d(TAG, "CameraToXYZ xform used: " + Arrays.toString(sensorToXYZ));
         float[] sensorToProPhoto = new float[9];
         multiply(sXYZtoProPhoto, sensorToXYZ, /*out*/sensorToProPhoto);
-        if (DEBUG) Log.d(TAG, "CameraToIntemediate xform used: " + Arrays.toString(sensorToProPhoto));
+        if (DEBUG)
+            Log.d(TAG, "CameraToIntemediate xform used: " + Arrays.toString(sensorToProPhoto));
         Allocation output = Allocation.createFromBitmap(rs, argbOutput);
         float[] proPhotoToSRGB = new float[9];
         multiply(sXYZtoRGBBradford, sProPhotoToXYZ, /*out*/proPhotoToSRGB);
@@ -342,9 +353,16 @@ public class RawConverter {
         converterKernel.set_rawWidth(inputWidth);
         converterKernel.set_neutralPoint(new Float3(neutralColorPoint[0].floatValue(),
                 neutralColorPoint[1].floatValue(), neutralColorPoint[2].floatValue()));
-        converterKernel.set_toneMapCoeffs(new Float4(DEFAULT_ACR3_TONEMAP_CURVE_COEFFS[0],
+
+        /*converterKernel.set_toneMapCoeffs(new Float4(DEFAULT_ACR3_TONEMAP_CURVE_COEFFS[0],
                 DEFAULT_ACR3_TONEMAP_CURVE_COEFFS[1], DEFAULT_ACR3_TONEMAP_CURVE_COEFFS[2],
                 DEFAULT_ACR3_TONEMAP_CURVE_COEFFS[3]));
+
+        converterKernel.set_toneMapCoeffs(new Float4(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS[0],
+                CUSTOM_ACR3_TONEMAP_CURVE_COEFFS[1], CUSTOM_ACR3_TONEMAP_CURVE_COEFFS[2],
+                CUSTOM_ACR3_TONEMAP_CURVE_COEFFS[3]));*/
+
+        converterKernel.set_toneMapCoeffs(new Float4(tonemap[0], tonemap[1], tonemap[2], tonemap[3]));
         converterKernel.set_hasGainMap(gainMap != null);
         if (gainMap != null) {
             converterKernel.set_gainMap(gainMap);
@@ -354,16 +372,20 @@ public class RawConverter {
         converterKernel.set_cfaPattern(cfa);
         converterKernel.set_blackLevelPattern(new Int4(blackLevelPattern[0],
                 blackLevelPattern[1], blackLevelPattern[2], blackLevelPattern[3]));
+
+        converterKernel.set_saturationFactor(saturationFactor);
+
         converterKernel.forEach_convert_RAW_To_ARGB(output);
         output.copyTo(argbOutput);  // Force RS sync with bitmap (does not do an extra copy).
     }
+
     /**
      * Create a float-backed renderscript {@link Allocation} with the given dimensions, containing
      * the contents of the given float array.
      *
-     * @param rs a {@link RenderScript} context to use.
+     * @param rs     a {@link RenderScript} context to use.
      * @param fArray the float array to copy into the {@link Allocation}.
-     * @param width the width of the {@link Allocation}.
+     * @param width  the width of the {@link Allocation}.
      * @param height the height of the {@link Allocation}.
      * @return an {@link Allocation} containing the given floats.
      */
@@ -380,23 +402,24 @@ public class RawConverter {
         fAlloc.copyFrom(fArray);
         return fAlloc;
     }
+
     /**
      * Calculate the correlated color temperature (CCT) for a given x,y chromaticity in CIE 1931 x,y
      * chromaticity space using McCamy's cubic approximation algorithm given in:
-     *
+     * <p>
      * McCamy, Calvin S. (April 1992).
      * "Correlated color temperature as an explicit function of chromaticity coordinates".
      * Color Research & Application 17 (2): 142–144
      *
      * @param x x chromaticity component.
      * @param y y chromaticity component.
-     *
      * @return the CCT associated with this chromaticity coordinate.
      */
     private static double calculateColorTemperature(double x, double y) {
         double n = (x - 0.332) / (y - 0.1858);
         return -449 * Math.pow(n, 3) + 3525 * Math.pow(n, 2) - 6823.3 * n + 5520.33;
     }
+
     /**
      * Calculate the x,y chromaticity coordinates in CIE 1931 x,y chromaticity space from the given
      * CIE XYZ coordinates.
@@ -404,33 +427,33 @@ public class RawConverter {
      * @param X the CIE XYZ X coordinate.
      * @param Y the CIE XYZ Y coordinate.
      * @param Z the CIE XYZ Z coordinate.
-     *
      * @return the [x, y] chromaticity coordinates as doubles.
      */
     private static double[] calculateCIExyCoordinates(double X, double Y, double Z) {
-        double[] ret = new double[] { 0, 0 };
+        double[] ret = new double[]{0, 0};
         ret[0] = X / (X + Y + Z);
         ret[1] = Y / (X + Y + Z);
         return ret;
     }
+
     /**
      * Linearly interpolate between a and b given fraction f.
      *
      * @param a first term to interpolate between, a will be returned when f == 0.
      * @param b second term to interpolate between, b will be returned when f == 1.
      * @param f the fraction to interpolate by.
-     *
      * @return interpolated result as double.
      */
     private static double lerp(double a, double b, double f) {
         return (a * (1.0f - f)) + (b * f);
     }
+
     /**
      * Linearly interpolate between 3x3 matrices a and b given fraction f.
      *
-     * @param a first 3x3 matrix to interpolate between, a will be returned when f == 0.
-     * @param b second 3x3 matrix to interpolate between, b will be returned when f == 1.
-     * @param f the fraction to interpolate by.
+     * @param a      first 3x3 matrix to interpolate between, a will be returned when f == 0.
+     * @param b      second 3x3 matrix to interpolate between, b will be returned when f == 1.
+     * @param f      the fraction to interpolate by.
      * @param result will be set to contain the interpolated matrix.
      */
     private static void lerp(float[] a, float[] b, double f, /*out*/float[] result) {
@@ -438,11 +461,12 @@ public class RawConverter {
             result[i] = (float) lerp(a[i], b[i], f);
         }
     }
+
     /**
      * Convert a 9x9 {@link ColorSpaceTransform} to a matrix and write the matrix into the
      * output.
      *
-     * @param xform a {@link ColorSpaceTransform} to transform.
+     * @param xform  a {@link ColorSpaceTransform} to transform.
      * @param output the 3x3 matrix to overwrite.
      */
     private static void convertColorspaceTransform(ColorSpaceTransform xform, /*out*/float[] output) {
@@ -452,19 +476,19 @@ public class RawConverter {
             }
         }
     }
+
     /**
      * Find the interpolation factor to use with the RAW matrices given a neutral color point.
      *
-     * @param referenceIlluminant1 first reference illuminant.
-     * @param referenceIlluminant2 second reference illuminant.
+     * @param referenceIlluminant1  first reference illuminant.
+     * @param referenceIlluminant2  second reference illuminant.
      * @param calibrationTransform1 calibration matrix corresponding to the first reference
      *                              illuminant.
      * @param calibrationTransform2 calibration matrix corresponding to the second reference
      *                              illuminant.
-     * @param colorMatrix1 color matrix corresponding to the first reference illuminant.
-     * @param colorMatrix2 color matrix corresponding to the second reference illuminant.
-     * @param neutralColorPoint the neutral color point used to calculate the interpolation factor.
-     *
+     * @param colorMatrix1          color matrix corresponding to the first reference illuminant.
+     * @param colorMatrix2          color matrix corresponding to the second reference illuminant.
+     * @param neutralColorPoint     the neutral color point used to calculate the interpolation factor.
      * @return the interpolation factor corresponding to the given neutral color point.
      */
     private static double findDngInterpolationFactor(int referenceIlluminant1,
@@ -490,14 +514,14 @@ public class RawConverter {
         float[] XYZToCamera2 = new float[9];
         multiply(calibrationTransform1, colorMatrix1, /*out*/XYZToCamera1);
         multiply(calibrationTransform2, colorMatrix2, /*out*/XYZToCamera2);
-        float[] cameraNeutral = new float[] { neutralColorPoint[0].floatValue(),
+        float[] cameraNeutral = new float[]{neutralColorPoint[0].floatValue(),
                 neutralColorPoint[1].floatValue(), neutralColorPoint[2].floatValue()};
         float[] neutralGuess = new float[3];
         float[] interpXYZToCamera = new float[9];
         float[] interpXYZToCameraInverse = new float[9];
         double lower = Math.min(colorTemperature1, colorTemperature2);
         double upper = Math.max(colorTemperature1, colorTemperature2);
-        if(DEBUG) {
+        if (DEBUG) {
             Log.d(TAG, "XYZtoCamera1: " + Arrays.toString(XYZToCamera1));
             Log.d(TAG, "XYZtoCamera2: " + Arrays.toString(XYZToCamera2));
             Log.d(TAG, "Finding interpolation factor, initial guess 0.5...");
@@ -522,7 +546,7 @@ public class RawConverter {
                 interpFactor = 0;
             } else {
                 double invCT = 1.0 / colorTemperature;
-                interpFactor = (invCT - 1.0 / upper) / ( 1.0 / lower - 1.0 / upper);
+                interpFactor = (invCT - 1.0 / upper) / (1.0 / lower - 1.0 / upper);
             }
             if (lower == colorTemperature1) {
                 interpFactor = 1.0 - interpFactor;
@@ -546,28 +570,29 @@ public class RawConverter {
         }
         return interpFactor;
     }
+
     /**
      * Calculate the transform from the raw camera sensor colorspace to CIE XYZ colorspace with a
      * D50 whitepoint.
      *
-     * @param forwardTransform1 forward transform matrix corresponding to the first reference
-     *                          illuminant.
-     * @param forwardTransform2 forward transform matrix corresponding to the second reference
-     *                          illuminant.
+     * @param forwardTransform1     forward transform matrix corresponding to the first reference
+     *                              illuminant.
+     * @param forwardTransform2     forward transform matrix corresponding to the second reference
+     *                              illuminant.
      * @param calibrationTransform1 calibration transform matrix corresponding to the first
      *                              reference illuminant.
      * @param calibrationTransform2 calibration transform matrix corresponding to the second
      *                              reference illuminant.
-     * @param neutralColorPoint the neutral color point used to calculate the interpolation factor.
-     * @param interpolationFactor the interpolation factor to use for the forward and
-     *                            calibration transforms.
-     * @param outputTransform set to the full sensor to XYZ colorspace transform.
+     * @param neutralColorPoint     the neutral color point used to calculate the interpolation factor.
+     * @param interpolationFactor   the interpolation factor to use for the forward and
+     *                              calibration transforms.
+     * @param outputTransform       set to the full sensor to XYZ colorspace transform.
      */
     private static void calculateCameraToXYZD50Transform(float[] forwardTransform1,
                                                          float[] forwardTransform2, float[] calibrationTransform1, float[] calibrationTransform2,
                                                          Rational[/*3*/] neutralColorPoint, double interpolationFactor,
             /*out*/float[] outputTransform) {
-        float[] cameraNeutral = new float[] { neutralColorPoint[0].floatValue(),
+        float[] cameraNeutral = new float[]{neutralColorPoint[0].floatValue(),
                 neutralColorPoint[1].floatValue(), neutralColorPoint[2].floatValue()};
         if (DEBUG) Log.d(TAG, "Camera neutral: " + Arrays.toString(cameraNeutral));
         float[] interpolatedCC = new float[9];
@@ -575,7 +600,7 @@ public class RawConverter {
                 interpolatedCC);
         float[] inverseInterpolatedCC = new float[9];
         if (!invert(interpolatedCC, /*out*/inverseInterpolatedCC)) {
-            throw new IllegalArgumentException( "Cannot invert interpolated calibration transform" +
+            throw new IllegalArgumentException("Cannot invert interpolated calibration transform" +
                     ", input matrices are invalid.");
         }
         if (DEBUG) Log.d(TAG, "Inverted interpolated CalibrationTransform: " +
@@ -585,9 +610,9 @@ public class RawConverter {
         if (DEBUG) Log.d(TAG, "Reference neutral: " + Arrays.toString(referenceNeutral));
         float maxNeutral = Math.max(Math.max(referenceNeutral[0], referenceNeutral[1]),
                 referenceNeutral[2]);
-        float[] D = new float[] { maxNeutral/referenceNeutral[0], 0, 0,
-                0, maxNeutral/referenceNeutral[1], 0,
-                0, 0, maxNeutral/referenceNeutral[2] };
+        float[] D = new float[]{maxNeutral / referenceNeutral[0], 0, 0,
+                0, maxNeutral / referenceNeutral[1], 0,
+                0, 0, maxNeutral / referenceNeutral[2]};
         if (DEBUG) Log.d(TAG, "Reference Neutral Diagonal: " + Arrays.toString(D));
         float[] intermediate = new float[9];
         float[] intermediate2 = new float[9];
@@ -596,11 +621,12 @@ public class RawConverter {
         multiply(D, inverseInterpolatedCC, /*out*/intermediate2);
         multiply(intermediate, intermediate2, /*out*/outputTransform);
     }
+
     /**
      * Map a 3d column vector using the given matrix.
      *
      * @param matrix float array containing 3x3 matrix to map vector by.
-     * @param input 3 dimensional vector to map.
+     * @param input  3 dimensional vector to map.
      * @param output 3 dimensional vector result.
      */
     private static void map(float[] matrix, float[] input, /*out*/float[] output) {
@@ -608,6 +634,7 @@ public class RawConverter {
         output[1] = input[0] * matrix[3] + input[1] * matrix[4] + input[2] * matrix[5];
         output[2] = input[0] * matrix[6] + input[1] * matrix[7] + input[2] * matrix[8];
     }
+
     /**
      * Multiply two 3x3 matrices together: A * B
      *
@@ -625,6 +652,7 @@ public class RawConverter {
         output[5] = a[3] * b[2] + a[4] * b[5] + a[5] * b[8];
         output[8] = a[6] * b[2] + a[7] * b[5] + a[8] * b[8];
     }
+
     /**
      * Transpose a 3x3 matrix in-place.
      *
@@ -643,10 +671,11 @@ public class RawConverter {
         m[7] = t;
         return m;
     }
+
     /**
      * Invert a 3x3 matrix, or return false if the matrix is singular.
      *
-     * @param m matrix to invert.
+     * @param m      matrix to invert.
      * @param output set the output to be the inverse of m.
      */
     private static boolean invert(float[] m, /*out*/float[] output) {
@@ -683,6 +712,7 @@ public class RawConverter {
         output[8] = (float) (t22 / det);
         return true;
     }
+
     /**
      * Scale each element in a matrix by the given scaling factor.
      *
@@ -694,17 +724,19 @@ public class RawConverter {
             matrix[i] *= factor;
         }
     }
+
     /**
      * Clamp a value to a given range.
      *
-     * @param low lower bound to clamp to.
-     * @param high higher bound to clamp to.
+     * @param low   lower bound to clamp to.
+     * @param high  higher bound to clamp to.
      * @param value the value to clamp.
      * @return the clamped value.
      */
     private static double clamp(double low, double high, double value) {
         return Math.max(low, Math.min(high, value));
     }
+
     /**
      * Return the max float in the array.
      *
@@ -718,6 +750,7 @@ public class RawConverter {
         }
         return val;
     }
+
     /**
      * Normalize ColorMatrix to eliminate headroom for input space scaled to [0, 1] using
      * the D50 whitepoint.  This maps the D50 whitepoint into the colorspace used by the
@@ -735,6 +768,7 @@ public class RawConverter {
             scale(1.0f / maxVal, colorMatrix);
         }
     }
+
     /**
      * Normalize ForwardMatrix to ensure that sensor whitepoint [1, 1, 1] maps to D50 in CIE XYZ
      * colorspace.
@@ -742,13 +776,13 @@ public class RawConverter {
      * @param forwardMatrix a 3x3 matrix containing a DNG ForwardTransform to be normalized.
      */
     private static void normalizeFM(/*inout*/float[] forwardMatrix) {
-        float[] tmp = new float[] {1, 1, 1};
+        float[] tmp = new float[]{1, 1, 1};
         float[] xyz = new float[3];
         map(forwardMatrix, tmp, /*out*/xyz);
         float[] intermediate = new float[9];
-        float[] m = new float[] {1.0f / xyz[0], 0, 0, 0, 1.0f / xyz[1], 0, 0, 0, 1.0f / xyz[2]};
+        float[] m = new float[]{1.0f / xyz[0], 0, 0, 0, 1.0f / xyz[1], 0, 0, 0, 1.0f / xyz[2]};
         multiply(m, forwardMatrix, /*out*/ intermediate);
-        float[] m2 = new float[] {D50_XYZ[0], 0, 0, 0, D50_XYZ[1], 0, 0, 0, D50_XYZ[2]};
+        float[] m2 = new float[]{D50_XYZ[0], 0, 0, 0, D50_XYZ[1], 0, 0, 0, D50_XYZ[2]};
         multiply(m2, intermediate, /*out*/forwardMatrix);
     }
 }
