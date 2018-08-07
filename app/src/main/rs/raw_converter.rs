@@ -47,13 +47,14 @@ rs_matrix3x3 intermediateToSRGB; // Color transform from wide-gamut colorspace t
 ushort4 blackLevelPattern; // Blacklevel to subtract for each channel, given in CFA order
 int whiteLevel;  // Whitelevel of sensor
 float3 neutralPoint; // The camera neutral
+float4 toneMapCoeffs; // Coefficients for a polynomial tonemapping curve
 
 uint offsetX; // X offset into inputRawBuffer
 uint offsetY; // Y offset into inputRawBuffer
 uint rawWidth; // Width of raw buffer
 uint rawHeight; // Height of raw buffer
 
-float4 toneMapCoeffs; // Coefficients for a polynomial tonemapping curve
+float4 postProcCurve;
 float saturationFactor;
 float sharpenFactor;
 
@@ -210,6 +211,18 @@ static void load3x3ushort(uint x, uint y, rs_allocation buf, /*out*/float* outpu
     outputArray[6] = *((ushort *) rsGetElementAt(buf, x - 1, y + 1));
     outputArray[7] = *((ushort *) rsGetElementAt(buf, x, y + 1));
     outputArray[8] = *((ushort *) rsGetElementAt(buf, x + 1, y + 1));
+}
+
+// Load a NxN patch of pixels into the output.
+static void loadNxNfloat3(uint x, uint y, int n, rs_allocation buf, /*out*/float3* outputArray) {
+    // n is uneven so this will keep one pixel centered.
+    int offset = n / 2;
+    int index = 0;
+    for (int xDelta = -offset; xDelta <= offset; xDelta++) {
+        for (int yDelta = -offset; yDelta <= offset; yDelta++) {
+            outputArray[index++] = *((float3 *) rsGetElementAt(buf, x + xDelta, y + yDelta));
+        }
+    }
 }
 
 // Load a 3x3 patch of pixels into the output.
@@ -512,6 +525,12 @@ float3 RS_KERNEL convert_RAW_To_Intermediate(ushort in, uint x, uint y) {
     return sRGB;
 }
 
+static float applyCurve(float in) {
+    return native_powr(in, 3.f) * postProcCurve.x +
+            native_powr(in, 2.f) * postProcCurve.y +
+            in * postProcCurve.z + postProcCurve.w;
+}
+
 // Applies post-processing on intermediate sRGB image
 uchar4 RS_KERNEL convert_Intermediate_To_ARGB(uint x, uint y) {
     float3 HSV, sRGB;
@@ -525,32 +544,42 @@ uchar4 RS_KERNEL convert_Intermediate_To_ARGB(uint x, uint y) {
     if (xP == rawWidth - 1) xP = rawWidth - 2;
     if (yP == rawHeight - 1) yP = rawHeight  - 2;
 
-    float3 patch[9];
-    float value[9];
+    // Level zero means no sharpening/chroma denoise
+    const int level = 2;
+    const int size = 2 * level + 1;
+    const int area = size * size;
 
-    load3x3float3(xP, yP, intermediateBuffer, /*out*/ patch);
+    float3 patch[area];
+    float value[area];
+
+    loadNxNfloat3(xP, yP, size, intermediateBuffer, patch);
 
     // Save pixel values
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < area; i++) {
         value[i] = rgbToHsv(patch[i]).z;
     }
 
     // Average pixels
-    sRGB = patch[0] + patch[1] + patch[2];
-    sRGB += patch[3] + patch[4] + patch[5];
-    sRGB += patch[6] + patch[7] + patch[8];
-    sRGB /= 9;
+    sRGB = patch[0];
+    for (int i = 1; i < area; i++) {
+        sRGB += patch[i];
+    }
+    sRGB /= area;
 
     // Sharpen value
-    float deltaMidValue = 9 * value[4];
-    for (int i = 0; i < 9; i++) {
+    float deltaMidValue = area * value[area / 2];
+    for (int i = 0; i < area; i++) {
         deltaMidValue -= value[i];
     }
+
     HSV = rgbToHsv(sRGB);
-    HSV.z = clamp(value[4] + sharpenFactor * deltaMidValue, 0.f, 1.f);
+    HSV.z = clamp(value[4] + sharpenFactor * deltaMidValue / area, 0.f, 1.f);
     sRGB = hsvToRgb(HSV);
 
-    // Apply additional saturation
+    // Apply additional contrast and saturation
+    sRGB.r = applyCurve(sRGB.r);
+    sRGB.g = applyCurve(sRGB.g);
+    sRGB.b = applyCurve(sRGB.b);
     sRGB = saturate(sRGB);
     sRGB = clamp(sRGB, 0.f, 1.f);
 

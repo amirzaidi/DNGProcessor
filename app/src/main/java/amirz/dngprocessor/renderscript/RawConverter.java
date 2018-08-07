@@ -247,7 +247,7 @@ public class RawConverter {
                                      float[] calibrationTransform2, float[] colorMatrix1, float[] colorMatrix2,
                                      float[] forwardTransform1, float[] forwardTransform2, Rational[/*3*/] neutralColorPoint,
                                      LensShadingMap lensShadingMap, int outputOffsetX, int outputOffsetY,
-                                     float[] tonemap, float saturationFactor, float sharpenFactor,
+                                     float[] postProcCurve, float saturationFactor, float sharpenFactor,
             /*out*/Bitmap argbOutput) {
 
         // Validate arguments
@@ -368,9 +368,16 @@ public class RawConverter {
         converterKernel.set_cfaPattern(cfa);
         converterKernel.set_blackLevelPattern(new Int4(blackLevelPattern[0],
                 blackLevelPattern[1], blackLevelPattern[2], blackLevelPattern[3]));
+        converterKernel.set_toneMapCoeffs(new Float4(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS[0],
+                CUSTOM_ACR3_TONEMAP_CURVE_COEFFS[1],
+                CUSTOM_ACR3_TONEMAP_CURVE_COEFFS[2],
+                CUSTOM_ACR3_TONEMAP_CURVE_COEFFS[3]));
 
         // Setup RS kernel custom globals
-        converterKernel.set_toneMapCoeffs(new Float4(tonemap[0], tonemap[1], tonemap[2], tonemap[3]));
+        converterKernel.set_postProcCurve(new Float4(postProcCurve[0],
+                postProcCurve[1],
+                postProcCurve[2],
+                postProcCurve[3]));
         converterKernel.set_saturationFactor(saturationFactor);
         converterKernel.set_sharpenFactor(sharpenFactor);
 

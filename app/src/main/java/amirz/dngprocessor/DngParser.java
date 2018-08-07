@@ -110,20 +110,22 @@ public class DngParser implements Runnable, RawConverterCallback {
         int[] defaultCropSize = tags.get(TIFF.TAG_DefaultCropSize).getIntArray();
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
 
-        float tonemapStrength = 0.625f;
-        float[] tonemap = new float[] {
-                -2f + 2f * tonemapStrength,
-                3f - 3f * tonemapStrength,
-                tonemapStrength,
+        // 0 to 1, where 0 is bleak and 1 is crunchy.
+        float crunchFactor = 0.75f;
+        float curveFactor = 1f - crunchFactor;
+        float[] postProcCurve = new float[] {
+                -2f + 2f * curveFactor,
+                3f - 3f * curveFactor,
+                curveFactor,
                 0f
         };
-        float saturationFactor = 2.05f;
-        float sharpenFactor = 0.33f;
+        float saturationFactor = 1.7f;
+        float sharpenFactor = 3f;
 
         RawConverter.convertToSRGB(this, rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
                 rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
                 forward1, forward2, neutral, /* shadingMap */ null,
-                defaultCropOrigin[0], defaultCropOrigin[1], tonemap, saturationFactor, sharpenFactor, argbOutput);
+                defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve, saturationFactor, sharpenFactor, argbOutput);
 
         NotifHandler.progress(mContext, mFile, STEPS, 4);
         rs.destroy();
