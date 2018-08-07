@@ -111,7 +111,14 @@ public class DngParser implements Runnable, RawConverterCallback {
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
 
         // 0 to 1, where 0 is bleak and 1 is crunchy.
-        float crunchFactor = 0.75f;
+        float crunchFactor = 0.5f;
+
+        // 0 is greyscale, 1 is the default, higher means oversaturation.
+        float saturationFactor = 1.7f;
+
+        // 0 is the default, higher means more value sharpening.
+        float sharpenFactor = 3f;
+
         float curveFactor = 1f - crunchFactor;
         float[] postProcCurve = new float[] {
                 -2f + 2f * curveFactor,
@@ -119,8 +126,6 @@ public class DngParser implements Runnable, RawConverterCallback {
                 curveFactor,
                 0f
         };
-        float saturationFactor = 1.7f;
-        float sharpenFactor = 3f;
 
         RawConverter.convertToSRGB(this, rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
                 rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
