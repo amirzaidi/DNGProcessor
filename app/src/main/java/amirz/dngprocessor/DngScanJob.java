@@ -10,6 +10,8 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 
+import java.io.File;
+
 public class DngScanJob extends JobService {
     private static final String TAG = "DngScanJob";
     private static final int SCAN_DNG_JOB = 9500;
@@ -31,7 +33,7 @@ public class DngScanJob extends JobService {
                         .build();
             }
 
-            Log.e(TAG, "Scheduling job");
+            Log.w(TAG, "Scheduling job");
             js.schedule(sJobInfo);
         }
     }
@@ -49,8 +51,9 @@ public class DngScanJob extends JobService {
                 for (Uri uri : params.getTriggeredContentUris()) {
                     try {
                         String file = Path.getFileFromUri(this, uri);
-                        if (file.endsWith(Path.EXT_RAW)) {
-                            Log.e(TAG, "Starting processing of " + file);
+                        if (file.endsWith(Path.EXT_RAW) &&
+                                !DngParser.sProcessing.contains(file) &&
+                                !new File(Path.processedFile(file)).exists()) {
                             new Thread(new DngParser(this, uri)).start();
                         }
                         sb.append(file);
@@ -62,14 +65,14 @@ public class DngScanJob extends JobService {
             }
         }
 
-        Log.e(TAG, sb.toString());
+        Log.w(TAG, sb.toString());
         scheduleJob(this);
         return true;
     }
 
     @Override
     public boolean onStopJob(JobParameters params) {
-        Log.e(TAG, "onStopJob");
+        Log.w(TAG, "onStopJob");
         return false;
     }
 }

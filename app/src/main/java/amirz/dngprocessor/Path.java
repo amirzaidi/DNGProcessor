@@ -20,7 +20,7 @@ public class Path {
     public static final String PROCESSED = DCIM + File.separator + "Processed";
 
     public static String processedFile(String name) {
-        return PROCESSED + File.separator + name;
+        return PROCESSED + File.separator + name.replace(".dng", ".jpg");
     }
 
     public static String getFileFromUri(Context context, Uri uri) {

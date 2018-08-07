@@ -16,6 +16,7 @@ import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import amirz.dngprocessor.renderscript.RawConverter;
 import amirz.dngprocessor.renderscript.RawConverterCallback;
@@ -23,6 +24,8 @@ import amirz.dngprocessor.renderscript.RawConverterCallback;
 public class DngParser implements Runnable, RawConverterCallback {
     private static final String TAG = "Parser";
     private static final int STEPS = RawConverter.STEPS + 2;
+
+    public static final ConcurrentSkipListSet<String> sProcessing = new ConcurrentSkipListSet<>();
 
     private final Context mContext;
     private final Uri mUri;
@@ -32,14 +35,15 @@ public class DngParser implements Runnable, RawConverterCallback {
         mContext = context;
         mUri = uri;
         mFile = Path.getFileFromUri(mContext, mUri);
+        sProcessing.add(mFile);
     }
 
-    private String getSavePath(String ext) {
+    private String getSavePath() {
         File folder = new File(Path.PROCESSED);
         if (!folder.exists() && !folder.mkdir()) {
             throw new RuntimeException("Cannot create " + Path.PROCESSED);
         }
-        return Path.processedFile(mFile.replace(".dng", "." + ext));
+        return Path.processedFile(mFile);
     }
 
     @Override
@@ -48,7 +52,8 @@ public class DngParser implements Runnable, RawConverterCallback {
         NotifHandler.progress(mContext, mFile, STEPS, 0);
 
         ByteReader.ReaderWithExif reader = ByteReader.fromUri(mContext, mUri);
-        Log.e(TAG, mUri.toString() + " size " + reader.length);
+        Log.e(TAG, "Starting processing of " + mFile + " (" + mUri.toString() + ") size " +
+                reader.length);
 
         ByteBuffer wrap = reader.wrap;
 
@@ -137,7 +142,7 @@ public class DngParser implements Runnable, RawConverterCallback {
 
         rs.destroy();
 
-        String savePath = getSavePath("jpg");
+        String savePath = getSavePath();
         try (FileOutputStream out = new FileOutputStream(savePath)) {
             argbOutput.compress(Bitmap.CompressFormat.JPEG, 100, out);
         } catch (Exception e) {
@@ -175,6 +180,7 @@ public class DngParser implements Runnable, RawConverterCallback {
                 new String[] { savePath }, null, null);
 
         NotifHandler.done(mContext, mFile);
+        sProcessing.remove(mFile);
     }
 
     @Override
