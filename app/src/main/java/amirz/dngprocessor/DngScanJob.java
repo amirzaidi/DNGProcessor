@@ -58,8 +58,7 @@ public class DngScanJob extends JobService {
                         }
                         sb.append(file);
                         sb.append(", ");
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    } catch (Exception ignored) {
                     }
                 }
             }
