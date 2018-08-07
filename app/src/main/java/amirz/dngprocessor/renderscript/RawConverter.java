@@ -241,7 +241,7 @@ public class RawConverter {
      *
      * @see #convertToSRGB
      */
-    public static void convertToSRGB(RenderScript rs, int inputWidth, int inputHeight,
+    public static void convertToSRGB(RawConverterCallback cb, RenderScript rs, int inputWidth, int inputHeight,
                                      int inputStride, int cfa, int[] blackLevelPattern, int whiteLevel, byte[] rawImageInput,
                                      int referenceIlluminant1, int referenceIlluminant2, float[] calibrationTransform1,
                                      float[] calibrationTransform2, float[] colorMatrix1, float[] colorMatrix2,
@@ -389,13 +389,20 @@ public class RawConverter {
         Allocation intermediateInput = Allocation.createTyped(rs, intermediateBuilder.create());
         converterKernel.set_intermediateBuffer(intermediateInput);
 
+        // Step 1: Convert to intermediate
+        cb.onProgress(0);
         converterKernel.forEach_convert_RAW_To_Intermediate(rawInput, intermediateInput);
 
         // Setup output
         Allocation output = Allocation.createFromBitmap(rs, argbOutput);
+
+        // Step 2: Convert to final
+        cb.onProgress(1);
         converterKernel.forEach_convert_Intermediate_To_ARGB(output);
 
-        output.copyTo(argbOutput);  // Force RS sync with bitmap (does not do an extra copy).
+        // Step 3: Force RS sync with Bitmap
+        cb.onProgress(2);
+        output.copyTo(argbOutput);
     }
 
     /**

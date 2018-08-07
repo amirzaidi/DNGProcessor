@@ -1,19 +1,15 @@
 package amirz.dngprocessor;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.hardware.camera2.CameraCharacteristics;
 import android.support.media.ExifInterface;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
-import android.os.Environment;
-import android.provider.OpenableColumns;
 import android.renderscript.RenderScript;
 import android.util.Log;
 import android.util.Rational;
 import android.util.SparseArray;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,52 +17,37 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-import amirz.dngprocessor.renderscript.BitmapTransformations;
 import amirz.dngprocessor.renderscript.RawConverter;
+import amirz.dngprocessor.renderscript.RawConverterCallback;
 
-public class Parser implements Runnable {
+public class DngParser implements Runnable, RawConverterCallback {
     private static final String TAG = "Parser";
-    private static final String FOLDER = File.separator + "DCIM" + File.separator + "Processed";
+    private static final int STEPS = 5;
+    private static final int DNG_STEP_OFFSET = 1;
 
     private final Context mContext;
     private final Uri mUri;
+    private final String mFile;
 
-    public Parser(Context context, Uri uri) {
+    public DngParser(Context context, Uri uri) {
         mContext = context;
         mUri = uri;
+        mFile = Path.getFileFromUri(mContext, mUri);
     }
 
-    private String getFileName() {
-        String result = null;
-        if (mUri.getScheme().equals("content")) {
-            try (Cursor cursor = mContext.getContentResolver().query(mUri, null, null, null, null)) {
-                if (cursor != null && cursor.moveToFirst()) {
-                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-                }
-            }
-        }
-
-        if (result == null) {
-            result = mUri.getPath();
-            int cut = result.lastIndexOf('/');
-            if (cut != -1) {
-                result = result.substring(cut + 1);
-            }
-        }
-
-        return result;
-    }
-
-    private String getSavePath(String newExt) {
-        File folder = new File(Environment.getExternalStorageDirectory() + FOLDER);
+    private String getSavePath(String ext) {
+        File folder = new File(Path.PROCESSED);
         if (!folder.exists() && !folder.mkdir()) {
-            throw new RuntimeException("Cannot create " + FOLDER);
+            throw new RuntimeException("Cannot create " + Path.PROCESSED);
         }
-        return folder.getPath() + File.separator + getFileName().replace(".dng", "." + newExt);
+        return Path.processedFile(mFile.replace(".dng", "." + ext));
     }
 
     @Override
     public void run() {
+        NotifHandler.create(mContext, mFile);
+        NotifHandler.progress(mContext, mFile, STEPS, 0);
+
         ByteReader.ReaderWithExif reader = ByteReader.fromUri(mContext, mUri);
         Log.e(TAG, mUri.toString() + " size " + reader.length);
 
@@ -84,9 +65,6 @@ public class Parser implements Runnable {
         wrap.position(start);
 
         SparseArray<TIFFTag> tags = parseTags(wrap);
-        for (int i = 0; i < tags.size(); i++) {
-            Log.w(TAG, tags.keyAt(i) + " = " + tags.valueAt(i).toString());
-        }
 
         int rowsPerStrip = tags.get(TIFF.TAG_RowsPerStrip).getInt();
         if (rowsPerStrip != 1)
@@ -113,8 +91,7 @@ public class Parser implements Runnable {
             cfa = CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGGB;
         }
 
-        //int[] blackLevelPattern = tags.get(TIFF.TAG_BlackLevel).getIntArray();
-        int[] blackLevelPattern = { 0, 0, 0, 0 };
+        int[] blackLevelPattern = tags.get(TIFF.TAG_BlackLevel).getIntArray();
         int whiteLevel = tags.get(TIFF.TAG_WhiteLevel).getInt();
         int ref1 = tags.get(TIFF.TAG_CalibrationIlluminant1).getInt();
         int ref2 = tags.get(TIFF.TAG_CalibrationIlluminant2).getInt();
@@ -133,8 +110,6 @@ public class Parser implements Runnable {
         int[] defaultCropSize = tags.get(TIFF.TAG_DefaultCropSize).getIntArray();
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
 
-        Log.e(TAG, "Converting..");
-
         float tonemapStrength = 0.625f;
         float[] tonemap = new float[] {
                 -2f + 2f * tonemapStrength,
@@ -145,14 +120,13 @@ public class Parser implements Runnable {
         float saturationFactor = 2.05f;
         float sharpenFactor = 0.33f;
 
-        RawConverter.convertToSRGB(rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
+        RawConverter.convertToSRGB(this, rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
                 rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
                 forward1, forward2, neutral, /* shadingMap */ null,
                 defaultCropOrigin[0], defaultCropOrigin[1], tonemap, saturationFactor, sharpenFactor, argbOutput);
 
+        NotifHandler.progress(mContext, mFile, STEPS, 4);
         rs.destroy();
-
-        Log.e(TAG, "Saving..");
 
         String savePath = getSavePath("jpg");
         try (FileOutputStream out = new FileOutputStream(savePath)) {
@@ -161,6 +135,7 @@ public class Parser implements Runnable {
             e.printStackTrace();
         }
 
+        NotifHandler.progress(mContext, mFile, STEPS, STEPS);
         argbOutput.recycle();
 
         try {
@@ -176,8 +151,11 @@ public class Parser implements Runnable {
             newExif.setAttribute(ExifInterface.TAG_EXPOSURE_TIME,
                     String.valueOf(tags.get(TIFF.TAG_ExposureTime).getFloat()));
 
+            /*
+            Broken on OP3(T)
             newExif.setAttribute(ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY,
-                    String.valueOf(tags.get(TIFF.TAG_ISOSpeedRatings).getInt()));
+                     String.valueOf(tags.get(TIFF.TAG_ISOSpeedRatings).getInt()));
+            */
 
             newExif.saveAttributes();
         } catch (Exception e) {
@@ -187,8 +165,12 @@ public class Parser implements Runnable {
         MediaScannerConnection.scanFile(mContext,
                 new String[] { savePath }, null, null);
 
-        Log.e(TAG, "Done");
-        Toast.makeText(mContext, "Saved processed image", Toast.LENGTH_SHORT).show();
+        NotifHandler.done(mContext, mFile);
+    }
+
+    @Override
+    public void onProgress(int step) {
+        NotifHandler.progress(mContext, mFile, STEPS, DNG_STEP_OFFSET + step);
     }
 
     @SuppressWarnings("deprecation")

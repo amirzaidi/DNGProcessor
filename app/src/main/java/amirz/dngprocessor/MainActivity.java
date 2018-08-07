@@ -17,6 +17,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        NotifHandler.createChannel(this);
         tryRequestImage();
     }
 
@@ -27,6 +28,8 @@ public class MainActivity extends Activity {
 
     private void tryRequestImage() {
         if (hasPermissions()) {
+            DngScanJob.scheduleJob(this);
+
             Intent picker = new Intent(Intent.ACTION_GET_CONTENT);
             picker.setType("image/x-adobe-dng");
             startActivityForResult(picker, REQUEST_IMAGE);
@@ -45,7 +48,7 @@ public class MainActivity extends Activity {
                     tryRequestImage();
                     break;
                 case REQUEST_IMAGE:
-                    new Thread(new Parser(this, data.getData())).start();
+                    new Thread(new DngParser(this, data.getData())).start();
                     break;
             }
         }
