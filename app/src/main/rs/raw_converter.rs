@@ -35,6 +35,7 @@ typedef uchar3 yuvf_420; // flexible YUV (4:2:0). use rsGetElementAtYuv to read.
 
 rs_allocation inputRawBuffer; // RAW16 buffer of dimensions (raw image stride) * (raw image height)
 rs_allocation intermediateBuffer; // Float32 buffer of dimensions (raw image stride) * (raw image height) * 3
+rs_allocation intermediateColor;
 
 bool hasGainMap; // Does gainmap exist?
 rs_allocation gainMap; // Gainmap to apply to linearized raw sensor data.
@@ -57,6 +58,7 @@ uint rawHeight; // Height of raw buffer
 float4 postProcCurve;
 float saturationFactor;
 float sharpenFactor;
+int denoiseFactor;
 
 // Interpolate gain map to find per-channel gains at a given pixel
 static float4 getGain(uint x, uint y) {
@@ -223,19 +225,6 @@ static void loadNxNfloat3(uint x, uint y, int n, rs_allocation buf, /*out*/float
             outputArray[index++] = *((float3 *) rsGetElementAt(buf, x + xDelta, y + yDelta));
         }
     }
-}
-
-// Load a 3x3 patch of pixels into the output.
-static void load3x3float3(uint x, uint y, rs_allocation buf, /*out*/float3* outputArray) {
-    outputArray[0] = *((float3 *) rsGetElementAt(buf, x - 1, y - 1));
-    outputArray[1] = *((float3 *) rsGetElementAt(buf, x, y - 1));
-    outputArray[2] = *((float3 *) rsGetElementAt(buf, x + 1, y - 1));
-    outputArray[3] = *((float3 *) rsGetElementAt(buf, x - 1, y));
-    outputArray[4] = *((float3 *) rsGetElementAt(buf, x, y));
-    outputArray[5] = *((float3 *) rsGetElementAt(buf, x + 1, y));
-    outputArray[6] = *((float3 *) rsGetElementAt(buf, x - 1, y + 1));
-    outputArray[7] = *((float3 *) rsGetElementAt(buf, x, y + 1));
-    outputArray[8] = *((float3 *) rsGetElementAt(buf, x + 1, y + 1));
 }
 
 // Blacklevel subtract, and normalize each pixel in the outputArray, and apply the
@@ -534,20 +523,24 @@ static float applyCurve(float in) {
 // Applies post-processing on intermediate sRGB image
 uchar4 RS_KERNEL convert_Intermediate_To_ARGB(uint x, uint y) {
     float3 HSV, sRGB;
+    float tmp;
+    int size, area;
+    uint xP, yP;
 
-    uint xP = x + offsetX;
-    uint yP = y + offsetY;
+    // Minimum of 1
+    const int radius = 1;
 
-    // Should never happen
-    if (xP == 0) xP = 1;
-    if (yP == 0) yP = 1;
-    if (xP == rawWidth - 1) xP = rawWidth - 2;
-    if (yP == rawHeight - 1) yP = rawHeight  - 2;
+    xP = x + offsetX;
+    yP = y + offsetY;
 
-    // Level zero means no sharpening/chroma denoise
-    const int level = 2;
-    const int size = 2 * level + 1;
-    const int area = size * size;
+    // Ensure within bounds
+    if (xP < radius) xP = radius;
+    if (yP < radius) yP = radius;
+    if (xP > rawWidth - radius - 1) xP = rawWidth - radius - 1;
+    if (yP > rawHeight - radius - 1) yP = rawHeight  - radius - 1;
+
+    size = 2 * radius + 1;
+    area = size * size;
 
     float3 patch[area];
     float value[area];
@@ -559,21 +552,38 @@ uchar4 RS_KERNEL convert_Intermediate_To_ARGB(uint x, uint y) {
         value[i] = rgbToHsv(patch[i]).z;
     }
 
-    // Average pixels
-    sRGB = patch[0];
-    for (int i = 1; i < area; i++) {
-        sRGB += patch[i];
+    // Sort all pixels in the patch
+    for (int i = 0; i < area; i++) {
+        for (int j = i; j < area; j++) {
+            if (patch[i].r > patch[j].r) {
+                tmp = patch[i].r;
+                patch[i].r = patch[j].r;
+                patch[j].r = tmp;
+            }
+            if (patch[i].g > patch[j].g) {
+                tmp = patch[i].g;
+                patch[i].g = patch[j].g;
+                patch[j].g = tmp;
+            }
+            if (patch[i].b > patch[j].b) {
+                tmp = patch[i].b;
+                patch[i].b = patch[j].b;
+                patch[j].b = tmp;
+            }
+        }
     }
-    sRGB /= area;
+
+    // Take median pixel value
+    sRGB = patch[area / 2];
 
     // Sharpen value
-    float deltaMidValue = area * value[area / 2];
+    tmp = area * value[area / 2];
     for (int i = 0; i < area; i++) {
-        deltaMidValue -= value[i];
+        tmp -= value[i];
     }
 
     HSV = rgbToHsv(sRGB);
-    HSV.z = clamp(value[4] + sharpenFactor * deltaMidValue / area, 0.f, 1.f);
+    HSV.z = clamp(value[4] + sharpenFactor * tmp / area, 0.f, 1.f);
     sRGB = hsvToRgb(HSV);
 
     // Apply additional contrast and saturation

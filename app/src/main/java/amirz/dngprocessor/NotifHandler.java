@@ -29,10 +29,11 @@ public class NotifHandler {
     }
 
     public static void progress(Context context, String name, int max, int progress) {
-        manager(context).notify(name.hashCode(),
-                sMap.get(name.hashCode())
+        Notification notif = sMap.get(name.hashCode())
                 .setProgress(max, progress, false)
-                .build());
+                .build();
+        notif.flags |= Notification.FLAG_ONGOING_EVENT;
+        manager(context).notify(name.hashCode(), notif);
     }
 
     public static void done(Context context, String name) {

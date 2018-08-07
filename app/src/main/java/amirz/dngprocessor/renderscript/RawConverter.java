@@ -43,6 +43,15 @@ import amirz.dngprocessor.ScriptC_raw_converter;
 public class RawConverter {
     private static final String TAG = "RawConverter";
     private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
+
+    public static int STEPS = 0;
+    private static final int STEP_INPUT_ALLOC = ++STEPS;
+    private static final int STEP_INTERMEDIATE_ALLOC = ++STEPS;
+    private static final int STEP_INTERMEDIATE_CALC = ++STEPS;
+    private static final int STEP_OUTPUT_ALLOC = ++STEPS;
+    private static final int STEP_OUTPUT_CALC = ++STEPS;
+    private static final int STEP_SYNC = ++STEPS;
+
     /**
      * Matrix to convert from CIE XYZ colorspace to sRGB, Bradford-adapted to D65.
      */
@@ -248,8 +257,7 @@ public class RawConverter {
                                      float[] forwardTransform1, float[] forwardTransform2, Rational[/*3*/] neutralColorPoint,
                                      LensShadingMap lensShadingMap, int outputOffsetX, int outputOffsetY,
                                      float[] postProcCurve, float saturationFactor, float sharpenFactor,
-            /*out*/Bitmap argbOutput) {
-
+                                     int denoiseFactor, Bitmap argbOutput) {
         // Validate arguments
         if (argbOutput == null || rs == null || rawImageInput == null) {
             throw new IllegalArgumentException("Null argument to convertToSRGB");
@@ -380,6 +388,7 @@ public class RawConverter {
                 postProcCurve[3]));
         converterKernel.set_saturationFactor(saturationFactor);
         converterKernel.set_sharpenFactor(sharpenFactor);
+        converterKernel.set_denoiseFactor(denoiseFactor);
 
         // Setup input allocation (16-bit raw pixels)
         Type.Builder rawBuilder = new Type.Builder(rs, Element.U16(rs));
@@ -388,28 +397,33 @@ public class RawConverter {
         Allocation rawInput = Allocation.createTyped(rs, rawBuilder.create());
         rawInput.copyFromUnchecked(rawImageInput);
         converterKernel.set_inputRawBuffer(rawInput);
+        cb.onProgress(STEP_INPUT_ALLOC);
 
         // Setup intermediate allocation
-        Type.Builder intermediateBuilder = new Type.Builder(rs, Element.F32_3(rs));
-        intermediateBuilder.setX(inputStride / 2);
-        intermediateBuilder.setY(inputHeight);
-        Allocation intermediateInput = Allocation.createTyped(rs, intermediateBuilder.create());
+        Type.Builder intermediatesBuilder = new Type.Builder(rs, Element.F32_3(rs));
+        intermediatesBuilder.setX(inputStride / 2);
+        intermediatesBuilder.setY(inputHeight);
+        Allocation intermediateInput = Allocation.createTyped(rs, intermediatesBuilder.create());
         converterKernel.set_intermediateBuffer(intermediateInput);
+        cb.onProgress(STEP_INTERMEDIATE_ALLOC);
 
-        // Step 1: Convert to intermediate
-        cb.onProgress(0);
+        // Convert to intermediate
         converterKernel.forEach_convert_RAW_To_Intermediate(rawInput, intermediateInput);
+        cb.onProgress(STEP_INTERMEDIATE_CALC);
 
         // Setup output
         Allocation output = Allocation.createFromBitmap(rs, argbOutput);
+        cb.onProgress(STEP_OUTPUT_ALLOC);
 
-        // Step 2: Convert to final
-        cb.onProgress(1);
+        // Convert to final
         converterKernel.forEach_convert_Intermediate_To_ARGB(output);
+        cb.onProgress(STEP_OUTPUT_CALC);
 
-        // Step 3: Force RS sync with Bitmap
-        cb.onProgress(2);
+        // Force RS sync with Bitmap
         output.copyTo(argbOutput);
+        cb.onProgress(STEP_SYNC);
+
+        converterKernel.destroy();
     }
 
     /**

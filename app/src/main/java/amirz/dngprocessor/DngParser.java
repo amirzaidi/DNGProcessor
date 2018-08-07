@@ -22,8 +22,7 @@ import amirz.dngprocessor.renderscript.RawConverterCallback;
 
 public class DngParser implements Runnable, RawConverterCallback {
     private static final String TAG = "Parser";
-    private static final int STEPS = 5;
-    private static final int DNG_STEP_OFFSET = 1;
+    private static final int STEPS = RawConverter.STEPS + 2;
 
     private final Context mContext;
     private final Uri mUri;
@@ -119,6 +118,9 @@ public class DngParser implements Runnable, RawConverterCallback {
         // 0 is the default, higher means more value sharpening.
         float sharpenFactor = 3f;
 
+        // 1 is disabled, higher means more hue denoising.
+        int denoiseFactor = 64;
+
         float curveFactor = 1f - crunchFactor;
         float[] postProcCurve = new float[] {
                 -2f + 2f * curveFactor,
@@ -130,9 +132,9 @@ public class DngParser implements Runnable, RawConverterCallback {
         RawConverter.convertToSRGB(this, rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
                 rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
                 forward1, forward2, neutral, /* shadingMap */ null,
-                defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve, saturationFactor, sharpenFactor, argbOutput);
+                defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve, saturationFactor,
+                sharpenFactor, denoiseFactor, argbOutput);
 
-        NotifHandler.progress(mContext, mFile, STEPS, 4);
         rs.destroy();
 
         String savePath = getSavePath("jpg");
@@ -142,7 +144,7 @@ public class DngParser implements Runnable, RawConverterCallback {
             e.printStackTrace();
         }
 
-        NotifHandler.progress(mContext, mFile, STEPS, STEPS);
+        NotifHandler.progress(mContext, mFile, STEPS, STEPS - 1);
         argbOutput.recycle();
 
         try {
@@ -177,7 +179,7 @@ public class DngParser implements Runnable, RawConverterCallback {
 
     @Override
     public void onProgress(int step) {
-        NotifHandler.progress(mContext, mFile, STEPS, DNG_STEP_OFFSET + step);
+        NotifHandler.progress(mContext, mFile, STEPS, step);
     }
 
     @SuppressWarnings("deprecation")
