@@ -47,13 +47,17 @@ public class DngScanJob extends JobService {
         if (params.getTriggeredContentAuthorities() != null) {
             if (params.getTriggeredContentUris() != null) {
                 for (Uri uri : params.getTriggeredContentUris()) {
-                    String file = Path.getFileFromUri(this, uri);
-                    if (file.endsWith(Path.EXT_RAW)) {
-                        Log.e(TAG, "Starting processing of " + file);
-                        new Thread(new DngParser(this, uri)).start();
+                    try {
+                        String file = Path.getFileFromUri(this, uri);
+                        if (file.endsWith(Path.EXT_RAW)) {
+                            Log.e(TAG, "Starting processing of " + file);
+                            new Thread(new DngParser(this, uri)).start();
+                        }
+                        sb.append(file);
+                        sb.append(", ");
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                    sb.append(file);
-                    sb.append(", ");
                 }
             }
         }
