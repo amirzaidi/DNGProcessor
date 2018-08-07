@@ -247,8 +247,9 @@ public class RawConverter {
                                      float[] calibrationTransform2, float[] colorMatrix1, float[] colorMatrix2,
                                      float[] forwardTransform1, float[] forwardTransform2, Rational[/*3*/] neutralColorPoint,
                                      LensShadingMap lensShadingMap, int outputOffsetX, int outputOffsetY,
-                                     float[] tonemap, float saturationFactor,
+                                     float[] tonemap, float saturationFactor, float sharpenFactor,
             /*out*/Bitmap argbOutput) {
+
         // Validate arguments
         if (argbOutput == null || rs == null || rawImageInput == null) {
             throw new IllegalArgumentException("Null argument to convertToSRGB");
@@ -257,6 +258,7 @@ public class RawConverter {
             throw new IllegalArgumentException(
                     "Output bitmap passed to convertToSRGB is not ARGB_8888 format");
         }
+
         if (outputOffsetX < 0 || outputOffsetY < 0) {
             throw new IllegalArgumentException("Negative offset passed to convertToSRGB");
         }
@@ -266,6 +268,7 @@ public class RawConverter {
         if ((inputStride % 2) != 0) {
             throw new IllegalArgumentException("Invalid stride for RAW16 format, see graphics.h.");
         }
+
         int outWidth = argbOutput.getWidth();
         int outHeight = argbOutput.getHeight();
         if (outWidth + outputOffsetX > inputWidth || outHeight + outputOffsetY > inputHeight) {
@@ -294,6 +297,7 @@ public class RawConverter {
             Log.d(TAG, "ForwardTransform2: " + Arrays.toString(forwardTransform2));
             Log.d(TAG, "NeutralColorPoint: " + Arrays.toString(neutralColorPoint));
         }
+
         Allocation gainMap = null;
         if (lensShadingMap != null) {
             float[] lsm = new float[lensShadingMap.getGainFactorCount()];
@@ -301,49 +305,50 @@ public class RawConverter {
             gainMap = createFloat4Allocation(rs, lsm, lensShadingMap.getColumnCount(),
                     lensShadingMap.getRowCount());
         }
+
         float[] normalizedForwardTransform1 = Arrays.copyOf(forwardTransform1,
                 forwardTransform1.length);
         normalizeFM(normalizedForwardTransform1);
+
         float[] normalizedForwardTransform2 = Arrays.copyOf(forwardTransform2,
                 forwardTransform2.length);
         normalizeFM(normalizedForwardTransform2);
+
         float[] normalizedColorMatrix1 = Arrays.copyOf(colorMatrix1, colorMatrix1.length);
         normalizeCM(normalizedColorMatrix1);
+
         float[] normalizedColorMatrix2 = Arrays.copyOf(colorMatrix2, colorMatrix2.length);
         normalizeCM(normalizedColorMatrix2);
+
         if (DEBUG) {
             Log.d(TAG, "Normalized ForwardTransform1: " + Arrays.toString(normalizedForwardTransform1));
             Log.d(TAG, "Normalized ForwardTransform2: " + Arrays.toString(normalizedForwardTransform2));
             Log.d(TAG, "Normalized ColorMatrix1: " + Arrays.toString(normalizedColorMatrix1));
             Log.d(TAG, "Normalized ColorMatrix2: " + Arrays.toString(normalizedColorMatrix2));
         }
+
         // Calculate full sensor colorspace to sRGB colorspace transform.
         double interpolationFactor = findDngInterpolationFactor(referenceIlluminant1,
                 referenceIlluminant2, calibrationTransform1, calibrationTransform2,
                 normalizedColorMatrix1, normalizedColorMatrix2, neutralColorPoint);
         if (DEBUG) Log.d(TAG, "Interpolation factor used: " + interpolationFactor);
+
         float[] sensorToXYZ = new float[9];
         calculateCameraToXYZD50Transform(normalizedForwardTransform1, normalizedForwardTransform2,
                 calibrationTransform1, calibrationTransform2, neutralColorPoint,
                 interpolationFactor, /*out*/sensorToXYZ);
         if (DEBUG) Log.d(TAG, "CameraToXYZ xform used: " + Arrays.toString(sensorToXYZ));
+
         float[] sensorToProPhoto = new float[9];
         multiply(sXYZtoProPhoto, sensorToXYZ, /*out*/sensorToProPhoto);
         if (DEBUG)
             Log.d(TAG, "CameraToIntemediate xform used: " + Arrays.toString(sensorToProPhoto));
-        Allocation output = Allocation.createFromBitmap(rs, argbOutput);
+
         float[] proPhotoToSRGB = new float[9];
         multiply(sXYZtoRGBBradford, sProPhotoToXYZ, /*out*/proPhotoToSRGB);
-        // Setup input allocation (16-bit raw pixels)
-        Type.Builder typeBuilder = new Type.Builder(rs, Element.U16(rs));
-        typeBuilder.setX((inputStride / 2));
-        typeBuilder.setY(inputHeight);
-        Type inputType = typeBuilder.create();
-        Allocation input = Allocation.createTyped(rs, inputType);
-        input.copyFromUnchecked(rawImageInput);
+
         // Setup RS kernel globals
         ScriptC_raw_converter converterKernel = new ScriptC_raw_converter(rs);
-        converterKernel.set_inputRawBuffer(input);
         converterKernel.set_whiteLevel(whiteLevel);
         converterKernel.set_sensorToIntermediate(new Matrix3f(transpose(sensorToProPhoto)));
         converterKernel.set_intermediateToSRGB(new Matrix3f(transpose(proPhotoToSRGB)));
@@ -354,15 +359,6 @@ public class RawConverter {
         converterKernel.set_neutralPoint(new Float3(neutralColorPoint[0].floatValue(),
                 neutralColorPoint[1].floatValue(), neutralColorPoint[2].floatValue()));
 
-        /*converterKernel.set_toneMapCoeffs(new Float4(DEFAULT_ACR3_TONEMAP_CURVE_COEFFS[0],
-                DEFAULT_ACR3_TONEMAP_CURVE_COEFFS[1], DEFAULT_ACR3_TONEMAP_CURVE_COEFFS[2],
-                DEFAULT_ACR3_TONEMAP_CURVE_COEFFS[3]));
-
-        converterKernel.set_toneMapCoeffs(new Float4(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS[0],
-                CUSTOM_ACR3_TONEMAP_CURVE_COEFFS[1], CUSTOM_ACR3_TONEMAP_CURVE_COEFFS[2],
-                CUSTOM_ACR3_TONEMAP_CURVE_COEFFS[3]));*/
-
-        converterKernel.set_toneMapCoeffs(new Float4(tonemap[0], tonemap[1], tonemap[2], tonemap[3]));
         converterKernel.set_hasGainMap(gainMap != null);
         if (gainMap != null) {
             converterKernel.set_gainMap(gainMap);
@@ -373,9 +369,32 @@ public class RawConverter {
         converterKernel.set_blackLevelPattern(new Int4(blackLevelPattern[0],
                 blackLevelPattern[1], blackLevelPattern[2], blackLevelPattern[3]));
 
+        // Setup RS kernel custom globals
+        converterKernel.set_toneMapCoeffs(new Float4(tonemap[0], tonemap[1], tonemap[2], tonemap[3]));
         converterKernel.set_saturationFactor(saturationFactor);
+        converterKernel.set_sharpenFactor(sharpenFactor);
 
-        converterKernel.forEach_convert_RAW_To_ARGB(output);
+        // Setup input allocation (16-bit raw pixels)
+        Type.Builder rawBuilder = new Type.Builder(rs, Element.U16(rs));
+        rawBuilder.setX(inputStride / 2);
+        rawBuilder.setY(inputHeight);
+        Allocation rawInput = Allocation.createTyped(rs, rawBuilder.create());
+        rawInput.copyFromUnchecked(rawImageInput);
+        converterKernel.set_inputRawBuffer(rawInput);
+
+        // Setup intermediate allocation
+        Type.Builder intermediateBuilder = new Type.Builder(rs, Element.F32_3(rs));
+        intermediateBuilder.setX(inputStride / 2);
+        intermediateBuilder.setY(inputHeight);
+        Allocation intermediateInput = Allocation.createTyped(rs, intermediateBuilder.create());
+        converterKernel.set_intermediateBuffer(intermediateInput);
+
+        converterKernel.forEach_convert_RAW_To_Intermediate(rawInput, intermediateInput);
+
+        // Setup output
+        Allocation output = Allocation.createFromBitmap(rs, argbOutput);
+        converterKernel.forEach_convert_Intermediate_To_ARGB(output);
+
         output.copyTo(argbOutput);  // Force RS sync with bitmap (does not do an extra copy).
     }
 

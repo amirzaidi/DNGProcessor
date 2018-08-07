@@ -13,10 +13,10 @@ import android.renderscript.RenderScript;
 import android.util.Log;
 import android.util.Rational;
 import android.util.SparseArray;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -135,23 +135,20 @@ public class Parser implements Runnable {
 
         Log.e(TAG, "Converting..");
 
-        float tonemapStrength = 0.65f;
+        float tonemapStrength = 0.625f;
         float[] tonemap = new float[] {
                 -2f + 2f * tonemapStrength,
                 3f - 3f * tonemapStrength,
                 tonemapStrength,
                 0f
         };
-        float saturationFactor = 1.8f;
+        float saturationFactor = 2.05f;
+        float sharpenFactor = 0.33f;
 
         RawConverter.convertToSRGB(rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
                 rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
                 forward1, forward2, neutral, /* shadingMap */ null,
-                defaultCropOrigin[0], defaultCropOrigin[1], tonemap, saturationFactor, argbOutput);
-
-        Log.e(TAG, "Post processing..");
-        Bitmap sharpenedOutput = BitmapTransformations.sharpen(rs, argbOutput, 0.9f);
-        argbOutput.recycle();
+                defaultCropOrigin[0], defaultCropOrigin[1], tonemap, saturationFactor, sharpenFactor, argbOutput);
 
         rs.destroy();
 
@@ -159,12 +156,12 @@ public class Parser implements Runnable {
 
         String savePath = getSavePath("jpg");
         try (FileOutputStream out = new FileOutputStream(savePath)) {
-            sharpenedOutput.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            argbOutput.compress(Bitmap.CompressFormat.JPEG, 100, out);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        sharpenedOutput.recycle();
+        argbOutput.recycle();
 
         try {
             ExifInterface newExif = new ExifInterface(savePath);
@@ -191,6 +188,7 @@ public class Parser implements Runnable {
                 new String[] { savePath }, null, null);
 
         Log.e(TAG, "Done");
+        Toast.makeText(mContext, "Saved processed image", Toast.LENGTH_SHORT).show();
     }
 
     @SuppressWarnings("deprecation")

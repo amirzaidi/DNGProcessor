@@ -32,23 +32,30 @@ typedef uchar3 yuvf_420; // flexible YUV (4:2:0). use rsGetElementAtYuv to read.
 // and color space transforms along with the Bayer demosaic.  See RawConverter.java
 // for more information.
 // Input globals
+
 rs_allocation inputRawBuffer; // RAW16 buffer of dimensions (raw image stride) * (raw image height)
+rs_allocation intermediateBuffer; // Float32 buffer of dimensions (raw image stride) * (raw image height) * 3
+
+bool hasGainMap; // Does gainmap exist?
 rs_allocation gainMap; // Gainmap to apply to linearized raw sensor data.
-uint cfaPattern; // The Color Filter Arrangement pattern used
 uint gainMapWidth;  // The width of the gain map
 uint gainMapHeight;  // The height of the gain map
-bool hasGainMap; // Does gainmap exist?
+
+uint cfaPattern; // The Color Filter Arrangement pattern used
 rs_matrix3x3 sensorToIntermediate; // Color transform from sensor to a wide-gamut colorspace
 rs_matrix3x3 intermediateToSRGB; // Color transform from wide-gamut colorspace to sRGB
 ushort4 blackLevelPattern; // Blacklevel to subtract for each channel, given in CFA order
 int whiteLevel;  // Whitelevel of sensor
+float3 neutralPoint; // The camera neutral
+
 uint offsetX; // X offset into inputRawBuffer
 uint offsetY; // Y offset into inputRawBuffer
 uint rawWidth; // Width of raw buffer
 uint rawHeight; // Height of raw buffer
-float3 neutralPoint; // The camera neutral
+
 float4 toneMapCoeffs; // Coefficients for a polynomial tonemapping curve
 float saturationFactor;
+float sharpenFactor;
 
 // Interpolate gain map to find per-channel gains at a given pixel
 static float4 getGain(uint x, uint y) {
@@ -193,7 +200,7 @@ static float3 applyColorspace(float3 pRGB) {
 }
 
 // Load a 3x3 patch of pixels into the output.
-static void load3x3(uint x, uint y, rs_allocation buf, /*out*/float* outputArray) {
+static void load3x3ushort(uint x, uint y, rs_allocation buf, /*out*/float* outputArray) {
     outputArray[0] = *((ushort *) rsGetElementAt(buf, x - 1, y - 1));
     outputArray[1] = *((ushort *) rsGetElementAt(buf, x, y - 1));
     outputArray[2] = *((ushort *) rsGetElementAt(buf, x + 1, y - 1));
@@ -203,6 +210,19 @@ static void load3x3(uint x, uint y, rs_allocation buf, /*out*/float* outputArray
     outputArray[6] = *((ushort *) rsGetElementAt(buf, x - 1, y + 1));
     outputArray[7] = *((ushort *) rsGetElementAt(buf, x, y + 1));
     outputArray[8] = *((ushort *) rsGetElementAt(buf, x + 1, y + 1));
+}
+
+// Load a 3x3 patch of pixels into the output.
+static void load3x3float3(uint x, uint y, rs_allocation buf, /*out*/float3* outputArray) {
+    outputArray[0] = *((float3 *) rsGetElementAt(buf, x - 1, y - 1));
+    outputArray[1] = *((float3 *) rsGetElementAt(buf, x, y - 1));
+    outputArray[2] = *((float3 *) rsGetElementAt(buf, x + 1, y - 1));
+    outputArray[3] = *((float3 *) rsGetElementAt(buf, x - 1, y));
+    outputArray[4] = *((float3 *) rsGetElementAt(buf, x, y));
+    outputArray[5] = *((float3 *) rsGetElementAt(buf, x + 1, y));
+    outputArray[6] = *((float3 *) rsGetElementAt(buf, x - 1, y + 1));
+    outputArray[7] = *((float3 *) rsGetElementAt(buf, x, y + 1));
+    outputArray[8] = *((float3 *) rsGetElementAt(buf, x + 1, y + 1));
 }
 
 // Blacklevel subtract, and normalize each pixel in the outputArray, and apply the
@@ -350,17 +370,131 @@ static float3 demosaic(uint x, uint y, uint cfa, float* inputArray) {
     return pRGB;
 }
 
+// POST PROCESSING STARTS HERE
+
 const static float3 gMonoMult = {0.299f, 0.587f, 0.114f};
 static float3 saturate(float3 rgb) {
     return mix(dot(rgb, gMonoMult), rgb, saturationFactor);
 }
 
-// Full RAW->ARGB bitmap conversion kernel
-uchar4 RS_KERNEL convert_RAW_To_ARGB(uint x, uint y) {
+static float3 rgbToHsv(float3 rgb) {
+    float3 hsv;
+
+    float r = rgb.r;
+    float g = rgb.g;
+    float b = rgb.b;
+
+    float h, s, v;
+	float minV, maxV, delta;
+
+	minV = fmin(fmin(r, g), b);
+	maxV = fmax(fmax(r, g), b);
+	v = maxV;
+	delta = maxV - minV;
+
+	if(maxV == 0) {
+		s = 0;
+		h = -1;
+
+        hsv.x = h;
+        hsv.y = s;
+        hsv.z = v;
+        return hsv;
+	}
+	s = delta / maxV;
+
+	if(r == maxV) {
+		h = (g - b) / delta;
+	} else if(g == maxV) {
+		h = 2 + (b - r) / delta;
+	} else {
+		h = 4 + (r - g) / delta;
+    }
+
+	h /= 6;
+	if (h < 0) {
+		h += 1;
+    }
+
+    hsv.x = h;
+    hsv.y = s;
+    hsv.z = v;
+
+    return hsv;
+}
+
+static float3 hsvToRgb(float3 hsv) {
+    float3 rgb;
+
+    float h = hsv.x;
+    float s = hsv.y;
+    float v = hsv.z;
+
+    float r, g, b;
+	int i;
+	float f, p, q, t;
+
+	if(s == 0) {
+        rgb.r = v;
+        rgb.g = v;
+        rgb.b = v;
+
+        return rgb;
+	}
+
+	h *= 6;
+	i = (int) floor(h);
+	f = h - i;
+	p = v * (1 - s);
+	q = v * (1 - s * f);
+	t = v * (1 - s * (1 - f));
+
+	switch (i) {
+		case 0:
+			r = v;
+			g = t;
+			b = p;
+			break;
+		case 1:
+			r = q;
+			g = v;
+			b = p;
+			break;
+		case 2:
+			r = p;
+			g = v;
+			b = t;
+			break;
+		case 3:
+			r = p;
+			g = q;
+			b = v;
+			break;
+		case 4:
+			r = t;
+			g = p;
+			b = v;
+			break;
+		default:
+			r = v;
+			g = p;
+			b = q;
+			break;
+	}
+
+    rgb.r = r;
+    rgb.g = g;
+    rgb.b = b;
+
+	return rgb;
+}
+
+// Gets unprocessed sRGB image
+float3 RS_KERNEL convert_RAW_To_Intermediate(ushort in, uint x, uint y) {
     float3 pRGB, sRGB;
 
-    uint xP = x + offsetX;
-    uint yP = y + offsetY;
+    uint xP = x;
+    uint yP = y;
 
     if (xP == 0) xP = 1;
     if (yP == 0) yP = 1;
@@ -369,12 +503,54 @@ uchar4 RS_KERNEL convert_RAW_To_ARGB(uint x, uint y) {
 
     float patch[9];
 
-    load3x3(xP, yP, inputRawBuffer, /*out*/ patch);
+    load3x3ushort(xP, yP, inputRawBuffer, /*out*/ patch);
     linearizeAndGainmap(xP, yP, blackLevelPattern, whiteLevel, cfaPattern, /*inout*/patch);
 
     pRGB = demosaic(xP, yP, cfaPattern, patch);
     sRGB = applyColorspace(pRGB);
 
+    return sRGB;
+}
+
+// Applies post-processing on intermediate sRGB image
+uchar4 RS_KERNEL convert_Intermediate_To_ARGB(uint x, uint y) {
+    float3 HSV, sRGB;
+
+    uint xP = x + offsetX;
+    uint yP = y + offsetY;
+
+    // Should never happen
+    if (xP == 0) xP = 1;
+    if (yP == 0) yP = 1;
+    if (xP == rawWidth - 1) xP = rawWidth - 2;
+    if (yP == rawHeight - 1) yP = rawHeight  - 2;
+
+    float3 patch[9];
+    float value[9];
+
+    load3x3float3(xP, yP, intermediateBuffer, /*out*/ patch);
+
+    // Save pixel values
+    for (int i = 0; i < 9; i++) {
+        value[i] = rgbToHsv(patch[i]).z;
+    }
+
+    // Average pixels
+    sRGB = patch[0] + patch[1] + patch[2];
+    sRGB += patch[3] + patch[4] + patch[5];
+    sRGB += patch[6] + patch[7] + patch[8];
+    sRGB /= 9;
+
+    // Sharpen value
+    float deltaMidValue = 9 * value[4];
+    for (int i = 0; i < 9; i++) {
+        deltaMidValue -= value[i];
+    }
+    HSV = rgbToHsv(sRGB);
+    HSV.z = clamp(value[4] + sharpenFactor * deltaMidValue, 0.f, 1.f);
+    sRGB = hsvToRgb(HSV);
+
+    // Apply additional saturation
     sRGB = saturate(sRGB);
     sRGB = clamp(sRGB, 0.f, 1.f);
 
