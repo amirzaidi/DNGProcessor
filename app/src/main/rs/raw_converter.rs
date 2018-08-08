@@ -35,9 +35,9 @@ uint gainMapWidth;  // The width of the gain map
 uint gainMapHeight;  // The height of the gain map
 
 // Transformations
-rs_matrix3x3 sensorToIntermediate; // Color transform from sensor to a wide-gamut colorspace
+rs_matrix3x3 sensorToIntermediate; // Color transform from sensor to XYZ.
 
-rs_matrix3x3 intermediateToProPhoto;
+rs_matrix3x3 intermediateToProPhoto; // Color transform from XYZ to a wide-gamut colorspace
 rs_matrix3x3 proPhotoToSRGB; // Color transform from wide-gamut colorspace to sRGB
 
 // Sensor and picture variables
@@ -57,7 +57,11 @@ uint rawHeight; // Height of raw buffer
 float4 postProcCurve;
 float saturationFactor;
 float sharpenFactor;
-int denoiseFactor;
+
+// Constants
+const int radius = 1;
+const int size = 2 * radius + 1;
+const int area = size * size;
 
 // Interpolate gain map to find per-channel gains at a given pixel
 static float4 getGain(uint x, uint y) {
@@ -81,7 +85,9 @@ static float4 getGain(uint x, uint y) {
 
 // Apply gamma correction using sRGB gamma curve
 static float gammaEncode(float x) {
-    return (x <= 0.0031308f) ? x * 12.92f : 1.055f * pow(x, 0.4166667f) - 0.055f;
+    return (x <= 0.0031308f)
+        ? x * 12.92f
+        : 1.055f * pow(x, 0.4166667f) - 0.055f;
 }
 
 // Apply gamma correction to each color channel in RGB pixel
@@ -111,6 +117,7 @@ static float3 tonemap(float3 rgb) {
     float3 sorted = rgb;
     float tmp;
     int permutation = 0;
+
     // Sort the RGB channels by value
     if (sorted.z < sorted.y) {
         tmp = sorted.z;
@@ -130,13 +137,17 @@ static float3 tonemap(float3 rgb) {
         sorted.y = tmp;
         permutation |= 4;
     }
+
     float2 minmax;
     minmax.x = sorted.x;
     minmax.y = sorted.z;
+
     // Apply tonemapping curve to min, max RGB channel values
     minmax = native_powr(minmax, 3.f) * toneMapCoeffs.x +
             native_powr(minmax, 2.f) * toneMapCoeffs.y +
-            minmax * toneMapCoeffs.z + toneMapCoeffs.w;
+            minmax * toneMapCoeffs.z +
+            toneMapCoeffs.w;
+
     // Rescale middle value
     float newMid;
     if (sorted.z == sorted.x) {
@@ -145,6 +156,7 @@ static float3 tonemap(float3 rgb) {
         newMid = minmax.x + ((minmax.y - minmax.x) * (sorted.y - sorted.x) /
                 (sorted.z - sorted.x));
     }
+
     float3 finalRGB;
     switch (permutation) {
         case 0: // b >= g >= r
@@ -189,14 +201,25 @@ static float3 tonemap(float3 rgb) {
     return finalRGB;
 }
 
+static float3 XYZtoxyY(float3 XYZ) {
+    float3 result;
+    float sum = XYZ.x + XYZ.y + XYZ.z;
+
+    if (sum == 0) {
+        result.x = 0.f;
+        result.y = 0.f;
+        result.z = 0.f;
+    } else {
+        result.x = XYZ.x / sum;
+        result.y = XYZ.y / sum;
+        result.z = XYZ.y;
+    }
+
+    return result;
+}
+
 // Color conversion pipeline step one.
 static float3 convertSensorToIntermediate(float3 sensor) {
-    /*sensor.x = clamp(sensor.x, 0.f, neutralPoint.x);
-    sensor.y = clamp(sensor.y, 0.f, neutralPoint.y);
-    sensor.z = clamp(sensor.z, 0.f, neutralPoint.z);
-    return rsMatrixMultiply(&sensorToIntermediate, sensor);*/
-
-
     float3 intermediate;
 
     sensor.x = clamp(sensor.x, 0.f, neutralPoint.x);
@@ -204,8 +227,23 @@ static float3 convertSensorToIntermediate(float3 sensor) {
     sensor.z = clamp(sensor.z, 0.f, neutralPoint.z);
 
     intermediate = rsMatrixMultiply(&sensorToIntermediate, sensor);
+    intermediate = XYZtoxyY(intermediate);
 
     return intermediate;
+}
+
+static float3 xyYtoXYZ(float3 xyY) {
+    float3 result;
+    if (xyY.y == 0) {
+        result.x = 0.f;
+        result.y = 0.f;
+        result.z = 0.f;
+    } else {
+        result.x = xyY.x * xyY.z / xyY.y;
+        result.y = xyY.z;
+        result.z = (1.f - xyY.x - xyY.y) * xyY.z / xyY.y;
+    }
+    return result;
 }
 
 // Apply a colorspace transform to the intermediate colorspace, apply
@@ -213,6 +251,8 @@ static float3 convertSensorToIntermediate(float3 sensor) {
 // and apply a gamma correction curve.
 static float3 applyColorspace(float3 intermediate) {
     float3 proPhoto, sRGB;
+
+    intermediate = xyYtoXYZ(intermediate);
 
     proPhoto = rsMatrixMultiply(&intermediateToProPhoto, intermediate);
     proPhoto = tonemap(proPhoto);
@@ -421,17 +461,68 @@ float3 RS_KERNEL convert_RAW_To_Intermediate(ushort in, uint x, uint y) {
     return convertSensorToIntermediate(sensor);
 }
 
+static float3 processPatch(int xP, int yP) {
+    float3 result;
+    float tmp;
+
+    float3 patch[area];
+    float value[area];
+
+    loadNxNfloat3(xP, yP, size, intermediateBuffer, patch);
+
+    // Save pixel values
+    for (int i = 0; i < area; i++) {
+        value[i] = patch[i].z;
+    }
+
+    // Sort all pixels in the patch
+    for (int i = 0; i < area; i++) {
+        for (int j = i; j < area; j++) {
+            if (patch[i].x > patch[j].x) {
+                tmp = patch[i].x;
+                patch[i].x = patch[j].x;
+                patch[j].x = tmp;
+            }
+            if (patch[i].y > patch[j].y) {
+                tmp = patch[i].y;
+                patch[i].y = patch[j].y;
+                patch[j].y = tmp;
+            }
+        }
+    }
+
+    int mid = area / 2;
+
+    tmp = area * value[mid];
+    for (int i = 0; i < area; i++) {
+        tmp -= value[i];
+    }
+
+    result = patch[mid];
+    result.z = clamp(value[mid] + sharpenFactor * tmp / area, 0.f, 1.f);
+
+    return result;
+}
+
 static float applyCurve(float in) {
     return native_powr(in, 3.f) * postProcCurve.x +
             native_powr(in, 2.f) * postProcCurve.y +
-            in * postProcCurve.z + postProcCurve.w;
+            in * postProcCurve.z +
+            postProcCurve.w;
+}
+
+static float3 applyCurve3(float3 in) {
+    float3 result;
+    result.x = applyCurve(in.x);
+    result.y = applyCurve(in.y);
+    result.z = applyCurve(in.z);
+    return result;
 }
 
 // Applies post-processing on intermediate XYZ image
 uchar4 RS_KERNEL convert_Intermediate_To_ARGB(uint x, uint y) {
     float3 intermediate, sRGB;
     float tmp;
-    const int radius = 1, size = 3, area = 9;
     uint xP, yP;
 
     xP = x + offsetX;
@@ -443,48 +534,14 @@ uchar4 RS_KERNEL convert_Intermediate_To_ARGB(uint x, uint y) {
     if (xP > rawWidth - radius - 1) xP = rawWidth - radius - 1;
     if (yP > rawHeight - radius - 1) yP = rawHeight  - radius - 1;
 
-    float3 patch[area];
-    float value[area];
+    // Sharpen and denoise value
+    intermediate = processPatch(xP, yP);
 
-    loadNxNfloat3(xP, yP, size, intermediateBuffer, patch);
-
-    // Save pixel values
-    /*for (int i = 0; i < area; i++) {
-        value[i] = patch[i].x;
-    }*/
-
-    // Sort all pixels in the patch
-    /*for (int i = 0; i < area; i++) {
-        for (int j = i; j < area; j++) {
-            if (patch[i].y > patch[j].y) {
-                tmp = patch[i].y;
-                patch[i].y = patch[j].y;
-                patch[j].y = tmp;
-            }
-            if (patch[i].z > patch[j].z) {
-                tmp = patch[i].z;
-                patch[i].z = patch[j].z;
-                patch[j].z = tmp;
-            }
-        }
-    }*/
-
-    // Take median pixel value
-    intermediate = patch[area / 2];
-
-    // Sharpen value
-    /*tmp = area * value[area / 2];
-    for (int i = 0; i < area; i++) {
-        tmp -= value[i];
-    }
-
-    XYZ.x = clamp(value[4] + sharpenFactor * tmp / area, 0.f, 1.f);*/
+    // Convert to final colorspace
     sRGB = applyColorspace(intermediate);
 
     // Apply additional contrast and saturation
-    sRGB.r = applyCurve(sRGB.r);
-    sRGB.g = applyCurve(sRGB.g);
-    sRGB.b = applyCurve(sRGB.b);
+    sRGB = applyCurve3(sRGB);
     sRGB = saturate(sRGB);
     sRGB = clamp(sRGB, 0.f, 1.f);
 
