@@ -17,13 +17,6 @@
 #pragma rs java_package_name(amirz.dngprocessor)
 #pragma rs_fp_relaxed
 
-typedef uchar3 yuvx_444; // interleaved YUV. (y,u,v) per pixel. use .x/.y/.z to read
-typedef uchar3 yuvf_420; // flexible YUV (4:2:0). use rsGetElementAtYuv to read.
-
-#define convert_yuvx_444 convert_uchar3
-#define convert_yuvf_420 __error_cant_output_flexible_yuv__
-#define rsGetElementAt_yuvx_444 rsGetElementAt_uchar3
-#define rsGetElementAt_yuvf_420 __error_cant_output_flexible_yuv__
 #define RS_KERNEL __attribute__((kernel))
 #define LOGD(string, expr) rsDebug((string), (expr))
 
@@ -318,6 +311,7 @@ static void linearizeAndGainmap(uint x, uint y, ushort4 blackLevel, int whiteLev
         }
     }
 }
+
 // Apply bilinear-interpolation to demosaic
 static float3 demosaic(uint x, uint y, uint cfa, float* inputArray) {
     uint index = (x & 1) | ((y & 1) << 1);
@@ -405,9 +399,9 @@ static float3 rgbToHsv(float3 rgb) {
 	}
 	s = delta / maxV;
 
-	if(r == maxV) {
+	if (r == maxV) {
 		h = (g - b) / delta;
-	} else if(g == maxV) {
+	} else if (g == maxV) {
 		h = 2 + (b - r) / delta;
 	} else {
 		h = 4 + (r - g) / delta;
@@ -524,11 +518,8 @@ static float applyCurve(float in) {
 uchar4 RS_KERNEL convert_Intermediate_To_ARGB(uint x, uint y) {
     float3 HSV, sRGB;
     float tmp;
-    int size, area;
+    const int radius = 1, size = 3, area = 9;
     uint xP, yP;
-
-    // Minimum of 1
-    const int radius = 1;
 
     xP = x + offsetX;
     yP = y + offsetY;
@@ -538,9 +529,6 @@ uchar4 RS_KERNEL convert_Intermediate_To_ARGB(uint x, uint y) {
     if (yP < radius) yP = radius;
     if (xP > rawWidth - radius - 1) xP = rawWidth - radius - 1;
     if (yP > rawHeight - radius - 1) yP = rawHeight  - radius - 1;
-
-    size = 2 * radius + 1;
-    area = size * size;
 
     float3 patch[area];
     float value[area];

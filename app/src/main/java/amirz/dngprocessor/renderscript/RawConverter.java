@@ -60,6 +60,7 @@ public class RawConverter {
             -0.9787684f, 1.9161415f, 0.0334540f,
             0.0719453f, -0.2289914f, 1.4052427f
     };
+
     /**
      * Matrix to convert from the ProPhoto RGB colorspace to CIE XYZ colorspace.
      */
@@ -68,6 +69,7 @@ public class RawConverter {
             0.288000f, 0.711900f, 0.000100f,
             0.000000f, 0.000000f, 0.825105f
     };
+
     /**
      * Matrix to convert from CIE XYZ colorspace to ProPhoto RGB colorspace.
      */
@@ -76,6 +78,7 @@ public class RawConverter {
             -0.544426f, 1.508096f, 0.020472f,
             0.000000f, 0.000000f, 1.211968f
     };
+
     /**
      * Coefficients for a 3rd order polynomial, ordered from highest to lowest power.  This
      * polynomial approximates the default tonemapping curve used for ACR3.
@@ -96,10 +99,12 @@ public class RawConverter {
      * The D50 whitepoint coordinates in CIE XYZ colorspace.
      */
     private static final float[] D50_XYZ = new float[]{0.9642f, 1, 0.8249f};
+
     /**
      * An array containing the color temperatures for standard reference illuminants.
      */
     private static final SparseIntArray sStandardIlluminants = new SparseIntArray();
+
     private static final int NO_ILLUMINANT = -1;
 
     static {
@@ -122,133 +127,6 @@ public class RawConverter {
 
     /**
      * Convert a RAW16 buffer into an sRGB buffer, and write the result into a bitmap.
-     * <p>
-     * <p> This function applies the operations roughly outlined in the Adobe DNG specification
-     * using the provided metadata about the image sensor.  Sensor data for Android devices is
-     * assumed to be relatively linear, and no extra linearization step is applied here.  The
-     * following operations are applied in the given order:</p>
-     * <p>
-     * <ul>
-     * <li>
-     * Black level subtraction - the black levels given in the SENSOR_BLACK_LEVEL_PATTERN
-     * tag are subtracted from the corresponding raw pixels.
-     * </li>
-     * <li>
-     * Rescaling - each raw pixel is scaled by 1/(white level - black level).
-     * </li>
-     * <li>
-     * Lens shading correction - the interpolated gains from the gain map defined in the
-     * STATISTICS_LENS_SHADING_CORRECTION_MAP are applied to each raw pixel.
-     * </li>
-     * <li>
-     * Clipping - each raw pixel is clipped to a range of [0.0, 1.0].
-     * </li>
-     * <li>
-     * Demosaic - the RGB channels for each pixel are retrieved from the Bayer mosaic
-     * of raw pixels using a simple bilinear-interpolation demosaicing algorithm.
-     * </li>
-     * <li>
-     * Colorspace transform to wide-gamut RGB - each pixel is mapped into a
-     * wide-gamut colorspace (in this case ProPhoto RGB is used) from the sensor
-     * colorspace.
-     * </li>
-     * <li>
-     * Tonemapping - A basic tonemapping curve using the default from ACR3 is applied
-     * (no further exposure compensation is applied here, though this could be improved).
-     * </li>
-     * <li>
-     * Colorspace transform to final RGB - each pixel is mapped into linear sRGB colorspace.
-     * </li>
-     * <li>
-     * Gamma correction - each pixel is gamma corrected using γ=2.2 to map into sRGB
-     * colorspace for viewing.
-     * </li>
-     * <li>
-     * Packing - each pixel is scaled so that each color channel has a range of [0, 255],
-     * and is packed into an Android bitmap.
-     * </li>
-     * </ul>
-     * <p>
-     * <p> Arguments given here are assumed to come from the values for the corresponding
-     * {@link CameraCharacteristics.Key}s defined for the camera that produced this RAW16 buffer.
-     * </p>
-     *
-     * @param rs              a {@link RenderScript} context to use.
-     * @param inputWidth      width of the input RAW16 image in pixels.
-     * @param inputHeight     height of the input RAW16 image in pixels.
-     * @param inputStride     stride of the input RAW16 image in bytes.
-     * @param rawImageInput   a byte array containing a RAW16 image.
-     * @param staticMetadata  the {@link CameraCharacteristics} for this RAW capture.
-     * @param dynamicMetadata the {@link CaptureResult} for this RAW capture.
-     * @param outputOffsetX   the offset width into the raw image of the left side of the output
-     *                        rectangle.
-     * @param outputOffsetY   the offset height into the raw image of the top side of the output
-     *                        rectangle.
-     * @param argbOutput      a {@link Bitmap} to output the rendered RAW image into.  The height and
-     *                        width of this bitmap along with the output offsets are used to determine
-     *                        the dimensions and offset of the output rectangle contained in the RAW
-     *                        image to be rendered.
-     */
-    /*public static void convertToSRGB(RenderScript rs, int inputWidth, int inputHeight,
-                                     int inputStride, byte[] rawImageInput, CameraCharacteristics staticMetadata,
-                                     CaptureResult dynamicMetadata, int outputOffsetX, int outputOffsetY,
-            /*out*Bitmap argbOutput) {
-        int cfa = staticMetadata.get(CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT);
-        int[] blackLevelPattern = new int[4];
-        staticMetadata.get(CameraCharacteristics.SENSOR_BLACK_LEVEL_PATTERN).
-                copyTo(blackLevelPattern, /*offset*0);
-        int whiteLevel = staticMetadata.get(CameraCharacteristics.SENSOR_INFO_WHITE_LEVEL);
-        int ref1 = staticMetadata.get(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1);
-        int ref2;
-        if (staticMetadata.get(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2) != null) {
-            ref2 = staticMetadata.get(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2);
-        } else {
-            ref2 = ref1;
-        }
-        float[] calib1 = new float[9];
-        float[] calib2 = new float[9];
-        convertColorspaceTransform(
-                staticMetadata.get(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM1), calib1);
-        if (staticMetadata.get(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM2) != null) {
-            convertColorspaceTransform(
-                    staticMetadata.get(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM2), calib2);
-        } else {
-            convertColorspaceTransform(
-                    staticMetadata.get(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM1), calib2);
-        }
-        float[] color1 = new float[9];
-        float[] color2 = new float[9];
-        convertColorspaceTransform(
-                staticMetadata.get(CameraCharacteristics.SENSOR_COLOR_TRANSFORM1), color1);
-        if (staticMetadata.get(CameraCharacteristics.SENSOR_COLOR_TRANSFORM2) != null) {
-            convertColorspaceTransform(
-                    staticMetadata.get(CameraCharacteristics.SENSOR_COLOR_TRANSFORM2), color2);
-        } else {
-            convertColorspaceTransform(
-                    staticMetadata.get(CameraCharacteristics.SENSOR_COLOR_TRANSFORM1), color2);
-        }
-        float[] forward1 = new float[9];
-        float[] forward2 = new float[9];
-        convertColorspaceTransform(
-                staticMetadata.get(CameraCharacteristics.SENSOR_FORWARD_MATRIX1), forward1);
-        if (staticMetadata.get(CameraCharacteristics.SENSOR_FORWARD_MATRIX2) != null) {
-            convertColorspaceTransform(
-                    staticMetadata.get(CameraCharacteristics.SENSOR_FORWARD_MATRIX2), forward2);
-        } else {
-            convertColorspaceTransform(
-                    staticMetadata.get(CameraCharacteristics.SENSOR_FORWARD_MATRIX1), forward2);
-        }
-        Rational[] neutral = dynamicMetadata.get(CaptureResult.SENSOR_NEUTRAL_COLOR_POINT);
-        LensShadingMap shadingMap = dynamicMetadata.get(CaptureResult.STATISTICS_LENS_SHADING_CORRECTION_MAP);
-        convertToSRGB(rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
-                rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
-                forward1, forward2, neutral, shadingMap, outputOffsetX, outputOffsetY, argbOutput);
-    }*/
-
-    /**
-     * Convert a RAW16 buffer into an sRGB buffer, and write the result into a bitmap.
-     *
-     * @see #convertToSRGB
      */
     public static void convertToSRGB(RawConverterCallback cb, RenderScript rs, int inputWidth, int inputHeight,
                                      int inputStride, int cfa, int[] blackLevelPattern, int whiteLevel, byte[] rawImageInput,
