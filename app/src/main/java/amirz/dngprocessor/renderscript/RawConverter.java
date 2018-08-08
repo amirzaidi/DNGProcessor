@@ -42,7 +42,7 @@ import amirz.dngprocessor.ScriptC_raw_converter;
  */
 public class RawConverter {
     private static final String TAG = "RawConverter";
-    private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
+    private static final boolean DEBUG = true;
 
     public static int STEPS = 0;
     private static final int STEP_INPUT_ALLOC = ++STEPS;
@@ -135,7 +135,7 @@ public class RawConverter {
                                      float[] forwardTransform1, float[] forwardTransform2, Rational[/*3*/] neutralColorPoint,
                                      LensShadingMap lensShadingMap, int outputOffsetX, int outputOffsetY,
                                      float[] postProcCurve, float saturationFactor, float sharpenFactor,
-                                     int denoiseFactor, Bitmap argbOutput) {
+                                     Bitmap argbOutput) {
         // Validate arguments
         if (argbOutput == null || rs == null || rawImageInput == null) {
             throw new IllegalArgumentException("Null argument to convertToSRGB");
@@ -165,6 +165,7 @@ public class RawConverter {
         if (cfa < 0 || cfa > 3) {
             throw new IllegalArgumentException("Unsupported cfa pattern " + cfa + " used.");
         }
+
         if (DEBUG) {
             Log.d(TAG, "Metadata Used:");
             Log.d(TAG, "Input width,height: " + inputWidth + "," + inputHeight);
@@ -223,22 +224,25 @@ public class RawConverter {
         calculateCameraToXYZD50Transform(normalizedForwardTransform1, normalizedForwardTransform2,
                 calibrationTransform1, calibrationTransform2, neutralColorPoint,
                 interpolationFactor, /*out*/sensorToXYZ);
-        if (DEBUG) Log.d(TAG, "CameraToXYZ xform used: " + Arrays.toString(sensorToXYZ));
+        if (DEBUG) Log.d(TAG, "sensorToXYZ xform used: " + Arrays.toString(sensorToXYZ));
 
         float[] sensorToProPhoto = new float[9];
         multiply(sXYZtoProPhoto, sensorToXYZ, /*out*/sensorToProPhoto);
         if (DEBUG)
-            Log.d(TAG, "CameraToIntemediate xform used: " + Arrays.toString(sensorToProPhoto));
+            Log.d(TAG, "sensorToProPhoto used: " + Arrays.toString(sensorToProPhoto));
 
         float[] proPhotoToSRGB = new float[9];
         multiply(sXYZtoRGBBradford, sProPhotoToXYZ, /*out*/proPhotoToSRGB);
+
+        float[] XYZtoProPhoto = new float[9];
+        System.arraycopy(sXYZtoProPhoto, 0, XYZtoProPhoto, 0, sXYZtoProPhoto.length);
 
         // Setup RS kernel globals
         ScriptC_raw_converter converterKernel = new ScriptC_raw_converter(rs);
         converterKernel.set_whiteLevel(whiteLevel);
 
         converterKernel.set_sensorToIntermediate(new Matrix3f(transpose(sensorToXYZ)));
-        converterKernel.set_intermediateToProPhoto(new Matrix3f(transpose(sXYZtoProPhoto)));
+        converterKernel.set_intermediateToProPhoto(new Matrix3f(transpose(XYZtoProPhoto)));
         converterKernel.set_proPhotoToSRGB(new Matrix3f(transpose(proPhotoToSRGB)));
 
         converterKernel.set_offsetX(outputOffsetX);
@@ -269,7 +273,6 @@ public class RawConverter {
                 postProcCurve[3]));
         converterKernel.set_saturationFactor(saturationFactor);
         converterKernel.set_sharpenFactor(sharpenFactor);
-        converterKernel.set_denoiseFactor(denoiseFactor);
 
         // Setup input allocation (16-bit raw pixels)
         Type.Builder rawBuilder = new Type.Builder(rs, Element.U16(rs));

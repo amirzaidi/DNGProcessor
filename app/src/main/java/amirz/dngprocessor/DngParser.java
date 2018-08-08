@@ -51,6 +51,12 @@ public class DngParser implements Runnable, RawConverterCallback {
         NotifHandler.create(mContext, mFile);
         NotifHandler.progress(mContext, mFile, STEPS, 0);
 
+        synchronized (sProcessing) {
+            runUnsafe();
+        }
+    }
+
+    private void runUnsafe() {
         ByteReader.ReaderWithExif reader = ByteReader.fromUri(mContext, mUri);
         Log.e(TAG, "Starting processing of " + mFile + " (" + mUri.toString() + ") size " +
                 reader.length);
@@ -108,8 +114,6 @@ public class DngParser implements Runnable, RawConverterCallback {
         Rational[] neutral = tags.get(TIFF.TAG_AsShotNeutral).getRationalArray();
         //LensShadingMap shadingMap = dynamicMetadata.get(CaptureResult.STATISTICS_LENS_SHADING_CORRECTION_MAP);
 
-        RenderScript rs = RenderScript.create(mContext);
-
         int[] defaultCropOrigin = tags.get(TIFF.TAG_DefaultCropOrigin).getIntArray();
         int[] defaultCropSize = tags.get(TIFF.TAG_DefaultCropSize).getIntArray();
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
@@ -121,10 +125,7 @@ public class DngParser implements Runnable, RawConverterCallback {
         float saturationFactor = 1.7f;
 
         // 0 is the default, higher means more value sharpening.
-        float sharpenFactor = 3f;
-
-        // 1 is disabled, higher means more hue denoising.
-        int denoiseFactor = 64;
+        float sharpenFactor = 3.5f;
 
         float curveFactor = 1f - crunchFactor;
         float[] postProcCurve = new float[] {
@@ -134,13 +135,13 @@ public class DngParser implements Runnable, RawConverterCallback {
                 0f
         };
 
+        RenderScript rs = RenderScript.create(mContext);
         RawConverter.convertToSRGB(this, rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
                 rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
                 forward1, forward2, neutral, /* shadingMap */ null,
                 defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve, saturationFactor,
-                sharpenFactor, denoiseFactor, argbOutput);
-
-        rs.destroy();
+                sharpenFactor, argbOutput);
+        RenderScript.releaseAllContexts();
 
         String savePath = getSavePath();
         try (FileOutputStream out = new FileOutputStream(savePath)) {
