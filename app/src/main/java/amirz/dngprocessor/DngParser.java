@@ -24,6 +24,7 @@ import amirz.dngprocessor.renderscript.RawConverterCallback;
 public class DngParser implements Runnable, RawConverterCallback {
     private static final String TAG = "Parser";
     private static final int STEPS = RawConverter.STEPS + 2;
+    private static final int JPEG_QUALITY = 95;
 
     public static final ConcurrentSkipListSet<String> sProcessing = new ConcurrentSkipListSet<>();
 
@@ -145,7 +146,7 @@ public class DngParser implements Runnable, RawConverterCallback {
 
         String savePath = getSavePath();
         try (FileOutputStream out = new FileOutputStream(savePath)) {
-            argbOutput.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            argbOutput.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out);
         } catch (Exception e) {
             e.printStackTrace();
         }
