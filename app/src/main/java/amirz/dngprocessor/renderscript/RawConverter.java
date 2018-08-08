@@ -236,8 +236,11 @@ public class RawConverter {
         // Setup RS kernel globals
         ScriptC_raw_converter converterKernel = new ScriptC_raw_converter(rs);
         converterKernel.set_whiteLevel(whiteLevel);
-        converterKernel.set_sensorToIntermediate(new Matrix3f(transpose(sensorToProPhoto)));
-        converterKernel.set_intermediateToSRGB(new Matrix3f(transpose(proPhotoToSRGB)));
+
+        converterKernel.set_sensorToIntermediate(new Matrix3f(transpose(sensorToXYZ)));
+        converterKernel.set_intermediateToProPhoto(new Matrix3f(transpose(sXYZtoProPhoto)));
+        converterKernel.set_proPhotoToSRGB(new Matrix3f(transpose(proPhotoToSRGB)));
+
         converterKernel.set_offsetX(outputOffsetX);
         converterKernel.set_offsetY(outputOffsetY);
         converterKernel.set_rawHeight(inputHeight);
@@ -278,15 +281,15 @@ public class RawConverter {
         cb.onProgress(STEP_INPUT_ALLOC);
 
         // Setup intermediate allocation
-        Type.Builder intermediatesBuilder = new Type.Builder(rs, Element.F32_3(rs));
-        intermediatesBuilder.setX(inputStride / 2);
-        intermediatesBuilder.setY(inputHeight);
-        Allocation intermediateInput = Allocation.createTyped(rs, intermediatesBuilder.create());
-        converterKernel.set_intermediateBuffer(intermediateInput);
+        Type.Builder intermediateBuilder = new Type.Builder(rs, Element.F32_3(rs));
+        intermediateBuilder.setX(inputStride / 2);
+        intermediateBuilder.setY(inputHeight);
+        Allocation intermediateBuffer = Allocation.createTyped(rs, intermediateBuilder.create());
+        converterKernel.set_intermediateBuffer(intermediateBuffer);
         cb.onProgress(STEP_INTERMEDIATE_ALLOC);
 
         // Convert to intermediate
-        converterKernel.forEach_convert_RAW_To_Intermediate(rawInput, intermediateInput);
+        converterKernel.forEach_convert_RAW_To_Intermediate(rawInput, intermediateBuffer);
         cb.onProgress(STEP_INTERMEDIATE_CALC);
 
         // Setup output
