@@ -57,11 +57,27 @@ uint rawHeight; // Height of raw buffer
 float4 postProcCurve;
 float saturationFactor;
 float sharpenFactor;
+float histoFactor;
 
 // Constants
 const int radius = 1;
 const int size = 2 * radius + 1;
 const int area = size * size;
+
+const int histogram_slices = 4096;
+
+// Histogram
+int histogram[histogram_slices];
+float remapArray[histogram_slices];
+
+void create_remap_array() {
+    uint size = rawWidth * rawHeight;
+    uint count = 0;
+    for (int i = 0; i < histogram_slices; i++) {
+        count += histogram[i];
+        remapArray[i] = (float) count / size;
+    }
+}
 
 // Interpolate gain map to find per-channel gains at a given pixel
 static float4 getGain(uint x, uint y) {
@@ -440,25 +456,31 @@ static float3 saturate(float3 rgb) {
     return mix(dot(rgb, gMonoMult), rgb, saturationFactor);
 }
 
-// Gets unprocessed XYZ pixel
-float3 RS_KERNEL convert_RAW_To_Intermediate(ushort in, uint x, uint y) {
-    float3 sensor;
+static int get_histogram_index(float value) {
+    return fmin(floor(value * histogram_slices), histogram_slices - 1);
+}
 
-    uint xP = x;
-    uint yP = y;
-
-    if (xP == 0) xP = 1;
-    if (yP == 0) yP = 1;
-    if (xP == rawWidth - 1) xP = rawWidth - 2;
-    if (yP == rawHeight - 1) yP = rawHeight  - 2;
-
+// Gets unprocessed xyY pixel
+float3 RS_KERNEL convert_RAW_To_Intermediate(uint x, uint y) {
+    float3 sensor, intermediate;
+    int histogramIndex;
     float patch[9];
 
-    load3x3ushort(xP, yP, inputRawBuffer, /*out*/ patch);
-    linearizeAndGainmap(xP, yP, blackLevelPattern, whiteLevel, cfaPattern, /*inout*/patch);
+    if (x == 0) x = 1;
+    if (y == 0) y = 1;
+    if (x == rawWidth - 1) x = rawWidth - 2;
+    if (y == rawHeight - 1) y = rawHeight  - 2;
 
-    sensor = demosaic(xP, yP, cfaPattern, patch);
-    return convertSensorToIntermediate(sensor);
+    load3x3ushort(x, y, inputRawBuffer, /*out*/ patch);
+    linearizeAndGainmap(x, y, blackLevelPattern, whiteLevel, cfaPattern, /*inout*/patch);
+
+    sensor = demosaic(x, y, cfaPattern, patch);
+    intermediate = convertSensorToIntermediate(sensor);
+
+    histogramIndex = get_histogram_index(intermediate.z);
+    rsAtomicInc(&histogram[histogramIndex]);
+
+    return intermediate;
 }
 
 static float3 processPatch(int xP, int yP) {
@@ -500,6 +522,9 @@ static float3 processPatch(int xP, int yP) {
 
     result = patch[mid];
     result.z = clamp(value[mid] + sharpenFactor * tmp / area, 0.f, 1.f);
+
+    int histogramIndex = get_histogram_index(result.z);
+    result.z = (1.f - histoFactor) * result.z + histoFactor * remapArray[histogramIndex];
 
     return result;
 }

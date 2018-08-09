@@ -135,7 +135,7 @@ public class RawConverter {
                                      float[] forwardTransform1, float[] forwardTransform2, Rational[/*3*/] neutralColorPoint,
                                      LensShadingMap lensShadingMap, int outputOffsetX, int outputOffsetY,
                                      float[] postProcCurve, float saturationFactor, float sharpenFactor,
-                                     Bitmap argbOutput) {
+                                     float histoFactor, Bitmap argbOutput) {
         // Validate arguments
         if (argbOutput == null || rs == null || rawImageInput == null) {
             throw new IllegalArgumentException("Null argument to convertToSRGB");
@@ -273,6 +273,7 @@ public class RawConverter {
                 postProcCurve[3]));
         converterKernel.set_saturationFactor(saturationFactor);
         converterKernel.set_sharpenFactor(sharpenFactor);
+        converterKernel.set_histoFactor(histoFactor);
 
         // Setup input allocation (16-bit raw pixels)
         Type.Builder rawBuilder = new Type.Builder(rs, Element.U16(rs));
@@ -292,8 +293,11 @@ public class RawConverter {
         cb.onProgress(STEP_INTERMEDIATE_ALLOC);
 
         // Convert to intermediate
-        converterKernel.forEach_convert_RAW_To_Intermediate(rawInput, intermediateBuffer);
+        converterKernel.forEach_convert_RAW_To_Intermediate(intermediateBuffer);
         cb.onProgress(STEP_INTERMEDIATE_CALC);
+
+        // Populate histogram remapper
+        converterKernel.invoke_create_remap_array();
 
         // Setup output
         Allocation output = Allocation.createFromBitmap(rs, argbOutput);

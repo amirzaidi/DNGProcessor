@@ -128,6 +128,9 @@ public class DngParser implements Runnable, RawConverterCallback {
         // 0 is the default, higher means more value sharpening.
         float sharpenFactor = 3.5f;
 
+        // 0 is the default, higher means more histogram equalization.
+        float histoFactor = 0.05f;
+
         float curveFactor = 1f - crunchFactor;
         float[] postProcCurve = new float[] {
                 -2f + 2f * curveFactor,
@@ -141,7 +144,7 @@ public class DngParser implements Runnable, RawConverterCallback {
                 rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
                 forward1, forward2, neutral, /* shadingMap */ null,
                 defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve, saturationFactor,
-                sharpenFactor, argbOutput);
+                sharpenFactor, histoFactor, argbOutput);
         RenderScript.releaseAllContexts();
 
         String savePath = getSavePath();
