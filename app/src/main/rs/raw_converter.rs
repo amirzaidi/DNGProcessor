@@ -52,6 +52,8 @@ uint offsetX; // X offset into inputRawBuffer
 uint offsetY; // Y offset into inputRawBuffer
 uint rawWidth; // Width of raw buffer
 uint rawHeight; // Height of raw buffer
+uint maxX; // Last valid x pixel index on a patch
+uint maxY; // Last valid y pixel index on a patch
 
 // Custom variables
 float4 postProcCurve;
@@ -60,15 +62,24 @@ float sharpenFactor;
 float histoFactor;
 
 // Constants
-const int radius = 1;
-const int size = 2 * radius + 1;
-const int area = size * size;
+const static uint radius = 1;
+const static uint size = 2 * radius + 1;
+const static uint area = size * size;
+const static uint midIndex = area / 2;
 
-const int histogram_slices = 4096;
+// Cap denoise radius to prevent long processing times.
+const static uint radiusDenoise = 35;
+
+const static uint histogram_slices = 4096;
 
 // Histogram
-int histogram[histogram_slices];
+uint histogram[histogram_slices];
 float remapArray[histogram_slices];
+
+void init() {
+    maxX = rawWidth - 2;
+    maxY = rawHeight - 2;
+}
 
 void create_remap_array() {
     uint size = rawWidth * rawHeight;
@@ -101,9 +112,9 @@ static float4 getGain(uint x, uint y) {
 
 // Apply gamma correction using sRGB gamma curve
 static float gammaEncode(float x) {
-    return (x <= 0.0031308f)
+    return x <= 0.0031308f
         ? x * 12.92f
-        : 1.055f * pow(x, 0.4166667f) - 0.055f;
+        : mad(1.055f, pow(x, 0.4166667f), -0.055f);
 }
 
 // Apply gamma correction to each color channel in RGB pixel
@@ -450,12 +461,6 @@ static float3 demosaic(uint x, uint y, uint cfa, float* inputArray) {
     return pRGB;
 }
 
-// POST PROCESSING STARTS HERE
-const static float3 gMonoMult = {0.299f, 0.587f, 0.114f};
-static float3 saturate(float3 rgb) {
-    return mix(dot(rgb, gMonoMult), rgb, saturationFactor);
-}
-
 static int get_histogram_index(float value) {
     return fmin(floor(value * histogram_slices), histogram_slices - 1);
 }
@@ -467,10 +472,11 @@ float3 RS_KERNEL convert_RAW_To_Intermediate(uint x, uint y) {
     int histogramIndex;
     float patch[9];
 
-    if (x == 0) x = 1;
-    if (y == 0) y = 1;
-    if (x == rawWidth - 1) x = rawWidth - 2;
-    if (y == rawHeight - 1) y = rawHeight  - 2;
+    // Ensure within bounds
+    x = max(x, (uint) 1);
+    y = max(y, (uint) 1);
+    x = min(x, maxX);
+    y = min(y, maxY);
 
     load3x3ushort(x, y, inputRawBuffer, /*out*/ patch);
     linearizeAndGainmap(x, y, blackLevelPattern, whiteLevel, cfaPattern, /*inout*/patch);
@@ -484,11 +490,14 @@ float3 RS_KERNEL convert_RAW_To_Intermediate(uint x, uint y) {
     return intermediate;
 }
 
+// POST PROCESSING STARTS HERE
+
 static float3 processPatch(uint x, uint y) {
     float3 px, neighbour, sum;
     float3 patch[area];
     float mid, tmp, threshold = 0.f;
-    uint xP, yP, midIndex = area / 2, count = 1;
+    uint xP, yP, count = 1;
+    int minXp, maxXp, maxXw, minYp, maxYp, maxYh;
 
     loadNxNfloat3(x, y, size, intermediateBuffer, patch);
     px = patch[midIndex];
@@ -496,7 +505,7 @@ static float3 processPatch(uint x, uint y) {
     // Get denoising threshold
     for (uint i = 0; i < area; i++) {
         neighbour = patch[i];
-        tmp = hypot(px.x - neighbour.x, px.y - neighbour.y);
+        tmp = fast_distance(px.xy, neighbour.xy);
         threshold = fmax(threshold, tmp);
     }
 
@@ -506,42 +515,34 @@ static float3 processPatch(uint x, uint y) {
     // Ensure edges do not break the algorithm.
     threshold = fmin(threshold, 0.5f);
 
-    // Cap denoise radius to prevent long processing times.
-    uint radiusDenoise = 35;
-
     // Leftmost pixel
-    int minX = (int) x - radiusDenoise;
-    minX = max(minX, 0);
+    minXp = (int) x - radiusDenoise;
+    minXp = max(minXp, 0);
 
     // Rightmost pixel
-    int maxX = (int) x + radiusDenoise;
-    int maxXw = rawWidth - 1;
-    maxX = min(maxX, maxXw);
+    maxXp = (int) x + radiusDenoise;
+    maxXw = rawWidth - 1;
+    maxXp = min(maxXp, maxXw);
 
     // Top pixel
-    int minY = (int) y - radiusDenoise;
-    minY = max(minY, 0);
+    minYp = (int) y - radiusDenoise;
+    minYp = max(minYp, 0);
 
     // Bottom pixel
-    int maxY = (int) y + radiusDenoise;
-    int maxYh = rawHeight - 1;
-    maxY = min(maxY, maxYh);
+    maxYp = (int) y + radiusDenoise;
+    maxYh = rawHeight - 1;
+    maxYp = min(maxYp, maxYh);
 
     sum = px;
     for (int i = 0; i < 4; i++) {
         xP = x;
         yP = y;
 
-        bool left = i == 0;
-        bool right = i == 1;
-        bool up = i == 2;
-        bool down = i == 3;
-
-        while ((left && xP-- > minX) || (right && xP++ < maxX)
-            || (up && yP-- > minY) || (down && yP++ < maxY)) {
+        while ((i == 0 && xP-- > minXp) || (i == 1 && xP++ < maxXp)
+            || (i == 2 && yP-- > minYp) || (i == 3 && yP++ < maxYp)) {
 
             neighbour = *(float3 *) rsGetElementAt(intermediateBuffer, xP, yP);
-            if (hypot(px.x - neighbour.x, px.y - neighbour.y) <= threshold) {
+            if (fast_distance(px.xy, neighbour.xy) <= threshold) {
                 sum += neighbour;
                 count++;
             } else {
@@ -564,17 +565,17 @@ static float3 processPatch(uint x, uint y) {
 
     // Histogram equalization
     int histogramIndex = get_histogram_index(px.z);
-    px.z = (1.f - histoFactor) * px.z + histoFactor * remapArray[histogramIndex];
+    px.z = mad(histoFactor, remapArray[histogramIndex], (1.f - histoFactor) * px.z);
 
     return px;
 }
 
 // Applies post processing curve to channel
 static float applyCurve(float in) {
-    return native_powr(in, 3.f) * postProcCurve.x +
-            native_powr(in, 2.f) * postProcCurve.y +
-            in * postProcCurve.z +
-            postProcCurve.w;
+    float out = mad(in, postProcCurve.z, postProcCurve.w);
+    out = mad(native_powr(in, 2.f), postProcCurve.y, out);
+    out = mad(native_powr(in, 3.f), postProcCurve.x, out);
+    return out;
 }
 
 // Applies post processing curve to all channels
@@ -586,6 +587,12 @@ static float3 applyCurve3(float3 in) {
     return result;
 }
 
+const static float3 gMonoMult = { 0.299f, 0.587f, 0.114f };
+
+static float3 saturate(float3 rgb) {
+    return mix(dot(rgb, gMonoMult), rgb, saturationFactor);
+}
+
 // Applies post-processing on intermediate XYZ image
 uchar4 RS_KERNEL convert_Intermediate_To_ARGB(uint x, uint y) {
     float3 intermediate, sRGB;
@@ -594,12 +601,6 @@ uchar4 RS_KERNEL convert_Intermediate_To_ARGB(uint x, uint y) {
 
     xP = x + offsetX;
     yP = y + offsetY;
-
-    // Ensure within bounds
-    if (xP < radius) xP = radius;
-    if (yP < radius) yP = radius;
-    if (xP > rawWidth - radius - 1) xP = rawWidth - radius - 1;
-    if (yP > rawHeight - radius - 1) yP = rawHeight  - radius - 1;
 
     // Sharpen and denoise value
     intermediate = processPatch(xP, yP);
