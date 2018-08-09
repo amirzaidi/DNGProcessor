@@ -491,11 +491,11 @@ float3 RS_KERNEL convert_RAW_To_Intermediate(uint x, uint y) {
 
 // Does colour post processing to remove noise
 float3 RS_KERNEL convert_Intermediate_To_Color(uint x, uint y) {
-    float3 result;
+    float3 px, neighbour, sum;
     float3 patch[areaC];
-    float tmp;
+    float thresholdMax = 0.f, threshold;
+    uint xP, yP, midC = areaC / 2, count = 1;
 
-    // Ensure within bounds
     if (x < radiusC) x = radiusC;
     if (y < radiusC) y = radiusC;
     if (x > rawWidth - radiusC - 1) x = rawWidth - radiusC - 1;
@@ -503,23 +503,64 @@ float3 RS_KERNEL convert_Intermediate_To_Color(uint x, uint y) {
 
     loadNxNfloat3(x, y, sizeC, intermediateBuffer, patch);
 
-    // Sort all pixels in the patch
-    for (int i = 0; i < areaC; i++) {
-        for (int j = i; j < areaC; j++) {
-            if (patch[i].x > patch[j].x) {
-                tmp = patch[i].x;
-                patch[i].x = patch[j].x;
-                patch[j].x = tmp;
-            }
-            if (patch[i].y > patch[j].y) {
-                tmp = patch[i].y;
-                patch[i].y = patch[j].y;
-                patch[j].y = tmp;
+    px = patch[midC];
+    for (uint i = 0; i < areaC; i++) {
+        neighbour = patch[i];
+        threshold = hypot(px.x - neighbour.x, px.y - neighbour.y);
+        thresholdMax = fmax(thresholdMax, threshold);
+    }
+
+    // Threshold that needs to be reached to abort averaging.
+    threshold = 1.5f * thresholdMax;
+
+    // Ensure edges do not break the algorithm.
+    threshold = fmin(threshold, 0.5f);
+
+    // Cap denoise radius to prevent long processing times.
+    uint radiusDenoise = 35;
+
+    // Leftmost pixel
+    int minX = (int) x - radiusDenoise;
+    minX = max(minX, 0);
+
+    // Rightmost pixel
+    int maxX = (int) x + radiusDenoise;
+    int maxXw = rawWidth - 1;
+    maxX = min(maxX, maxXw);
+
+    // Top pixel
+    int minY = (int) y - radiusDenoise;
+    minY = max(minY, 0);
+
+    // Bottom pixel
+    int maxY = (int) y + radiusDenoise;
+    int maxYh = rawHeight - 1;
+    maxY = min(maxY, maxYh);
+
+    sum = px;
+    for (int i = 0; i < 4; i++) {
+        xP = x;
+        yP = y;
+
+        bool left = i == 0;
+        bool right = i == 1;
+        bool up = i == 2;
+        bool down = i == 3;
+
+        while ((left && xP-- > minX) || (right && xP++ < maxX)
+            || (up && yP-- > minY) || (down && yP++ < maxY)) {
+
+            neighbour = *(float3 *) rsGetElementAt(intermediateBuffer, xP, yP);
+            if (hypot(px.x - neighbour.x, px.y - neighbour.y) <= threshold) {
+                sum += neighbour;
+                count++;
+            } else {
+                break;
             }
         }
     }
 
-    return patch[areaC / 2];
+    return sum / count;
 }
 
 static float3 processPatch(uint xP, uint yP) {
