@@ -27,7 +27,6 @@
 // Buffers
 rs_allocation inputRawBuffer; // RAW16 buffer of dimensions (raw image stride) * (raw image height)
 rs_allocation intermediateBuffer; // Float32 buffer of dimensions (raw image stride) * (raw image height) * 3
-rs_allocation intermediateColor;
 
 // Gain map
 bool hasGainMap; // Does gainmap exist?
@@ -64,10 +63,6 @@ float histoFactor;
 const int radius = 1;
 const int size = 2 * radius + 1;
 const int area = size * size;
-
-const int radiusC = 1;
-const int sizeC = 2 * radiusC + 1;
-const int areaC = sizeC * sizeC;
 
 const int histogram_slices = 4096;
 
@@ -489,29 +484,24 @@ float3 RS_KERNEL convert_RAW_To_Intermediate(uint x, uint y) {
     return intermediate;
 }
 
-// Does colour post processing to remove noise
-float3 RS_KERNEL convert_Intermediate_To_Color(uint x, uint y) {
+static float3 processPatch(uint x, uint y) {
     float3 px, neighbour, sum;
-    float3 patch[areaC];
-    float thresholdMax = 0.f, threshold;
-    uint xP, yP, midC = areaC / 2, count = 1;
+    float3 patch[area];
+    float mid, tmp, threshold = 0.f;
+    uint xP, yP, midIndex = area / 2, count = 1;
 
-    if (x < radiusC) x = radiusC;
-    if (y < radiusC) y = radiusC;
-    if (x > rawWidth - radiusC - 1) x = rawWidth - radiusC - 1;
-    if (y > rawHeight - radiusC - 1) y = rawHeight  - radiusC - 1;
+    loadNxNfloat3(x, y, size, intermediateBuffer, patch);
+    px = patch[midIndex];
 
-    loadNxNfloat3(x, y, sizeC, intermediateBuffer, patch);
-
-    px = patch[midC];
-    for (uint i = 0; i < areaC; i++) {
+    // Get denoising threshold
+    for (uint i = 0; i < area; i++) {
         neighbour = patch[i];
-        threshold = hypot(px.x - neighbour.x, px.y - neighbour.y);
-        thresholdMax = fmax(thresholdMax, threshold);
+        tmp = hypot(px.x - neighbour.x, px.y - neighbour.y);
+        threshold = fmax(threshold, tmp);
     }
 
     // Threshold that needs to be reached to abort averaging.
-    threshold = 1.5f * thresholdMax;
+    threshold = 1.5f * threshold;
 
     // Ensure edges do not break the algorithm.
     threshold = fmin(threshold, 0.5f);
@@ -560,34 +550,23 @@ float3 RS_KERNEL convert_Intermediate_To_Color(uint x, uint y) {
         }
     }
 
-    return sum / count;
-}
-
-static float3 processPatch(uint xP, uint yP) {
-    float3 result;
-    float mid, tmp;
-
-    float3 patch[area];
-
-    loadNxNfloat3(xP, yP, size, intermediateBuffer, patch);
-
-    // Get color of patch from processed color map
-    result = *(float3 *) rsGetElementAt(intermediateColor, xP, yP);
+    // Get color of patch
+    px = sum / count;
 
     // Value sharpening
-    mid = patch[area / 2].z;
+    mid = patch[midIndex].z;
     tmp = area * mid;
     for (int i = 0; i < area; i++) {
         tmp -= patch[i].z;
     }
 
-    result.z = clamp(mid + sharpenFactor * tmp / area, 0.f, 1.f);
+    px.z = clamp(mid + sharpenFactor * tmp / area, 0.f, 1.f);
 
     // Histogram equalization
-    int histogramIndex = get_histogram_index(result.z);
-    result.z = (1.f - histoFactor) * result.z + histoFactor * remapArray[histogramIndex];
+    int histogramIndex = get_histogram_index(px.z);
+    px.z = (1.f - histoFactor) * px.z + histoFactor * remapArray[histogramIndex];
 
-    return result;
+    return px;
 }
 
 // Applies post processing curve to channel

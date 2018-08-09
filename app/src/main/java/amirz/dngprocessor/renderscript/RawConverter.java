@@ -296,14 +296,6 @@ public class RawConverter {
         converterKernel.forEach_convert_RAW_To_Intermediate(intermediateBuffer);
         cb.onProgress(STEP_INTERMEDIATE_CALC);
 
-        // Calculate noise levels
-        // ToDo
-
-        // Split image into pieces based on noise levels
-        Allocation intermediateColor = Allocation.createTyped(rs, intermediateBuilder.create());
-        converterKernel.set_intermediateColor(intermediateColor);
-        converterKernel.forEach_convert_Intermediate_To_Color(intermediateColor);
-
         // Populate histogram remapper
         converterKernel.invoke_create_remap_array();
 
