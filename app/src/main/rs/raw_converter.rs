@@ -27,6 +27,7 @@
 // Buffers
 rs_allocation inputRawBuffer; // RAW16 buffer of dimensions (raw image stride) * (raw image height)
 rs_allocation intermediateBuffer; // Float32 buffer of dimensions (raw image stride) * (raw image height) * 3
+rs_allocation intermediateColor;
 
 // Gain map
 bool hasGainMap; // Does gainmap exist?
@@ -64,6 +65,10 @@ const int radius = 1;
 const int size = 2 * radius + 1;
 const int area = size * size;
 
+const int radiusC = 1;
+const int sizeC = 2 * radiusC + 1;
+const int areaC = sizeC * sizeC;
+
 const int histogram_slices = 4096;
 
 // Histogram
@@ -87,10 +92,10 @@ static float4 getGain(uint x, uint y) {
     uint gY = (uint) interpY;
     uint gXNext = (gX + 1 < gainMapWidth) ? gX + 1 : gX;
     uint gYNext = (gY + 1 < gainMapHeight) ? gY + 1 : gY;
-    float4 tl = *((float4 *) rsGetElementAt(gainMap, gX, gY));
-    float4 tr = *((float4 *) rsGetElementAt(gainMap, gXNext, gY));
-    float4 bl = *((float4 *) rsGetElementAt(gainMap, gX, gYNext));
-    float4 br = *((float4 *) rsGetElementAt(gainMap, gXNext, gYNext));
+    float4 tl = *(float4 *) rsGetElementAt(gainMap, gX, gY);
+    float4 tr = *(float4 *) rsGetElementAt(gainMap, gXNext, gY);
+    float4 bl = *(float4 *) rsGetElementAt(gainMap, gX, gYNext);
+    float4 br = *(float4 *) rsGetElementAt(gainMap, gXNext, gYNext);
     float fracX = interpX - (float) gX;
     float fracY = interpY - (float) gY;
     float invFracX = 1.f - fracX;
@@ -281,15 +286,15 @@ static float3 applyColorspace(float3 intermediate) {
 
 // Load a 3x3 patch of pixels into the output.
 static void load3x3ushort(uint x, uint y, rs_allocation buf, /*out*/float* outputArray) {
-    outputArray[0] = *((ushort *) rsGetElementAt(buf, x - 1, y - 1));
-    outputArray[1] = *((ushort *) rsGetElementAt(buf, x, y - 1));
-    outputArray[2] = *((ushort *) rsGetElementAt(buf, x + 1, y - 1));
-    outputArray[3] = *((ushort *) rsGetElementAt(buf, x - 1, y));
-    outputArray[4] = *((ushort *) rsGetElementAt(buf, x, y));
-    outputArray[5] = *((ushort *) rsGetElementAt(buf, x + 1, y));
-    outputArray[6] = *((ushort *) rsGetElementAt(buf, x - 1, y + 1));
-    outputArray[7] = *((ushort *) rsGetElementAt(buf, x, y + 1));
-    outputArray[8] = *((ushort *) rsGetElementAt(buf, x + 1, y + 1));
+    outputArray[0] = *(ushort *) rsGetElementAt(buf, x - 1, y - 1);
+    outputArray[1] = *(ushort *) rsGetElementAt(buf, x, y - 1);
+    outputArray[2] = *(ushort *) rsGetElementAt(buf, x + 1, y - 1);
+    outputArray[3] = *(ushort *) rsGetElementAt(buf, x - 1, y);
+    outputArray[4] = *(ushort *) rsGetElementAt(buf, x, y);
+    outputArray[5] = *(ushort *) rsGetElementAt(buf, x + 1, y);
+    outputArray[6] = *(ushort *) rsGetElementAt(buf, x - 1, y + 1);
+    outputArray[7] = *(ushort *) rsGetElementAt(buf, x, y + 1);
+    outputArray[8] = *(ushort *) rsGetElementAt(buf, x + 1, y + 1);
 }
 
 // Load a NxN patch of pixels into the output.
@@ -299,7 +304,7 @@ static void loadNxNfloat3(uint x, uint y, int n, rs_allocation buf, /*out*/float
     int index = 0;
     for (int xDelta = -offset; xDelta <= offset; xDelta++) {
         for (int yDelta = -offset; yDelta <= offset; yDelta++) {
-            outputArray[index++] = *((float3 *) rsGetElementAt(buf, x + xDelta, y + yDelta));
+            outputArray[index++] = *(float3 *) rsGetElementAt(buf, x + xDelta, y + yDelta);
         }
     }
 }
@@ -461,6 +466,7 @@ static int get_histogram_index(float value) {
 }
 
 // Gets unprocessed xyY pixel
+// Do not change processing here.
 float3 RS_KERNEL convert_RAW_To_Intermediate(uint x, uint y) {
     float3 sensor, intermediate;
     int histogramIndex;
@@ -483,23 +489,23 @@ float3 RS_KERNEL convert_RAW_To_Intermediate(uint x, uint y) {
     return intermediate;
 }
 
-static float3 processPatch(int xP, int yP) {
+// Does colour post processing to remove noise
+float3 RS_KERNEL convert_Intermediate_To_Color(uint x, uint y) {
     float3 result;
+    float3 patch[areaC];
     float tmp;
 
-    float3 patch[area];
-    float value[area];
+    // Ensure within bounds
+    if (x < radiusC) x = radiusC;
+    if (y < radiusC) y = radiusC;
+    if (x > rawWidth - radiusC - 1) x = rawWidth - radiusC - 1;
+    if (y > rawHeight - radiusC - 1) y = rawHeight  - radiusC - 1;
 
-    loadNxNfloat3(xP, yP, size, intermediateBuffer, patch);
-
-    // Save pixel values
-    for (int i = 0; i < area; i++) {
-        value[i] = patch[i].z;
-    }
+    loadNxNfloat3(x, y, sizeC, intermediateBuffer, patch);
 
     // Sort all pixels in the patch
-    for (int i = 0; i < area; i++) {
-        for (int j = i; j < area; j++) {
+    for (int i = 0; i < areaC; i++) {
+        for (int j = i; j < areaC; j++) {
             if (patch[i].x > patch[j].x) {
                 tmp = patch[i].x;
                 patch[i].x = patch[j].x;
@@ -513,22 +519,37 @@ static float3 processPatch(int xP, int yP) {
         }
     }
 
-    int mid = area / 2;
+    return patch[areaC / 2];
+}
 
-    tmp = area * value[mid];
+static float3 processPatch(uint xP, uint yP) {
+    float3 result;
+    float mid, tmp;
+
+    float3 patch[area];
+
+    loadNxNfloat3(xP, yP, size, intermediateBuffer, patch);
+
+    // Get color of patch from processed color map
+    result = *(float3 *) rsGetElementAt(intermediateColor, xP, yP);
+
+    // Value sharpening
+    mid = patch[area / 2].z;
+    tmp = area * mid;
     for (int i = 0; i < area; i++) {
-        tmp -= value[i];
+        tmp -= patch[i].z;
     }
 
-    result = patch[mid];
-    result.z = clamp(value[mid] + sharpenFactor * tmp / area, 0.f, 1.f);
+    result.z = clamp(mid + sharpenFactor * tmp / area, 0.f, 1.f);
 
+    // Histogram equalization
     int histogramIndex = get_histogram_index(result.z);
     result.z = (1.f - histoFactor) * result.z + histoFactor * remapArray[histogramIndex];
 
     return result;
 }
 
+// Applies post processing curve to channel
 static float applyCurve(float in) {
     return native_powr(in, 3.f) * postProcCurve.x +
             native_powr(in, 2.f) * postProcCurve.y +
@@ -536,6 +557,7 @@ static float applyCurve(float in) {
             postProcCurve.w;
 }
 
+// Applies post processing curve to all channels
 static float3 applyCurve3(float3 in) {
     float3 result;
     result.x = applyCurve(in.x);
