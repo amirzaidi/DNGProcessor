@@ -312,6 +312,7 @@ public class RawConverter {
         cb.onProgress(STEP_SYNC);
 
         converterKernel.destroy();
+        Log.w(TAG, "Raw conversion complete");
     }
 
     /**
