@@ -291,16 +291,15 @@ static float3 applyColorspace(float3 intermediate) {
 }
 
 // Load a 3x3 patch of pixels into the output.
-static void load3x3ushort(uint x, uint y, rs_allocation buf, /*out*/float* outputArray) {
-    outputArray[0] = *(ushort *) rsGetElementAt(buf, x - 1, y - 1);
-    outputArray[1] = *(ushort *) rsGetElementAt(buf, x, y - 1);
-    outputArray[2] = *(ushort *) rsGetElementAt(buf, x + 1, y - 1);
-    outputArray[3] = *(ushort *) rsGetElementAt(buf, x - 1, y);
-    outputArray[4] = *(ushort *) rsGetElementAt(buf, x, y);
-    outputArray[5] = *(ushort *) rsGetElementAt(buf, x + 1, y);
-    outputArray[6] = *(ushort *) rsGetElementAt(buf, x - 1, y + 1);
-    outputArray[7] = *(ushort *) rsGetElementAt(buf, x, y + 1);
-    outputArray[8] = *(ushort *) rsGetElementAt(buf, x + 1, y + 1);
+static void load3x3ushort(uint x, uint y, rs_allocation buf, float* outputArray) {
+    ushort3 tmp;
+    int i = 0;
+    while (i < 9) {
+        tmp = rsAllocationVLoadX_ushort3(buf, x - 1, y - 1 + i / 3);
+        outputArray[i++] = tmp.x;
+        outputArray[i++] = tmp.y;
+        outputArray[i++] = tmp.z;
+    }
 }
 
 // Load a NxN patch of pixels into the output.
