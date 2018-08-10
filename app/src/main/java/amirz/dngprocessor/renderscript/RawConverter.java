@@ -16,9 +16,7 @@
 package amirz.dngprocessor.renderscript;
 
 import android.graphics.Bitmap;
-import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraMetadata;
-import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.params.ColorSpaceTransform;
 import android.hardware.camera2.params.LensShadingMap;
 import android.renderscript.Allocation;
@@ -45,12 +43,10 @@ public class RawConverter {
     private static final boolean DEBUG = true;
 
     public static int STEPS = 0;
-    private static final int STEP_INPUT_ALLOC = ++STEPS;
-    private static final int STEP_INTERMEDIATE_ALLOC = ++STEPS;
+    private static final int STEP_RAW_INTERMEDIATE_ALLOC = ++STEPS;
     private static final int STEP_INTERMEDIATE_CALC = ++STEPS;
     private static final int STEP_OUTPUT_ALLOC = ++STEPS;
     private static final int STEP_OUTPUT_CALC = ++STEPS;
-    private static final int STEP_SYNC = ++STEPS;
 
     /**
      * Matrix to convert from CIE XYZ colorspace to sRGB, Bradford-adapted to D65.
@@ -282,7 +278,6 @@ public class RawConverter {
         Allocation rawInput = Allocation.createTyped(rs, rawBuilder.create());
         rawInput.copyFromUnchecked(rawImageInput);
         converterKernel.set_inputRawBuffer(rawInput);
-        cb.onProgress(STEP_INPUT_ALLOC);
 
         // Setup intermediate allocation
         Type.Builder intermediateBuilder = new Type.Builder(rs, Element.F32_3(rs));
@@ -290,7 +285,7 @@ public class RawConverter {
         intermediateBuilder.setY(inputHeight);
         Allocation intermediateBuffer = Allocation.createTyped(rs, intermediateBuilder.create());
         converterKernel.set_intermediateBuffer(intermediateBuffer);
-        cb.onProgress(STEP_INTERMEDIATE_ALLOC);
+        cb.onProgress(STEP_RAW_INTERMEDIATE_ALLOC);
 
         // Convert to intermediate
         converterKernel.forEach_convert_RAW_To_Intermediate(intermediateBuffer);
@@ -309,7 +304,6 @@ public class RawConverter {
 
         // Force RS sync with Bitmap
         output.copyTo(argbOutput);
-        cb.onProgress(STEP_SYNC);
 
         converterKernel.destroy();
         Log.w(TAG, "Raw conversion complete");
