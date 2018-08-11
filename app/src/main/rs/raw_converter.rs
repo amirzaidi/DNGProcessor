@@ -494,73 +494,107 @@ float3 RS_KERNEL convert_RAW_To_Intermediate(uint x, uint y) {
 static float3 processPatch(uint x, uint y) {
     float3 px, neighbour, sum;
     float3 patch[area];
-    float mid, tmp, threshold = 0.f;
-    uint xP, yP, count = 1;
-    int minXp, maxXp, maxXw, minYp, maxYp, maxYh;
+    float2 minxy, maxxy;
+    float mid, tmp, threshold, blur;
+
+    uint coord, count = 1;
+    int bound, tmpInt;
 
     loadNxNfloat3(x, y, size, intermediateBuffer, patch);
     px = patch[midIndex];
+    sum = px;
 
     // Get denoising threshold
     for (uint i = 0; i < area; i++) {
         neighbour = patch[i];
-        tmp = fast_distance(px.xy, neighbour.xy);
-        threshold = fmax(threshold, tmp);
+        minxy = fmin(neighbour.xy, minxy);
+        maxxy = fmax(neighbour.xy, maxxy);
     }
 
     // Threshold that needs to be reached to abort averaging.
-    threshold = 1.5f * threshold;
+    threshold = fast_distance(minxy, maxxy);
 
-    // Ensure edges do not break the algorithm.
-    threshold = fmin(threshold, 0.5f);
+    // Shadows
+    if (px.z < 0.1f) {
+        // Multiplied up to three times.
+        threshold *= 20.f * (0.15f - px.z);
+    }
 
-    // Leftmost pixel
-    minXp = (int) x - radiusDenoise;
-    minXp = max(minXp, 0);
+    // Reduce sharpening with high thresholds
+    blur = mad(2.f, threshold, 0.8f);
 
-    // Rightmost pixel
-    maxXp = (int) x + radiusDenoise;
-    maxXw = rawWidth - 1;
-    maxXp = min(maxXp, maxXw);
+    // Left
+    bound = (int) x - radiusDenoise;
+    bound = max(bound, 0);
 
-    // Top pixel
-    minYp = (int) y - radiusDenoise;
-    minYp = max(minYp, 0);
-
-    // Bottom pixel
-    maxYp = (int) y + radiusDenoise;
-    maxYh = rawHeight - 1;
-    maxYp = min(maxYp, maxYh);
-
-    sum = px;
-    for (int i = 0; i < 4; i++) {
-        xP = x;
-        yP = y;
-
-        while ((i == 0 && xP-- > minXp) || (i == 1 && xP++ < maxXp)
-            || (i == 2 && yP-- > minYp) || (i == 3 && yP++ < maxYp)) {
-
-            neighbour = *(float3 *) rsGetElementAt(intermediateBuffer, xP, yP);
-            if (fast_distance(px.xy, neighbour.xy) <= threshold) {
-                sum += neighbour;
-                count++;
-            } else {
-                break;
-            }
+    coord = x;
+    while (coord-- > bound) {
+        neighbour = *(float3 *) rsGetElementAt(intermediateBuffer, coord, y);
+        if (fast_distance(px.xy, neighbour.xy) <= threshold) {
+            sum += neighbour;
+            count++;
+        } else {
+            break;
         }
     }
 
-    // Get color of patch
-    px = sum / count;
+    // Right
+    bound = (int) x + radiusDenoise;
+    tmpInt = rawWidth - 1;
+    bound = min(bound, tmpInt);
+
+    coord = x;
+    while (coord++ < bound) {
+        neighbour = *(float3 *) rsGetElementAt(intermediateBuffer, coord, y);
+        if (fast_distance(px.xy, neighbour.xy) <= threshold) {
+            sum += neighbour;
+            count++;
+        } else {
+            break;
+        }
+    }
+
+    // Up
+    bound = (int) y - radiusDenoise;
+    bound = max(bound, 0);
+
+    coord = y;
+    while (coord-- > bound) {
+        neighbour = *(float3 *) rsGetElementAt(intermediateBuffer, x, coord);
+        if (fast_distance(px.xy, neighbour.xy) <= threshold) {
+            sum += neighbour;
+            count++;
+        } else {
+            break;
+        }
+    }
+
+    // Down
+    bound = (int) y + radiusDenoise;
+    tmpInt = rawHeight - 1;
+    bound = min(bound, tmpInt);
+
+    coord = y;
+    while (coord++ < bound) {
+        neighbour = *(float3 *) rsGetElementAt(intermediateBuffer, x, coord);
+        if (fast_distance(px.xy, neighbour.xy) <= threshold) {
+            sum += neighbour;
+            count++;
+        } else {
+            break;
+        }
+    }
 
     // Value sharpening
-    mid = patch[midIndex].z;
+    mid = px.z;
     tmp = area * mid;
     for (int i = 0; i < area; i++) {
         tmp -= patch[i].z;
     }
 
-    px.z = clamp(mid + sharpenFactor * tmp / area, 0.f, 1.f);
+    // Get color of patch
+    px = sum / count;
+    px.z = clamp(mid + sharpenFactor * tmp / area / blur, 0.f, 1.f);
 
     // Histogram equalization
     int histogramIndex = get_histogram_index(px.z);
