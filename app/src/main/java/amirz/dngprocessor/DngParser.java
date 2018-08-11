@@ -123,10 +123,10 @@ public class DngParser implements Runnable, RawConverterCallback {
         float crunchFactor = 0.6f;
 
         // 0 is greyscale, 1 is the default, higher means oversaturation.
-        float saturationFactor = 1.75f;
+        float saturationFactor = 1.65f;
 
         // 0 is the default, higher means more value sharpening.
-        float sharpenFactor = 3.3f;
+        float sharpenFactor = 3.2f;
 
         // 0 is the default, higher means more histogram equalization.
         float histoFactor = 0.025f;
