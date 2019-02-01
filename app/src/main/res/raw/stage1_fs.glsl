@@ -18,6 +18,10 @@ uniform mat3 sensorToIntermediate; // Color transform from sensor to XYZ.
 uniform mat3 intermediateToProPhoto; // Color transform from XYZ to a wide-gamut colorspace
 uniform mat3 proPhotoToSRGB; // Color transform from wide-gamut colorspace to sRGB
 
+// Post processing
+uniform vec3 postProcCurve;
+uniform float saturationFactor;
+
 // Size
 uniform ivec2 outOffset;
 uniform int outWidth;
@@ -293,6 +297,20 @@ vec3 applyColorspace(vec3 intermediate) {
     return sRGB;
 }
 
+// Applies post processing curve to all channels
+vec3 applyCurve(vec3 inValue) {
+    return inValue*inValue*inValue * postProcCurve.x
+        + inValue*inValue * postProcCurve.y
+        + inValue * postProcCurve.z;
+}
+
+const vec3 gMonoMult = vec3(0.299f, 0.587f, 0.114f);
+
+vec3 saturate(vec3 rgb) {
+    return dot(rgb, gMonoMult) * (1.f - saturationFactor)
+        + rgb * saturationFactor;
+}
+
 void main() {
     ivec2 xy = ivec2(gl_FragCoord.xy) + outOffset;
     float[9] inoutPatch = load3x3(xy);
@@ -304,6 +322,10 @@ void main() {
     vec3 sensor = demosaic(x, y, inoutPatch);
     vec3 intermediate = convertSensorToIntermediate(sensor);
     vec3 sRGB = applyColorspace(intermediate);
+
+    sRGB = applyCurve(sRGB);
+    sRGB = saturate(sRGB);
+    sRGB = clamp(sRGB, 0.f, 1.f);
 
     color = vec4(sRGB, 1.f);
 }

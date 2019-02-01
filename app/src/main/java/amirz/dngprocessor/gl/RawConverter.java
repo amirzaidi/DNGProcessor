@@ -228,6 +228,9 @@ public class RawConverter {
         square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         square.setTransforms(sensorToXYZ, XYZtoProPhoto, proPhotoToSRGB);
 
+        square.setPostProcCurve(postProcCurve);
+        square.setSaturationFactor(saturationFactor);
+
         square.setIn(rawImageInput, inputWidth, inputHeight);
         square.setOut(outWidth, outHeight);
         square.setOffset(outputOffsetX, outputOffsetY);

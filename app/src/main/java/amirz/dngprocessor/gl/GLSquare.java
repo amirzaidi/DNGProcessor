@@ -88,6 +88,15 @@ public class GLSquare {
                 1, true, proPhotoToSRGB, 0);
     }
 
+    public void setPostProcCurve(float[] postProcCurve) {
+        glUniform3f(glGetUniformLocation(mProgram, "postProcCurve"),
+                postProcCurve[0], postProcCurve[1], postProcCurve[2]);
+    }
+
+    public void setSaturationFactor(float saturationFactor) {
+        glUniform1f(glGetUniformLocation(mProgram, "saturationFactor"), saturationFactor);
+    }
+
     public void setIn(byte[] in, int inWidth, int inHeight) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(in.length);
         buffer.put(in);
