@@ -34,7 +34,7 @@ public class DngScanJob extends JobService {
             }
 
             Log.w(TAG, "Scheduling job");
-            js.schedule(sJobInfo);
+            //js.schedule(sJobInfo);
         }
     }
 

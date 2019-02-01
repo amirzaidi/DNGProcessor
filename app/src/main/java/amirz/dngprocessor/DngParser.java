@@ -18,12 +18,12 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-import amirz.dngprocessor.renderscript.RawConverter;
+import amirz.dngprocessor.gl.RawConverter;
 import amirz.dngprocessor.renderscript.RawConverterCallback;
 
 public class DngParser implements Runnable, RawConverterCallback {
     private static final String TAG = "Parser";
-    private static final int STEPS = RawConverter.STEPS + 2;
+    private static final int STEPS = amirz.dngprocessor.renderscript.RawConverter.STEPS + 2;
     private static final int JPEG_QUALITY = 95;
 
     public static final ConcurrentSkipListSet<String> sProcessing = new ConcurrentSkipListSet<>();
