@@ -2,7 +2,7 @@
 
 precision mediump float;
 
-uniform usampler2D raw;
+uniform usampler2D rawBuffer;
 uniform int rawWidth;
 uniform int rawHeight;
 
@@ -11,37 +11,25 @@ uniform uint cfaPattern; // The Color Filter Arrangement pattern used
 uniform vec4 blackLevel; // Blacklevel to subtract for each channel, given in CFA order
 uniform float whiteLevel;  // Whitelevel of sensor
 uniform vec3 neutralPoint; // The camera neutral
-uniform vec4 toneMapCoeffs; // Coefficients for a polynomial tonemapping curve
 
 // Transform
 uniform mat3 sensorToIntermediate; // Color transform from sensor to XYZ.
-uniform mat3 intermediateToProPhoto; // Color transform from XYZ to a wide-gamut colorspace
-uniform mat3 proPhotoToSRGB; // Color transform from wide-gamut colorspace to sRGB
-
-// Post processing
-uniform vec3 postProcCurve;
-uniform float saturationFactor;
-
-// Size
-uniform ivec2 outOffset;
-uniform int outWidth;
-uniform int outHeight;
 
 // Out
-out vec4 color;
+out vec3 intermediate;
 
 float[9] load3x3(ivec2 xy) {
     float outputArray[9];
 
-    outputArray[0] = float(texelFetch(raw, xy + ivec2(-1, -1), 0).r);
-    outputArray[1] = float(texelFetch(raw, xy + ivec2(0, -1), 0).r);
-    outputArray[2] = float(texelFetch(raw, xy + ivec2(1, -1), 0).r);
-    outputArray[3] = float(texelFetch(raw, xy + ivec2(-1, 0), 0).r);
-    outputArray[4] = float(texelFetch(raw, xy, 0).r);
-    outputArray[5] = float(texelFetch(raw, xy + ivec2(1, 0), 0).r);
-    outputArray[6] = float(texelFetch(raw, xy + ivec2(1, -1), 0).r);
-    outputArray[7] = float(texelFetch(raw, xy + ivec2(1, 0), 0).r);
-    outputArray[8] = float(texelFetch(raw, xy + ivec2(1, 1), 0).r);
+    outputArray[0] = float(texelFetch(rawBuffer, xy + ivec2(-1, -1), 0).r);
+    outputArray[1] = float(texelFetch(rawBuffer, xy + ivec2(0, -1), 0).r);
+    outputArray[2] = float(texelFetch(rawBuffer, xy + ivec2(1, -1), 0).r);
+    outputArray[3] = float(texelFetch(rawBuffer, xy + ivec2(-1, 0), 0).r);
+    outputArray[4] = float(texelFetch(rawBuffer, xy, 0).r);
+    outputArray[5] = float(texelFetch(rawBuffer, xy + ivec2(1, 0), 0).r);
+    outputArray[6] = float(texelFetch(rawBuffer, xy + ivec2(1, -1), 0).r);
+    outputArray[7] = float(texelFetch(rawBuffer, xy + ivec2(1, 0), 0).r);
+    outputArray[8] = float(texelFetch(rawBuffer, xy + ivec2(1, 1), 0).r);
 
     return outputArray;
 }
@@ -137,93 +125,6 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
     return pRGB;
 }
 
-vec3 tonemap(vec3 rgb) {
-    vec3 sorted = rgb;
-    float tmp;
-    int permutation = 0;
-
-    // Sort the RGB channels by value
-    if (sorted.z < sorted.y) {
-        tmp = sorted.z;
-        sorted.z = sorted.y;
-        sorted.y = tmp;
-        permutation |= 1;
-    }
-    if (sorted.y < sorted.x) {
-        tmp = sorted.y;
-        sorted.y = sorted.x;
-        sorted.x = tmp;
-        permutation |= 2;
-    }
-    if (sorted.z < sorted.y) {
-        tmp = sorted.z;
-        sorted.z = sorted.y;
-        sorted.y = tmp;
-        permutation |= 4;
-    }
-
-    vec2 minmax;
-    minmax.x = sorted.x;
-    minmax.y = sorted.z;
-
-    // Apply tonemapping curve to min, max RGB channel values
-    minmax = minmax*minmax*minmax * toneMapCoeffs.x +
-        minmax*minmax * toneMapCoeffs.y +
-        minmax * toneMapCoeffs.z +
-        toneMapCoeffs.w;
-
-    // Rescale middle value
-    float newMid;
-    if (sorted.z == sorted.x) {
-        newMid = minmax.y;
-    } else {
-        newMid = minmax.x + ((minmax.y - minmax.x) * (sorted.y - sorted.x) /
-                (sorted.z - sorted.x));
-    }
-
-    vec3 finalRGB;
-    switch (permutation) {
-        case 0: // b >= g >= r
-            finalRGB.x = minmax.x;
-            finalRGB.y = newMid;
-            finalRGB.z = minmax.y;
-            break;
-        case 1: // g >= b >= r
-            finalRGB.x = minmax.x;
-            finalRGB.z = newMid;
-            finalRGB.y = minmax.y;
-            break;
-        case 2: // b >= r >= g
-            finalRGB.y = minmax.x;
-            finalRGB.x = newMid;
-            finalRGB.z = minmax.y;
-            break;
-        case 3: // g >= r >= b
-            finalRGB.z = minmax.x;
-            finalRGB.x = newMid;
-            finalRGB.y = minmax.y;
-            break;
-        case 6: // r >= b >= g
-            finalRGB.y = minmax.x;
-            finalRGB.z = newMid;
-            finalRGB.x = minmax.y;
-            break;
-        case 7: // r >= g >= b
-            finalRGB.z = minmax.x;
-            finalRGB.y = newMid;
-            finalRGB.x = minmax.y;
-            break;
-        case 4: // impossible
-        case 5: // impossible
-        default:
-            finalRGB.x = 0.f;
-            finalRGB.y = 0.f;
-            finalRGB.z = 0.f;
-            break;
-    }
-    return finalRGB;
-}
-
 vec3 XYZtoxyY(vec3 XYZ) {
     vec3 result;
     float sum = XYZ.x + XYZ.y + XYZ.z;
@@ -252,67 +153,13 @@ vec3 convertSensorToIntermediate(vec3 sensor) {
     return intermediate;
 }
 
-vec3 xyYtoXYZ(vec3 xyY) {
-    vec3 result;
-    if (xyY.y == 0.f) {
-        result.x = 0.f;
-        result.y = 0.f;
-        result.z = 0.f;
-    } else {
-        result.x = xyY.x * xyY.z / xyY.y;
-        result.y = xyY.z;
-        result.z = (1.f - xyY.x - xyY.y) * xyY.z / xyY.y;
-    }
-    return result;
-}
-
-
-// Apply gamma correction using sRGB gamma curve
-float gammaEncode(float x) {
-    return x <= 0.0031308f
-        ? x * 12.92f
-        : 1.055f * pow(x, 0.4166667f) - 0.055f;
-}
-
-// Apply gamma correction to each color channel in RGB pixel
-vec3 gammaCorrectPixel(vec3 rgb) {
-    vec3 ret;
-    ret.x = gammaEncode(rgb.x);
-    ret.y = gammaEncode(rgb.y);
-    ret.z = gammaEncode(rgb.z);
-    return ret;
-}
-
-vec3 applyColorspace(vec3 intermediate) {
-    vec3 proPhoto, sRGB;
-
-    intermediate = xyYtoXYZ(intermediate);
-
-    proPhoto = intermediateToProPhoto * intermediate;
-    proPhoto = tonemap(proPhoto);
-
-    sRGB = proPhotoToSRGB * proPhoto;
-    sRGB = gammaCorrectPixel(sRGB);
-
-    return sRGB;
-}
-
-// Applies post processing curve to all channels
-vec3 applyCurve(vec3 inValue) {
-    return inValue*inValue*inValue * postProcCurve.x
-        + inValue*inValue * postProcCurve.y
-        + inValue * postProcCurve.z;
-}
-
-const vec3 gMonoMult = vec3(0.299f, 0.587f, 0.114f);
-
-vec3 saturate(vec3 rgb) {
-    return dot(rgb, gMonoMult) * (1.f - saturationFactor)
-        + rgb * saturationFactor;
-}
-
 void main() {
-    ivec2 xy = ivec2(gl_FragCoord.xy) + outOffset;
+    ivec2 xy = ivec2(gl_FragCoord.xy);
+    if (xy.x == 0) xy.x++;
+    if (xy.y == 0) xy.y++;
+    if (xy.x == rawWidth - 1) xy.x--;
+    if (xy.y == rawHeight - 1) xy.x--;
+
     float[9] inoutPatch = load3x3(xy);
 
     int x = xy.x;
@@ -320,12 +167,5 @@ void main() {
     linearizeAndGainmap(x, y, inoutPatch);
 
     vec3 sensor = demosaic(x, y, inoutPatch);
-    vec3 intermediate = convertSensorToIntermediate(sensor);
-    vec3 sRGB = applyColorspace(intermediate);
-
-    sRGB = applyCurve(sRGB);
-    sRGB = saturate(sRGB);
-    sRGB = clamp(sRGB, 0.f, 1.f);
-
-    color = vec4(sRGB, 1.f);
+    intermediate = convertSensorToIntermediate(sensor);
 }

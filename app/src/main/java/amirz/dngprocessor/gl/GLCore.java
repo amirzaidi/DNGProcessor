@@ -63,6 +63,7 @@ public class GLCore {
         // Expand on this logic to be more selective in choosing a configuration
         int[] numConfig = new int[1];
         egl.eglChooseConfig(display, attribList2, null, 0, numConfig);
+
         int configSize = numConfig[0];
         EGLConfig[] mEGLConfigs = new EGLConfig[configSize];
         egl.eglChooseConfig(display, attribList2, mEGLConfigs, configSize, numConfig);

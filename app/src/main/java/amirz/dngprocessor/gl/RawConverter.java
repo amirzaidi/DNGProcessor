@@ -19,6 +19,7 @@ import android.graphics.Bitmap;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.params.ColorSpaceTransform;
 import android.hardware.camera2.params.LensShadingMap;
+import android.opengl.GLES20;
 import android.renderscript.RenderScript;
 import android.util.Log;
 import android.util.Rational;
@@ -218,24 +219,34 @@ public class RawConverter {
         float[] XYZtoProPhoto = new float[9];
         System.arraycopy(sXYZtoProPhoto, 0, XYZtoProPhoto, 0, sXYZtoProPhoto.length);
 
+        int e;
+
         // Write the variables first
         GLCore core = new GLCore(argbOutput);
         GLSquare square = core.getSquare();
 
+        square.setIn(rawImageInput, inputWidth, inputHeight);
         square.setCfaPattern(cfa);
         square.setBlackWhiteLevel(blackLevelPattern, whiteLevel);
         square.setNeutralPoint(neutralColorPoint);
-        square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
-        square.setTransforms(sensorToXYZ, XYZtoProPhoto, proPhotoToSRGB);
+        square.setTransforms1(sensorToXYZ);
 
+        square.draw1();
+        e = GLES20.glGetError();
+
+        square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
+        square.setTransforms2(XYZtoProPhoto, proPhotoToSRGB);
         square.setPostProcCurve(postProcCurve);
         square.setSaturationFactor(saturationFactor);
+        e = GLES20.glGetError();
 
-        square.setIn(rawImageInput, inputWidth, inputHeight);
-        square.setOut(outWidth, outHeight);
         square.setOffset(outputOffsetX, outputOffsetY);
+        square.setOut(outWidth, outHeight);
 
-        square.draw();
+        e = GLES20.glGetError();
+        square.draw2();
+
+        e = GLES20.glGetError();
         core.save();
 
         Log.w(TAG, "Raw conversion complete");
