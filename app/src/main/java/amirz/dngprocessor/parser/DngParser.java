@@ -90,6 +90,11 @@ public class DngParser {
             cfa = CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGGB;
         }
 
+        int[] cfaValuesGRBG = { 1, 0, 2, 1 };
+        if (Arrays.equals(cfaValues, cfaValuesGRBG)) {
+            cfa = CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_GRBG;
+        }
+
         //String model = tags.get(TIFF.TAG_Model).toString();
 
         int[] blackLevelPattern = tags.get(TIFF.TAG_BlackLevel).getIntArray();
@@ -130,8 +135,8 @@ public class DngParser {
         float sharpenFactor = 0.325f;
 
         // Don't sharpen above ISO 400
-        int iso = tags.get(TIFF.TAG_ISOSpeedRatings).getInt();
-        if (iso > 400) {
+        TIFFTag iso = tags.get(TIFF.TAG_ISOSpeedRatings);
+        if (iso != null && iso.getInt() > 400) {
             sharpenFactor = 0.f;
         }
 
@@ -179,14 +184,20 @@ public class DngParser {
             ExifInterface newExif = new ExifInterface(savePath);
             copyAttributes(reader.exif, newExif);
 
-            newExif.setAttribute(ExifInterface.TAG_FOCAL_LENGTH,
-                    tags.get(TIFF.TAG_FocalLength).getRational().toString());
+            if (tags.get(TIFF.TAG_FocalLength) != null) {
+                newExif.setAttribute(ExifInterface.TAG_FOCAL_LENGTH,
+                        tags.get(TIFF.TAG_FocalLength).getRational().toString());
+            }
 
-            newExif.setAttribute(ExifInterface.TAG_APERTURE_VALUE,
-                    tags.get(TIFF.TAG_FNumber).getRational().toString());
+            if (tags.get(TIFF.TAG_FNumber) != null) {
+                newExif.setAttribute(ExifInterface.TAG_APERTURE_VALUE,
+                        tags.get(TIFF.TAG_FNumber).getRational().toString());
+            }
 
-            newExif.setAttribute(ExifInterface.TAG_EXPOSURE_TIME,
-                    String.valueOf(tags.get(TIFF.TAG_ExposureTime).getFloat()));
+            if (tags.get(TIFF.TAG_ExposureTime) != null) {
+                newExif.setAttribute(ExifInterface.TAG_EXPOSURE_TIME,
+                        String.valueOf(tags.get(TIFF.TAG_ExposureTime).getFloat()));
+            }
 
             /*
             Broken on OP3(T)
