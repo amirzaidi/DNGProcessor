@@ -179,14 +179,29 @@ public class GLSquare {
                 1, true, proPhotoToSRGB, 0);
     }
 
+    public void setDotFix(boolean dotFix) {
+        glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "dotFix"),
+                dotFix ? 1 : 0);
+    }
+
     public void setPostProcCurve(float[] postProcCurve) {
         glUniform3f(glGetUniformLocation(mProgramIntermediateToSRGB, "postProcCurve"),
                 postProcCurve[0], postProcCurve[1], postProcCurve[2]);
     }
 
-    public void setSaturationFactor(float saturationFactor) {
-        glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "saturationFactor"),
-                saturationFactor);
+    public void setSaturationCurve(float[] saturationCurve) {
+        glUniform3f(glGetUniformLocation(mProgramIntermediateToSRGB, "saturationCurve"),
+                saturationCurve[0], saturationCurve[1], saturationCurve[2]);
+    }
+
+    public void setSharpenFactor(float sharpenFactor) {
+        glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "sharpenFactor"),
+                sharpenFactor);
+    }
+
+    public void setHistoFactor(float histoFactor) {
+        glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "histoFactor"),
+                histoFactor);
     }
 
     public void setOffset(int offsetX, int offsetY) {

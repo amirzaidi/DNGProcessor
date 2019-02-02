@@ -102,6 +102,9 @@ public class DngParser implements Runnable, RawConverterCallback {
             cfa = CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGGB;
         }
 
+        String model = tags.get(TIFF.TAG_Model).toString();
+        boolean dotFix = model.startsWith("ONEPLUS A5");
+
         int[] blackLevelPattern = tags.get(TIFF.TAG_BlackLevel).getIntArray();
         int whiteLevel = tags.get(TIFF.TAG_WhiteLevel).getInt();
         int ref1 = tags.get(TIFF.TAG_CalibrationIlluminant1).getInt();
@@ -123,10 +126,15 @@ public class DngParser implements Runnable, RawConverterCallback {
         float crunchFactor = 0.6f;
 
         // 0 is greyscale, 1 is the default, higher means oversaturation.
-        float saturationFactor = 1.65f;
+        // Best constant: 1.65f
+        float[] saturationCurve = new float[] {
+                -2f,
+                2f,
+                1.25f
+        };
 
         // 0 is the default, higher means more value sharpening.
-        float sharpenFactor = 3.2f;
+        float sharpenFactor = 0.2f;
 
         // 0 is the default, higher means more histogram equalization.
         float histoFactor = 0.025f;
@@ -143,7 +151,7 @@ public class DngParser implements Runnable, RawConverterCallback {
         RawConverter.convertToSRGB(this, rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
                 rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
                 forward1, forward2, neutral, /* shadingMap */ null,
-                defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve, saturationFactor,
+                defaultCropOrigin[0], defaultCropOrigin[1], dotFix, postProcCurve, saturationCurve,
                 sharpenFactor, histoFactor, argbOutput);
         RenderScript.releaseAllContexts();
 

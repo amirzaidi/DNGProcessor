@@ -124,7 +124,7 @@ public class RawConverter {
                                      float[] calibrationTransform2, float[] colorMatrix1, float[] colorMatrix2,
                                      float[] forwardTransform1, float[] forwardTransform2, Rational[/*3*/] neutralColorPoint,
                                      LensShadingMap lensShadingMap, int outputOffsetX, int outputOffsetY,
-                                     float[] postProcCurve, float saturationFactor, float sharpenFactor,
+                                     boolean dotFix, float[] postProcCurve, float[] saturationCurve, float sharpenFactor,
                                      float histoFactor, Bitmap argbOutput) {
         // Validate arguments
         if (argbOutput == null || rs == null || rawImageInput == null) {
@@ -219,8 +219,6 @@ public class RawConverter {
         float[] XYZtoProPhoto = new float[9];
         System.arraycopy(sXYZtoProPhoto, 0, XYZtoProPhoto, 0, sXYZtoProPhoto.length);
 
-        int e;
-
         // Write the variables first
         GLCore core = new GLCore(argbOutput);
         GLSquare square = core.getSquare();
@@ -232,21 +230,20 @@ public class RawConverter {
         square.setTransforms1(sensorToXYZ);
 
         square.draw1();
-        e = GLES20.glGetError();
 
         square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         square.setTransforms2(XYZtoProPhoto, proPhotoToSRGB);
+        square.setDotFix(dotFix);
         square.setPostProcCurve(postProcCurve);
-        square.setSaturationFactor(saturationFactor);
-        e = GLES20.glGetError();
+        square.setSaturationCurve(saturationCurve);
+        square.setSharpenFactor(sharpenFactor);
+        square.setHistoFactor(histoFactor);
 
         square.setOffset(outputOffsetX, outputOffsetY);
         square.setOut(outWidth, outHeight);
 
-        e = GLES20.glGetError();
         square.draw2();
 
-        e = GLES20.glGetError();
         core.save();
 
         Log.w(TAG, "Raw conversion complete");

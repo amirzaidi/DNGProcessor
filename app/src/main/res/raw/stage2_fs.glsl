@@ -14,14 +14,65 @@ uniform mat3 intermediateToProPhoto; // Color transform from XYZ to a wide-gamut
 uniform mat3 proPhotoToSRGB; // Color transform from wide-gamut colorspace to sRGB
 
 // Post processing
+uniform bool dotFix;
 uniform vec3 postProcCurve;
-uniform float saturationFactor;
+uniform vec3 saturationCurve;
+uniform float sharpenFactor;
+uniform float histoFactor;
 
 // Size
 uniform ivec2 outOffset;
 
 // Out
 out vec4 color;
+
+vec3[9] load3x3(ivec2 xy) {
+    vec3 outputArray[9];
+
+    outputArray[0] = texelFetch(intermediateBuffer, xy + ivec2(-1, -1), 0).rgb;
+    outputArray[1] = texelFetch(intermediateBuffer, xy + ivec2(0, -1), 0).rgb;
+    outputArray[2] = texelFetch(intermediateBuffer, xy + ivec2(1, -1), 0).rgb;
+    outputArray[3] = texelFetch(intermediateBuffer, xy + ivec2(-1, 0), 0).rgb;
+    outputArray[4] = texelFetch(intermediateBuffer, xy, 0).rgb;
+    outputArray[5] = texelFetch(intermediateBuffer, xy + ivec2(1, 0), 0).rgb;
+    outputArray[6] = texelFetch(intermediateBuffer, xy + ivec2(1, -1), 0).rgb;
+    outputArray[7] = texelFetch(intermediateBuffer, xy + ivec2(1, 0), 0).rgb;
+    outputArray[8] = texelFetch(intermediateBuffer, xy + ivec2(1, 1), 0).rgb;
+
+    return outputArray;
+}
+
+vec3 processPatch(ivec2 xy) {
+    vec3 px;
+
+    float tmp;
+    vec3[9] impatch = load3x3(xy);
+
+    // Selection sort
+    vec3[9] sorted = impatch;
+    for (int i = 0; i < 9; i++) {
+        for (int j = i + 1; j < 9; j++) {
+            if (sorted[i].x > sorted[j].x) {
+                tmp = sorted[i].x;
+                sorted[i].x = sorted[j].x;
+                sorted[j].x = tmp;
+            }
+            if (sorted[i].y > sorted[j].y) {
+                tmp = sorted[i].y;
+                sorted[i].y = sorted[j].y;
+                sorted[j].y = tmp;
+            }
+        }
+    }
+
+    px.xy = sorted[4].xy;
+
+    px.z = 5.f * impatch[4].z - impatch[1].z - impatch[3].z - impatch[5].z - impatch[7].z;
+    px.z = (1.f - sharpenFactor) * impatch[4].z + sharpenFactor * px.z;
+    px.z = clamp(px.z, 0.f, 1.f);
+
+    return px;
+}
 
 vec3 xyYtoXYZ(vec3 xyY) {
     vec3 result;
@@ -154,6 +205,16 @@ vec3 applyColorspace(vec3 intermediate) {
     return sRGB;
 }
 
+const vec3 gMonoMult = vec3(0.299f, 0.587f, 0.114f);
+vec3 saturate(vec3 rgb, float z) {
+    float saturationFactor = z*z * saturationCurve[0]
+        + z * saturationCurve[1]
+        + saturationCurve[2];
+
+    return dot(rgb, gMonoMult) * (1.f - saturationFactor)
+        + rgb * saturationFactor;
+}
+
 // Applies post processing curve to all channels
 vec3 applyCurve(vec3 inValue) {
     return inValue*inValue*inValue * postProcCurve.x
@@ -161,21 +222,20 @@ vec3 applyCurve(vec3 inValue) {
         + inValue * postProcCurve.z;
 }
 
-const vec3 gMonoMult = vec3(0.299f, 0.587f, 0.114f);
-vec3 saturate(vec3 rgb) {
-    return dot(rgb, gMonoMult) * (1.f - saturationFactor)
-        + rgb * saturationFactor;
-}
-
 void main() {
-    ivec2 xy = ivec2(gl_FragCoord.xy) + outOffset;
+    ivec2 xy = ivec2(gl_FragCoord.xy);
+    if (dotFix && xy % 2 == ivec2(0, 1)) {
+        xy += ivec2(1, -1);
+    }
+    xy += outOffset;
 
-    vec3 intermediate = texelFetch(intermediateBuffer, xy, 0).rgb;
+    vec3 intermediate = processPatch(xy);
     vec3 sRGB = applyColorspace(intermediate);
 
+    sRGB = saturate(sRGB, intermediate.z);
     sRGB = applyCurve(sRGB);
-    sRGB = saturate(sRGB);
     sRGB = clamp(sRGB, 0.f, 1.f);
 
     color = vec4(sRGB, 1.f);
+
 }
