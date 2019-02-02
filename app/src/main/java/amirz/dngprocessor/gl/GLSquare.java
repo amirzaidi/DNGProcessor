@@ -43,11 +43,11 @@ public class GLSquare {
 
         int vertexShader1 = loadShader(
                 GL_VERTEX_SHADER,
-                MainActivity.VS1);
+                Shaders.VS1);
 
         int fragmentShader1 = loadShader(
                 GL_FRAGMENT_SHADER,
-                MainActivity.PS1);
+                Shaders.PS1);
 
         mProgramSensorToIntermediate = glCreateProgram();
         glAttachShader(mProgramSensorToIntermediate, vertexShader1);
@@ -57,11 +57,11 @@ public class GLSquare {
 
         int vertexShader2 = loadShader(
                 GL_VERTEX_SHADER,
-                MainActivity.VS2);
+                Shaders.VS2);
 
         int fragmentShader2 = loadShader(
                 GL_FRAGMENT_SHADER,
-                MainActivity.PS2);
+                Shaders.PS2);
 
         mProgramIntermediateToSRGB = glCreateProgram();
         glAttachShader(mProgramIntermediateToSRGB, vertexShader2);

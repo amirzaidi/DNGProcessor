@@ -21,40 +21,10 @@ public class MainActivity extends Activity {
     private static final int REQUEST_PERMISSIONS = 1;
     private static final int REQUEST_IMAGE = 2;
 
-    public static String VS1;
-    public static String PS1;
-
-    public static String VS2;
-    public static String PS2;
-
-    public String readRaw(int resId) {
-        try (InputStream inputStream = getResources().openRawResource(resId)) {
-            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-
-            StringBuilder text = new StringBuilder();
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                text.append(line);
-                text.append('\n');
-            }
-
-            return text.toString();
-        } catch (IOException e) {
-            return null;
-        }
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        VS1 = readRaw(R.raw.stage1_vs);
-        PS1 = readRaw(R.raw.stage1_fs);
-
-        VS2 = readRaw(R.raw.stage2_vs);
-        PS2 = readRaw(R.raw.stage2_fs);
 
         NotifHandler.createChannel(this);
         tryRequestImage();

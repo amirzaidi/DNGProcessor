@@ -1,13 +1,10 @@
 package amirz.dngprocessor.scheduler;
 
 import android.app.IntentService;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -19,13 +16,19 @@ import amirz.dngprocessor.parser.DngParser;
 
 public class DngParseService extends IntentService {
     private static final String TAG = "DngParseService";
+    private static final boolean ATLEAST_OREO = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
 
     public static void runForUri(Context context, Uri uri) {
         context = context.getApplicationContext();
 
         Intent intent = new Intent(context, DngParseService.class);
         intent.setData(uri);
-        context.startService(intent);
+
+        if (ATLEAST_OREO) {
+            context.startForegroundService(intent);
+        } else {
+            context.startService(intent);
+        }
     }
 
     public DngParseService() {
@@ -38,10 +41,10 @@ public class DngParseService extends IntentService {
         String file = Path.getFileFromUri(this, uri);
         Log.e(TAG, "onHandleIntent " + file);
 
+        NotifHandler.create(this, file);
         if (!new File(Path.processedFile(file)).exists()) {
-            NotifHandler.create(this, file);
             new DngParser(this, uri).run();
-            NotifHandler.done(this);
         }
+        NotifHandler.done(this);
     }
 }

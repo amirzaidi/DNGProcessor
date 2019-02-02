@@ -20,6 +20,7 @@ import amirz.dngprocessor.NotifHandler;
 import amirz.dngprocessor.Path;
 import amirz.dngprocessor.gl.RawConverter;
 import amirz.dngprocessor.gl.RawConverterCallback;
+import amirz.dngprocessor.gl.Shaders;
 
 public class DngParser implements RawConverterCallback {
     private static final String TAG = "DngParser";
@@ -148,6 +149,7 @@ public class DngParser implements RawConverterCallback {
         };
 
 //        if (true) {
+            Shaders.load(mContext);
             RawConverter.convertToSRGB(this, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
                     rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
                     forward1, forward2, neutral, /* shadingMap */ null,
