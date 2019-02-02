@@ -42,36 +42,95 @@ vec3[9] load3x3(ivec2 xy) {
     return outputArray;
 }
 
+const int radiusDenoise = 75;
 vec3 processPatch(ivec2 xy) {
-    vec3 px;
-
-    float tmp;
     vec3[9] impatch = load3x3(xy);
+    vec2 px = impatch[4].xy, neighbour, sum;
+    float z = impatch[4].z, mid, tmp, threshold;
 
-    // Selection sort
-    vec3[9] sorted = impatch;
-    for (int i = 0; i < 9; i++) {
-        for (int j = i + 1; j < 9; j++) {
-            if (sorted[i].x > sorted[j].x) {
-                tmp = sorted[i].x;
-                sorted[i].x = sorted[j].x;
-                sorted[j].x = tmp;
-            }
-            if (sorted[i].y > sorted[j].y) {
-                tmp = sorted[i].y;
-                sorted[i].y = sorted[j].y;
-                sorted[j].y = tmp;
-            }
+    // Get denoising threshold
+    neighbour = impatch[0].xy;
+    vec2 minxy = neighbour.xy, maxxy = neighbour.xy;
+    for (int i = 1; i < 9; i++) {
+        neighbour = impatch[i].xy;
+        minxy = min(neighbour, minxy);
+        maxxy = max(neighbour, maxxy);
+    }
+
+    // Threshold that needs to be reached to abort averaging.
+    threshold = distance(minxy, maxxy) * 1.25f;
+
+    // Shadows
+    float sharpen = sharpenFactor;
+    if (z < 0.1f) {
+        // Multiplied up to three times.
+        threshold *= 20.f * (0.15f - z);
+
+        // Reduce sharpening with high thresholds
+        sharpen *= 10.f * z;
+    }
+
+    int coord, count = 1;
+    int bound;
+    sum = px;
+
+    // Left
+    bound = max(xy.x - radiusDenoise, 0);
+    coord = xy.x;
+    while (coord-- > bound) {
+        neighbour = texelFetch(intermediateBuffer, ivec2(coord, xy.y), 0).xy;
+        if (distance(px, neighbour) <= threshold) {
+            sum += neighbour;
+            count++;
+        } else {
+            break;
         }
     }
 
-    px.xy = sorted[4].xy;
+    // Right
+    bound = min(xy.x + radiusDenoise, intermediateWidth - 1);
+    coord = xy.x;
+    while (coord++ < bound) {
+        neighbour = texelFetch(intermediateBuffer, ivec2(coord, xy.y), 0).xy;
+        if (distance(px, neighbour) <= threshold) {
+            sum += neighbour;
+            count++;
+        } else {
+            break;
+        }
+    }
 
-    px.z = 5.f * impatch[4].z - impatch[1].z - impatch[3].z - impatch[5].z - impatch[7].z;
-    px.z = (1.f - sharpenFactor) * impatch[4].z + sharpenFactor * px.z;
-    px.z = clamp(px.z, 0.f, 1.f);
+    // Up
+    bound = max(xy.y - radiusDenoise, 0);
+    coord = xy.y;
+    while (coord-- > bound) {
+        neighbour = texelFetch(intermediateBuffer, ivec2(xy.x, coord), 0).xy;
+        if (distance(px, neighbour) <= threshold) {
+            sum += neighbour;
+            count++;
+        } else {
+            break;
+        }
+    }
 
-    return px;
+    // Down
+    bound = min(xy.y + radiusDenoise, intermediateHeight - 1);
+    coord = xy.y;
+    while (coord++ < bound) {
+        neighbour = texelFetch(intermediateBuffer, ivec2(xy.x, coord), 0).xy;
+        if (distance(px, neighbour) <= threshold) {
+            sum += neighbour;
+            count++;
+        } else {
+            break;
+        }
+    }
+
+    z = 5.f * z - impatch[1].z - impatch[3].z - impatch[5].z - impatch[7].z;
+    z = (1.f - sharpen) * impatch[4].z + sharpen * z;
+    z = clamp(z, 0.f, 1.f);
+
+    return vec3(sum / float(count), z);
 }
 
 vec3 xyYtoXYZ(vec3 xyY) {
