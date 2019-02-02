@@ -1,5 +1,6 @@
 package amirz.dngprocessor;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -13,6 +14,7 @@ public class Path {
     public static final String EXT_JPG = ".jpg";
 
     public static final String MIME_RAW = "image/x-adobe-dng";
+    public static final String MIME_JPG = "image/jpeg";
 
     public static final String ROOT = Environment.getExternalStorageDirectory().toString();
 
@@ -21,6 +23,11 @@ public class Path {
     public static final String CAMERA = DCIM + File.separator + "Camera";
 
     public static final String PROCESSED = DCIM + File.separator + "Processed";
+
+    public static boolean isRaw(ContentResolver contentResolver, Uri uri, String file) {
+        String mime = contentResolver.getType(uri);
+        return MIME_RAW.equals(mime) || (MIME_JPG.equals(mime) && file.endsWith(Path.EXT_RAW));
+    }
 
     public static String processedFile(String name) {
         return PROCESSED + File.separator + name.replace(EXT_RAW, EXT_JPG);
