@@ -82,19 +82,7 @@ public class DngParser {
         byte[] rawImageInput = new byte[inputStride * inputHeight];
         ((ByteBuffer) wrap.position(startIndex)).get(rawImageInput);
 
-        // ToDo: Support other CFA formats
-        int cfa = -1;
-        int[] cfaValues = tags.get(TIFF.TAG_CFAPattern).getIntArray();
-        int[] cfaValuesRGGB = { 0, 1, 1, 2 };
-        if (Arrays.equals(cfaValues, cfaValuesRGGB)) {
-            cfa = CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGGB;
-        }
-
-        int[] cfaValuesGRBG = { 1, 0, 2, 1 };
-        if (Arrays.equals(cfaValues, cfaValuesGRBG)) {
-            cfa = CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_GRBG;
-        }
-
+        int cfa = CFAPattern.get(tags.get(TIFF.TAG_CFAPattern).getIntArray());
         //String model = tags.get(TIFF.TAG_Model).toString();
 
         int[] blackLevelPattern = tags.get(TIFF.TAG_BlackLevel).getIntArray();
