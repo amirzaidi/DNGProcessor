@@ -131,7 +131,7 @@ vec3 processPatch(ivec2 xy) {
 
         // Sort impatch z
         float tmp;
-        for (int i = 0; i < 9; i++) {
+        for (int i = 0; i < 5; i++) {
             for (int j = i + 1; j < 9; j++) {
                 if (impatch[j].z < impatch[i].z) {
                     tmp = impatch[j].z;
