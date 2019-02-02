@@ -10,7 +10,6 @@ import amirz.dngprocessor.MainActivity;
 
 import static android.opengl.GLES20.*;
 import static android.opengl.GLES30.*;
-import static android.opengl.GLU.gluErrorString;
 import static javax.microedition.khronos.opengles.GL10.GL_RGB;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_2D;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MAG_FILTER;
@@ -151,6 +150,36 @@ public class GLSquare {
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glDisableVertexAttribArray(posHandle);
 
+        // Calculate a histogram on the result
+        int histBins = 512;
+        int sampling = 32;
+        int[] hist = new int[histBins];
+
+        float[] f = new float[inWidth * 4];
+        FloatBuffer fb = ByteBuffer.allocateDirect(f.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        fb.mark();
+
+        for (int y = 0; y < inHeight; y += sampling) {
+            glReadPixels(0, y, inWidth, 1, GL_RGBA, GL_FLOAT, fb.reset());
+            fb.get(f);
+
+            // Loop over all z values
+            for (int i = 2; i < f.length; i += 4 * sampling) {
+                int bin = (int) (f[i] * histBins);
+                if (bin >= histBins) bin = histBins - 1;
+                hist[bin]++;
+            }
+        }
+
+        float[] cumulativeHist = new float[histBins + 1];
+        for (int i = 1; i < cumulativeHist.length; i++) {
+            cumulativeHist[i] = cumulativeHist[i - 1] + hist[i - 1];
+        }
+        float max = cumulativeHist[histBins];
+        for (int i = 0; i < cumulativeHist.length; i++) {
+            cumulativeHist[i] /= max;
+        }
+
         // Now switch to the second program
         glLinkProgram(mProgramIntermediateToSRGB);
         glUseProgram(mProgramIntermediateToSRGB);
@@ -171,6 +200,9 @@ public class GLSquare {
 
         glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "intermediateHeight"),
                 inHeight);
+
+        glUniform1fv(glGetUniformLocation(mProgramIntermediateToSRGB, "intermediateHist"),
+                cumulativeHist.length, cumulativeHist, 0);
     }
 
     public void setToneMapCoeffs(float[] toneMapCoeffs) {

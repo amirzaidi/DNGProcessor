@@ -6,6 +6,9 @@ uniform sampler2D intermediateBuffer;
 uniform int intermediateWidth;
 uniform int intermediateHeight;
 
+const int histBins = 513;
+uniform float intermediateHist[histBins];
+
 // Sensor and picture variables
 uniform vec4 toneMapCoeffs; // Coefficients for a polynomial tonemapping curve
 
@@ -144,6 +147,11 @@ vec3 processPatch(ivec2 xy) {
         // Use this difference to boost sharpness
         z = clamp(z + sharpenFactor * dz, 0.f, 1.f);
     }
+
+    // Histogram equalization
+    int bin = int(z * float(histBins));
+    if (bin >= histBins) bin = histBins - 1;
+    z = (1.f - histoFactor) * z + histoFactor * intermediateHist[bin];
 
     return vec3(sum / float(count), z);
 }
