@@ -118,7 +118,7 @@ public class RawConverter {
     /**
      * Convert a RAW16 buffer into an sRGB buffer, and write the result into a bitmap.
      */
-    public static void convertToSRGB(RawConverterCallback cb, RenderScript rs, int inputWidth, int inputHeight,
+    public static void convertToSRGB(RawConverterCallback cb, int inputWidth, int inputHeight,
                                      int inputStride, int cfa, int[] blackLevelPattern, int whiteLevel, byte[] rawImageInput,
                                      int referenceIlluminant1, int referenceIlluminant2, float[] calibrationTransform1,
                                      float[] calibrationTransform2, float[] colorMatrix1, float[] colorMatrix2,
@@ -127,7 +127,7 @@ public class RawConverter {
                                      float[] postProcCurve, float[] saturationCurve, float sharpenFactor,
                                      float histoFactor, Bitmap argbOutput) {
         // Validate arguments
-        if (argbOutput == null || rs == null || rawImageInput == null) {
+        if (argbOutput == null || rawImageInput == null) {
             throw new IllegalArgumentException("Null argument to convertToSRGB");
         }
         if (argbOutput.getConfig() != Bitmap.Config.ARGB_8888) {

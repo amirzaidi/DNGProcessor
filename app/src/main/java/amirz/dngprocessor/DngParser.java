@@ -158,21 +158,21 @@ public class DngParser implements Runnable, RawConverterCallback {
                 0f
         };
 
-        RenderScript rs = RenderScript.create(mContext);
 //        if (true) {
-            RawConverter.convertToSRGB(this, rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
+            RawConverter.convertToSRGB(this, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
                     rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
                     forward1, forward2, neutral, /* shadingMap */ null,
                     defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve, saturationCurve,
                     sharpenFactor, histoFactor, argbOutput);
 //        } else {
+//            RenderScript rs = RenderScript.create(mContext);
 //            amirz.dngprocessor.renderscript.RawConverter.convertToSRGB(this, rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
 //                    rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
 //                    forward1, forward2, neutral, /* shadingMap */ null,
 //                    defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve, 1.65f,
 //                    sharpenFactor, histoFactor, argbOutput);
+//            RenderScript.releaseAllContexts();
 //        }
-        RenderScript.releaseAllContexts();
 
         String savePath = getSavePath();
         try (FileOutputStream out = new FileOutputStream(savePath)) {
