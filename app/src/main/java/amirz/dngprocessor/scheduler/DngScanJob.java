@@ -55,10 +55,12 @@ public class DngScanJob extends JobService {
         if (params.getTriggeredContentAuthorities() != null) {
             if (params.getTriggeredContentUris() != null) {
                 for (Uri uri : params.getTriggeredContentUris()) {
+                    String key = uri.buildUpon().clearQuery().build().toString();
+
                     // If this is an unprocessed RAW image, process it and save that we did.
                     if (Path.MIME_RAW.equals(contentResolver.getType(uri))
-                            && prefs.getBoolean(uri.toString(), true)) {
-                        prefs.edit().putBoolean(uri.toString(), false).apply();
+                            && prefs.getBoolean(key, true)) {
+                        prefs.edit().putBoolean(key, false).apply();
                         DngParseService.runForUri(this, uri);
 
                         sb.append("PROCESS@");
