@@ -122,7 +122,7 @@ public class DngParser implements Runnable, RawConverterCallback {
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
 
         // 0 to 1, where 0 is bleak and 1 is crunchy.
-        float crunchFactor = 0.65f;
+        float crunchFactor = 0.67f;
 
         // 0 is greyscale, 1 is the default, higher means oversaturation.
         // Best constant: 1.65f
