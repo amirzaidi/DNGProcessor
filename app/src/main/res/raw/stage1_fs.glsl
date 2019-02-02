@@ -1,6 +1,6 @@
 #version 320 es
 
-precision highp float;
+precision mediump float;
 
 uniform usampler2D rawBuffer;
 uniform int rawWidth;

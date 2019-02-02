@@ -1,6 +1,6 @@
 #version 320 es
 
-precision highp float;
+precision mediump float;
 
 uniform sampler2D intermediateBuffer;
 uniform int intermediateWidth;
@@ -195,8 +195,8 @@ vec3 tonemap(vec3 rgb) {
     minmax.y = sorted.z;
 
     // Apply tonemapping curve to min, max RGB channel values
-    minmax = minmax*minmax*minmax * toneMapCoeffs.x +
-        minmax*minmax * toneMapCoeffs.y +
+    minmax = pow(minmax, vec2(3.f, 3.f)) * toneMapCoeffs.x +
+        pow(minmax, vec2(2.f, 2.f)) * toneMapCoeffs.y +
         minmax * toneMapCoeffs.z +
         toneMapCoeffs.w;
 
@@ -205,8 +205,8 @@ vec3 tonemap(vec3 rgb) {
     if (sorted.z == sorted.x) {
         newMid = minmax.y;
     } else {
-        newMid = minmax.x + ((minmax.y - minmax.x) * (sorted.y - sorted.x) /
-                (sorted.z - sorted.x));
+        float yprog = (sorted.y - sorted.x) / (sorted.z - sorted.x);
+        newMid = minmax.x + (minmax.y - minmax.x) * yprog;
     }
 
     vec3 finalRGB;
