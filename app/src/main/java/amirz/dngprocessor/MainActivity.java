@@ -3,17 +3,12 @@ package amirz.dngprocessor;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-
-import amirz.dngprocessor.parser.DngParser;
 import amirz.dngprocessor.scheduler.DngParseService;
 import amirz.dngprocessor.scheduler.DngScanJob;
+
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 public class MainActivity extends Activity {
     private static final String TAG = "MainActivity";
@@ -32,7 +27,7 @@ public class MainActivity extends Activity {
 
     private boolean hasPermissions() {
         return checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                == PackageManager.PERMISSION_GRANTED;
+                == PERMISSION_GRANTED;
     }
 
     private void tryRequestImage() {
@@ -50,16 +45,26 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK) {
-            switch (requestCode) {
-                case REQUEST_PERMISSIONS:
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode) {
+            case REQUEST_PERMISSIONS:
+                if (grantResults[0] == PERMISSION_GRANTED) {
                     tryRequestImage();
-                    break;
-                case REQUEST_IMAGE:
+                }
+                break;
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case REQUEST_IMAGE:
+                if (resultCode == RESULT_OK) {
                     DngParseService.runForUri(this, data.getData());
-                    break;
-            }
+                }
+                break;
         }
     }
 }
