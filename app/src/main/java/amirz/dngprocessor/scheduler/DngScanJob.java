@@ -7,11 +7,13 @@ import android.app.job.JobService;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 
 import amirz.dngprocessor.Path;
+import amirz.dngprocessor.Utilities;
 
 public class DngScanJob extends JobService {
     private static final String TAG = "DngScanJob";
@@ -48,12 +50,18 @@ public class DngScanJob extends JobService {
         sb.append("onStartJob: Media content has changed: ");
 
         ContentResolver contentResolver = getContentResolver();
+        SharedPreferences prefs = Utilities.prefs(this);
 
         if (params.getTriggeredContentAuthorities() != null) {
             if (params.getTriggeredContentUris() != null) {
                 for (Uri uri : params.getTriggeredContentUris()) {
-                    if (Path.MIME_RAW.equals(contentResolver.getType(uri))) {
+                    // If this is an unprocessed RAW image, process it and save that we did.
+                    if (Path.MIME_RAW.equals(contentResolver.getType(uri))
+                            && prefs.getBoolean(uri.toString(), true)) {
+                        prefs.edit().putBoolean(uri.toString(), false).apply();
                         DngParseService.runForUri(this, uri);
+
+                        sb.append("PROCESS@");
                     }
 
                     try {

@@ -4,19 +4,17 @@ import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.support.annotation.Nullable;
 import android.util.Log;
-
-import java.io.File;
 
 import amirz.dngprocessor.NotifHandler;
 import amirz.dngprocessor.Path;
 import amirz.dngprocessor.parser.DngParser;
 
+import static amirz.dngprocessor.Utilities.ATLEAST_OREO;
+
 public class DngParseService extends IntentService {
     private static final String TAG = "DngParseService";
-    private static final boolean ATLEAST_OREO = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
 
     public static void runForUri(Context context, Uri uri) {
         context = context.getApplicationContext();
@@ -42,9 +40,7 @@ public class DngParseService extends IntentService {
         Log.e(TAG, "onHandleIntent " + file);
 
         NotifHandler.create(this, file);
-        if (!new File(Path.processedFile(file)).exists()) {
-            new DngParser(this, uri).run();
-        }
+        new DngParser(this, uri).run();
         NotifHandler.done(this);
     }
 }
