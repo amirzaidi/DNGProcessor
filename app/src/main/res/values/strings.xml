@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">DNG Processor</string>
+    <string name="main_message">This app is waiting for new DNG files, and will process them when found. Go take a RAW picture!</string>
 </resources>

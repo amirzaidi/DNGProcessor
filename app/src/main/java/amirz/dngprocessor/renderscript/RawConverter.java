@@ -34,7 +34,6 @@ import android.util.SparseIntArray;
 import java.util.Arrays;
 
 import amirz.dngprocessor.ScriptC_raw_converter;
-import amirz.dngprocessor.gl.RawConverterCallback;
 
 /**
  * Utility class providing methods for rendering RAW16 images into other colorspaces.

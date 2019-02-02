@@ -32,10 +32,6 @@ public class RawConverter {
     private static final String TAG = "RawConverter";
     private static final boolean DEBUG = true;
 
-    public static int STEPS = 0;
-    private static final int STEP_RAW_INTERMEDIATE = ++STEPS;
-    private static final int STEP_INTERMEDIATE_OUTPUT = ++STEPS;
-
     /**
      * Matrix to convert from CIE XYZ colorspace to sRGB, Bradford-adapted to D65.
      */
@@ -112,7 +108,7 @@ public class RawConverter {
     /**
      * Convert a RAW16 buffer into an sRGB buffer, and write the result into a bitmap.
      */
-    public static void convertToSRGB(RawConverterCallback cb, int inputWidth, int inputHeight,
+    public static void convertToSRGB(int inputWidth, int inputHeight,
                                      int inputStride, int cfa, int[] blackLevelPattern, int whiteLevel, byte[] rawImageInput,
                                      int referenceIlluminant1, int referenceIlluminant2, float[] calibrationTransform1,
                                      float[] calibrationTransform2, float[] colorMatrix1, float[] colorMatrix2,
@@ -224,7 +220,6 @@ public class RawConverter {
         square.setTransforms1(sensorToXYZ);
 
         square.draw1();
-        cb.onProgress(STEP_RAW_INTERMEDIATE);
 
         square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         square.setTransforms2(XYZtoProPhoto, proPhotoToSRGB);
@@ -237,7 +232,6 @@ public class RawConverter {
         square.setOut(outWidth, outHeight);
 
         square.draw2();
-        cb.onProgress(STEP_INTERMEDIATE_OUTPUT);
 
         core.save();
 

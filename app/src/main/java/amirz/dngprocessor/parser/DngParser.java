@@ -19,12 +19,10 @@ import java.util.Arrays;
 import amirz.dngprocessor.NotifHandler;
 import amirz.dngprocessor.Path;
 import amirz.dngprocessor.gl.RawConverter;
-import amirz.dngprocessor.gl.RawConverterCallback;
 import amirz.dngprocessor.gl.Shaders;
 
-public class DngParser implements RawConverterCallback {
+public class DngParser {
     private static final String TAG = "DngParser";
-    private static final int STEPS = RawConverter.STEPS + 2;
     private static final int JPEG_QUALITY = 95;
 
     private final Context mContext;
@@ -46,7 +44,7 @@ public class DngParser implements RawConverterCallback {
     }
 
     public void run() {
-        NotifHandler.progress(mContext, STEPS, 0);
+        NotifHandler.progress(mContext, 3, 0);
 
         ByteReader.ReaderWithExif reader = ByteReader.fromUri(mContext, mUri);
         Log.e(TAG, "Starting processing of " + mFile + " (" + mUri.toString() + ") size " +
@@ -150,7 +148,7 @@ public class DngParser implements RawConverterCallback {
 
 //        if (true) {
             Shaders.load(mContext);
-            RawConverter.convertToSRGB(this, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
+            RawConverter.convertToSRGB(inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
                     rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
                     forward1, forward2, neutral, /* shadingMap */ null,
                     defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve, saturationCurve,
@@ -165,6 +163,8 @@ public class DngParser implements RawConverterCallback {
 //            RenderScript.releaseAllContexts();
 //        }
 
+        NotifHandler.progress(mContext, 3, 1);
+
         String savePath = getSavePath();
         try (FileOutputStream out = new FileOutputStream(savePath)) {
             argbOutput.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out);
@@ -172,7 +172,7 @@ public class DngParser implements RawConverterCallback {
             e.printStackTrace();
         }
 
-        NotifHandler.progress(mContext, STEPS, STEPS - 1);
+        NotifHandler.progress(mContext, 3, 2);
         argbOutput.recycle();
 
         try {
@@ -203,12 +203,7 @@ public class DngParser implements RawConverterCallback {
         mediaScannerIntent.setData(Uri.fromFile(new File(savePath)));
         mContext.sendBroadcast(mediaScannerIntent);
 
-        NotifHandler.progress(mContext, STEPS, STEPS);
-    }
-
-    @Override
-    public void onProgress(int step) {
-        NotifHandler.progress(mContext, STEPS, step);
+        NotifHandler.progress(mContext, 3, 3);
     }
 
     @SuppressWarnings("deprecation")
