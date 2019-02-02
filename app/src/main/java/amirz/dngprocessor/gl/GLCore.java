@@ -4,27 +4,13 @@ import android.graphics.Bitmap;
 
 import java.nio.IntBuffer;
 
-import javax.microedition.khronos.egl.EGL10;
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.egl.EGLContext;
-import javax.microedition.khronos.egl.EGLDisplay;
-import javax.microedition.khronos.egl.EGLSurface;
+import javax.microedition.khronos.egl.*;
 import javax.microedition.khronos.opengles.GL10;
 
 import static android.opengl.EGL14.EGL_BIND_TO_TEXTURE_RGBA;
 import static android.opengl.EGL14.EGL_CONTEXT_CLIENT_VERSION;
 import static android.opengl.EGL14.EGL_OPENGL_ES2_BIT;
-import static javax.microedition.khronos.egl.EGL10.EGL_ALPHA_SIZE;
-import static javax.microedition.khronos.egl.EGL10.EGL_BLUE_SIZE;
-import static javax.microedition.khronos.egl.EGL10.EGL_DEFAULT_DISPLAY;
-import static javax.microedition.khronos.egl.EGL10.EGL_DEPTH_SIZE;
-import static javax.microedition.khronos.egl.EGL10.EGL_GREEN_SIZE;
-import static javax.microedition.khronos.egl.EGL10.EGL_HEIGHT;
-import static javax.microedition.khronos.egl.EGL10.EGL_NONE;
-import static javax.microedition.khronos.egl.EGL10.EGL_NO_CONTEXT;
-import static javax.microedition.khronos.egl.EGL10.EGL_RED_SIZE;
-import static javax.microedition.khronos.egl.EGL10.EGL_STENCIL_SIZE;
-import static javax.microedition.khronos.egl.EGL10.EGL_WIDTH;
+import static javax.microedition.khronos.egl.EGL10.*;
 import static javax.microedition.khronos.opengles.GL10.GL_RGBA;
 import static javax.microedition.khronos.opengles.GL10.GL_UNSIGNED_BYTE;
 
@@ -54,8 +40,8 @@ public class GLCore {
                 EGL_BLUE_SIZE, 8,
                 EGL_ALPHA_SIZE, 8,
                 EGL_BIND_TO_TEXTURE_RGBA, 1,
-                EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PBUFFER_BIT,
-                EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+                EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
+                EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
                 EGL_NONE
         };
 
@@ -69,7 +55,7 @@ public class GLCore {
         egl.eglChooseConfig(display, attribList2, mEGLConfigs, configSize, numConfig);
 
         EGLContext context = egl.eglCreateContext(display, mEGLConfigs[0], EGL_NO_CONTEXT, new int[] {
-                EGL_CONTEXT_CLIENT_VERSION, 2, EGL10.EGL_NONE
+                EGL_CONTEXT_CLIENT_VERSION, 3, EGL10.EGL_NONE
         });
 
         EGLSurface surface = egl.eglCreatePbufferSurface(display, mEGLConfigs[0], new int[] {
