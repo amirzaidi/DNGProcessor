@@ -145,29 +145,23 @@ vec3 processPatch(ivec2 xy) {
         }
 
         // Use this difference to boost sharpness
-        z = clamp(z + sharpenFactor * dz, 0.f, 1.f);
+        z = z + sharpenFactor * dz;
     }
 
     // Histogram equalization
-    int bin = int(z * float(histBins));
-    if (bin >= histBins) bin = histBins - 1;
+    int bin = clamp(int(z * float(histBins)), 0, histBins - 1);
     z = (1.f - histoFactor) * z + histoFactor * intermediateHist[bin];
 
     return vec3(sum / float(count), z);
 }
 
 vec3 xyYtoXYZ(vec3 xyY) {
-    vec3 result;
-    if (xyY.y == 0.f) {
-        result.x = 0.f;
-        result.y = 0.f;
-        result.z = 0.f;
-    } else {
+    vec3 result = vec3(0.f, xyY.z, 0.f);
+    if (xyY.y > 0.f) {
         result.x = xyY.x * xyY.z / xyY.y;
-        result.y = xyY.z;
         result.z = (1.f - xyY.x - xyY.y) * xyY.z / xyY.y;
     }
-    return result;
+    return clamp(result, 0.f, 1.f);
 }
 
 vec3 tonemap(vec3 rgb) {

@@ -128,13 +128,9 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
 }
 
 vec3 XYZtoxyY(vec3 XYZ) {
-    vec3 result;
+    vec3 result = vec3(0.f, 0.f, 0.f);
     float sum = XYZ.x + XYZ.y + XYZ.z;
-    if (sum == 0.f) {
-        result.x = 0.f;
-        result.y = 0.f;
-        result.z = 0.f;
-    } else {
+    if (sum > 0.f) {
         result.x = XYZ.x / sum;
         result.y = XYZ.y / sum;
         result.z = XYZ.y;
