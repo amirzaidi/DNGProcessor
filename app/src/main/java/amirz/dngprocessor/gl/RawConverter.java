@@ -19,8 +19,6 @@ import android.graphics.Bitmap;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.params.ColorSpaceTransform;
 import android.hardware.camera2.params.LensShadingMap;
-import android.opengl.GLES20;
-import android.renderscript.RenderScript;
 import android.util.Log;
 import android.util.Rational;
 import android.util.SparseIntArray;

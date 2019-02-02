@@ -22,23 +22,21 @@
             </intent-filter>
         </activity>
 
-        <!--
         <service
-            android:name=".DngScanJob"
+            android:name=".scheduler.DngScanJob"
             android:enabled="true"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE">
         </service>
 
         <receiver
-            android:name=".BootReceiver"
+            android:name=".scheduler.BootReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-        -->
     </application>
 
 </manifest>

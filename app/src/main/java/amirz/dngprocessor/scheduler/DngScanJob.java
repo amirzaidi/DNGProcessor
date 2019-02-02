@@ -1,4 +1,4 @@
-package amirz.dngprocessor;
+package amirz.dngprocessor.scheduler;
 
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
@@ -11,6 +11,9 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import java.io.File;
+
+import amirz.dngprocessor.parser.DngParser;
+import amirz.dngprocessor.Path;
 
 public class DngScanJob extends JobService {
     private static final String TAG = "DngScanJob";
@@ -34,7 +37,7 @@ public class DngScanJob extends JobService {
             }
 
             Log.w(TAG, "Scheduling job");
-            //js.schedule(sJobInfo);
+            js.schedule(sJobInfo);
         }
     }
 
@@ -44,7 +47,7 @@ public class DngScanJob extends JobService {
     @Override
     public boolean onStartJob(JobParameters params) {
         StringBuilder sb = new StringBuilder();
-        sb.append("onStartJob: Media content has changed:\n");
+        sb.append("onStartJob: Media content has changed: ");
 
         if (params.getTriggeredContentAuthorities() != null) {
             if (params.getTriggeredContentUris() != null) {

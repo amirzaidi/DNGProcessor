@@ -1,4 +1,4 @@
-package amirz.dngprocessor;
+package amirz.dngprocessor.parser;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -6,7 +6,6 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.support.media.ExifInterface;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
-import android.renderscript.RenderScript;
 import android.util.Log;
 import android.util.Rational;
 import android.util.SparseArray;
@@ -18,6 +17,8 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+import amirz.dngprocessor.NotifHandler;
+import amirz.dngprocessor.Path;
 import amirz.dngprocessor.gl.RawConverter;
 import amirz.dngprocessor.renderscript.RawConverterCallback;
 

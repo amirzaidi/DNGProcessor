@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import amirz.dngprocessor.parser.DngParser;
+import amirz.dngprocessor.scheduler.DngScanJob;
+
 public class MainActivity extends Activity {
     private static final String TAG = "MainActivity";
 

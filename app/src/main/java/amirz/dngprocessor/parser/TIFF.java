@@ -1,4 +1,4 @@
-package amirz.dngprocessor;
+package amirz.dngprocessor.parser;
 
 import android.util.SparseIntArray;
 
