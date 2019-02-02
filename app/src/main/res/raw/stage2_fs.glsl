@@ -1,6 +1,6 @@
 #version 320 es
 
-precision mediump float;
+precision highp float;
 
 uniform sampler2D intermediateBuffer;
 uniform int intermediateWidth;
@@ -14,7 +14,6 @@ uniform mat3 intermediateToProPhoto; // Color transform from XYZ to a wide-gamut
 uniform mat3 proPhotoToSRGB; // Color transform from wide-gamut colorspace to sRGB
 
 // Post processing
-uniform bool dotFix;
 uniform vec3 postProcCurve;
 uniform vec3 saturationCurve;
 uniform float sharpenFactor;
@@ -29,50 +28,40 @@ out vec4 color;
 vec3[9] load3x3(ivec2 xy) {
     vec3 outputArray[9];
 
-    outputArray[0] = texelFetch(intermediateBuffer, xy + ivec2(-1, -1), 0).rgb;
-    outputArray[1] = texelFetch(intermediateBuffer, xy + ivec2(0, -1), 0).rgb;
-    outputArray[2] = texelFetch(intermediateBuffer, xy + ivec2(1, -1), 0).rgb;
-    outputArray[3] = texelFetch(intermediateBuffer, xy + ivec2(-1, 0), 0).rgb;
-    outputArray[4] = texelFetch(intermediateBuffer, xy, 0).rgb;
-    outputArray[5] = texelFetch(intermediateBuffer, xy + ivec2(1, 0), 0).rgb;
-    outputArray[6] = texelFetch(intermediateBuffer, xy + ivec2(1, -1), 0).rgb;
-    outputArray[7] = texelFetch(intermediateBuffer, xy + ivec2(1, 0), 0).rgb;
-    outputArray[8] = texelFetch(intermediateBuffer, xy + ivec2(1, 1), 0).rgb;
+    outputArray[0] = texelFetch(intermediateBuffer, xy + ivec2(-1, -1), 0).xyz;
+    outputArray[1] = texelFetch(intermediateBuffer, xy + ivec2(0, -1), 0).xyz;
+    outputArray[2] = texelFetch(intermediateBuffer, xy + ivec2(1, -1), 0).xyz;
+    outputArray[3] = texelFetch(intermediateBuffer, xy + ivec2(-1, 0), 0).xyz;
+    outputArray[4] = texelFetch(intermediateBuffer, xy, 0).xyz;
+    outputArray[5] = texelFetch(intermediateBuffer, xy + ivec2(1, 0), 0).xyz;
+    outputArray[6] = texelFetch(intermediateBuffer, xy + ivec2(-1, 1), 0).xyz;
+    outputArray[7] = texelFetch(intermediateBuffer, xy + ivec2(0, 1), 0).xyz;
+    outputArray[8] = texelFetch(intermediateBuffer, xy + ivec2(1, 1), 0).xyz;
 
     return outputArray;
 }
 
-const int radiusDenoise = 75;
 vec3 processPatch(ivec2 xy) {
     vec3[9] impatch = load3x3(xy);
-    vec2 px = impatch[4].xy, neighbour, sum;
-    float z = impatch[4].z, mid, tmp, threshold;
+
+    /**
+    CHROMA NOISE REDUCE
+    **/
 
     // Get denoising threshold
-    neighbour = impatch[0].xy;
-    vec2 minxy = neighbour.xy, maxxy = neighbour.xy;
+    vec2 minxy = impatch[0].xy, maxxy = minxy;
     for (int i = 1; i < 9; i++) {
-        neighbour = impatch[i].xy;
-        minxy = min(neighbour, minxy);
-        maxxy = max(neighbour, maxxy);
+        minxy = min(impatch[i].xy, minxy);
+        maxxy = max(impatch[i].xy, maxxy);
     }
 
     // Threshold that needs to be reached to abort averaging.
-    threshold = distance(minxy, maxxy) * 1.25f;
+    float threshold = distance(minxy, maxxy) * 1.1f;
 
-    // Shadows
-    float sharpen = sharpenFactor;
-    if (z < 0.1f) {
-        // Multiplied up to three times.
-        threshold *= 20.f * (0.15f - z);
-
-        // Reduce sharpening with high thresholds
-        sharpen *= 10.f * z;
-    }
-
-    int coord, count = 1;
-    int bound;
-    sum = px;
+    // Expand in a plus
+    const int radiusDenoise = 50;
+    vec2 neighbour, px = impatch[4].xy, sum = px;
+    int coord, bound, count = 1;
 
     // Left
     bound = max(xy.x - radiusDenoise, 0);
@@ -126,9 +115,35 @@ vec3 processPatch(ivec2 xy) {
         }
     }
 
-    z = 5.f * z - impatch[1].z - impatch[3].z - impatch[5].z - impatch[7].z;
-    z = (1.f - sharpen) * impatch[4].z + sharpen * z;
-    z = clamp(z, 0.f, 1.f);
+    /**
+    SHARPEN
+    **/
+
+    float z = impatch[4].z;
+    if (sharpenFactor > 0.f) {
+        // Sum of difference with all pixels nearby
+        float dz = impatch[4].z * 8.f;
+        for (int i = 0; i < 9; i++) {
+            if (i != 4) {
+                dz -= impatch[i].z;
+            }
+        }
+
+        // Sort impatch z
+        float tmp;
+        for (int i = 0; i < 9; i++) {
+            for (int j = i + 1; j < 9; j++) {
+                if (impatch[j].z < impatch[i].z) {
+                    tmp = impatch[j].z;
+                    impatch[j].z = impatch[i].z;
+                    impatch[i].z = tmp;
+                }
+            }
+        }
+
+        // Use this difference to boost sharpness
+        z = clamp(z + sharpenFactor * dz, 0.f, 1.f);
+    }
 
     return vec3(sum / float(count), z);
 }
@@ -149,6 +164,7 @@ vec3 xyYtoXYZ(vec3 xyY) {
 
 vec3 tonemap(vec3 rgb) {
     vec3 sorted = rgb;
+
     float tmp;
     int permutation = 0;
 
@@ -194,41 +210,34 @@ vec3 tonemap(vec3 rgb) {
     vec3 finalRGB;
     switch (permutation) {
         case 0: // b >= g >= r
-            finalRGB.x = minmax.x;
-            finalRGB.y = newMid;
-            finalRGB.z = minmax.y;
+            finalRGB.r = minmax.x;
+            finalRGB.g = newMid;
+            finalRGB.b = minmax.y;
             break;
         case 1: // g >= b >= r
-            finalRGB.x = minmax.x;
-            finalRGB.z = newMid;
-            finalRGB.y = minmax.y;
+            finalRGB.r = minmax.x;
+            finalRGB.b = newMid;
+            finalRGB.g = minmax.y;
             break;
         case 2: // b >= r >= g
-            finalRGB.y = minmax.x;
-            finalRGB.x = newMid;
-            finalRGB.z = minmax.y;
+            finalRGB.g = minmax.x;
+            finalRGB.r = newMid;
+            finalRGB.b = minmax.y;
             break;
         case 3: // g >= r >= b
-            finalRGB.z = minmax.x;
-            finalRGB.x = newMid;
-            finalRGB.y = minmax.y;
+            finalRGB.b = minmax.x;
+            finalRGB.r = newMid;
+            finalRGB.g = minmax.y;
             break;
         case 6: // r >= b >= g
-            finalRGB.y = minmax.x;
-            finalRGB.z = newMid;
-            finalRGB.x = minmax.y;
+            finalRGB.g = minmax.x;
+            finalRGB.b = newMid;
+            finalRGB.r = minmax.y;
             break;
         case 7: // r >= g >= b
-            finalRGB.z = minmax.x;
-            finalRGB.y = newMid;
-            finalRGB.x = minmax.y;
-            break;
-        case 4: // impossible
-        case 5: // impossible
-        default:
-            finalRGB.x = 0.f;
-            finalRGB.y = 0.f;
-            finalRGB.z = 0.f;
+            finalRGB.b = minmax.x;
+            finalRGB.g = newMid;
+            finalRGB.r = minmax.y;
             break;
     }
     return finalRGB;
@@ -256,7 +265,7 @@ vec3 applyColorspace(vec3 intermediate) {
     intermediate = xyYtoXYZ(intermediate);
 
     proPhoto = intermediateToProPhoto * intermediate;
-    proPhoto = tonemap(proPhoto);
+    proPhoto = tonemap(proPhoto); // Broken?
 
     sRGB = proPhotoToSRGB * proPhoto;
     sRGB = gammaCorrectPixel(sRGB);
@@ -270,8 +279,8 @@ vec3 saturate(vec3 rgb, float z) {
         + z * saturationCurve[1]
         + saturationCurve[2];
 
-    return dot(rgb, gMonoMult) * (1.f - saturationFactor)
-        + rgb * saturationFactor;
+    return rgb * saturationFactor
+        - dot(rgb, gMonoMult) * (saturationFactor - 1.f);
 }
 
 // Applies post processing curve to all channels
@@ -282,19 +291,18 @@ vec3 applyCurve(vec3 inValue) {
 }
 
 void main() {
-    ivec2 xy = ivec2(gl_FragCoord.xy);
-    if (dotFix && xy % 2 == ivec2(0, 1)) {
-        xy += ivec2(1, -1);
-    }
-    xy += outOffset;
+    ivec2 xy = ivec2(gl_FragCoord.xy) + outOffset;
 
+    // Sharpen and denoise value
     vec3 intermediate = processPatch(xy);
+
+    // Convert to final colorspace
     vec3 sRGB = applyColorspace(intermediate);
 
-    sRGB = saturate(sRGB, intermediate.z);
+    // Apply additional contrast and saturation
     sRGB = applyCurve(sRGB);
+    sRGB = saturate(sRGB, intermediate.z);
     sRGB = clamp(sRGB, 0.f, 1.f);
 
     color = vec4(sRGB, 1.f);
-
 }

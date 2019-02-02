@@ -1,6 +1,6 @@
 #version 320 es
 
-precision mediump float;
+precision highp float;
 
 uniform usampler2D rawBuffer;
 uniform int rawWidth;
@@ -9,7 +9,7 @@ uniform int rawHeight;
 // Sensor and picture variables
 uniform uint cfaPattern; // The Color Filter Arrangement pattern used
 uniform vec4 blackLevel; // Blacklevel to subtract for each channel, given in CFA order
-uniform float whiteLevel;  // Whitelevel of sensor
+uniform float whiteLevel; // Whitelevel of sensor
 uniform vec3 neutralPoint; // The camera neutral
 
 // Transform
@@ -27,8 +27,8 @@ float[9] load3x3(ivec2 xy) {
     outputArray[3] = float(texelFetch(rawBuffer, xy + ivec2(-1, 0), 0).r);
     outputArray[4] = float(texelFetch(rawBuffer, xy, 0).r);
     outputArray[5] = float(texelFetch(rawBuffer, xy + ivec2(1, 0), 0).r);
-    outputArray[6] = float(texelFetch(rawBuffer, xy + ivec2(1, -1), 0).r);
-    outputArray[7] = float(texelFetch(rawBuffer, xy + ivec2(1, 0), 0).r);
+    outputArray[6] = float(texelFetch(rawBuffer, xy + ivec2(-1, 1), 0).r);
+    outputArray[7] = float(texelFetch(rawBuffer, xy + ivec2(0, 1), 0).r);
     outputArray[8] = float(texelFetch(rawBuffer, xy + ivec2(1, 1), 0).r);
 
     return outputArray;
@@ -84,9 +84,9 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
                   // B G B
                   // G R G
                   // B G B
-            pRGB.x = inputArray[4];
-            pRGB.y = (inputArray[1] + inputArray[3] + inputArray[5] + inputArray[7]) / 4.f;
-            pRGB.z = (inputArray[0] + inputArray[2] + inputArray[6] + inputArray[8]) / 4.f;
+            pRGB.r = inputArray[4];
+            pRGB.g = (inputArray[1] + inputArray[3] + inputArray[5] + inputArray[7]) / 4.f;
+            pRGB.b = (inputArray[0] + inputArray[2] + inputArray[6] + inputArray[8]) / 4.f;
             break;
         case 1:
         case 4:
@@ -95,9 +95,10 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
                  // G B G
                  // R G R
                  // G B G
-            pRGB.x = (inputArray[3] + inputArray[5]) / 2.f;
-            pRGB.y = inputArray[4];
-            pRGB.z = (inputArray[1] + inputArray[7]) / 2.f;
+            // Blue channel > red channel here
+            pRGB.r = (inputArray[3] + inputArray[5]) / 2.f;
+            pRGB.g = inputArray[4];
+            pRGB.b = (inputArray[1] + inputArray[7]) / 2.f;
             break;
         case 2:
         case 7:
@@ -106,9 +107,10 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
                  // G R G
                  // B G B
                  // G R G
-            pRGB.x = (inputArray[1] + inputArray[7]) / 2.f;
-            pRGB.y = inputArray[4];
-            pRGB.z = (inputArray[3] + inputArray[5]) / 2.f;
+            // Red channel > blue channel here
+            pRGB.r = (inputArray[1] + inputArray[7]) / 2.f;
+            pRGB.g = inputArray[4];
+            pRGB.b = (inputArray[3] + inputArray[5]) / 2.f;
             break;
         case 3:
         case 6:
@@ -117,9 +119,9 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
                  // R G R
                  // G B G
                  // R G R
-            pRGB.x = (inputArray[0] + inputArray[2] + inputArray[6] + inputArray[8]) / 4.f;
-            pRGB.y = (inputArray[1] + inputArray[3] + inputArray[5] + inputArray[7]) / 4.f;
-            pRGB.z = inputArray[4];
+            pRGB.r = (inputArray[0] + inputArray[2] + inputArray[6] + inputArray[8]) / 4.f;
+            pRGB.g = (inputArray[1] + inputArray[3] + inputArray[5] + inputArray[7]) / 4.f;
+            pRGB.b = inputArray[4];
             break;
     }
     return pRGB;

@@ -123,11 +123,12 @@ public class GLSquare {
         glUniform1ui(glGetUniformLocation(mProgramSensorToIntermediate, "cfaPattern"), cfaPattern);
     }
 
-    public void setBlackWhiteLevel(int[] blackLevel, float whiteLevel) {
+    public void setBlackWhiteLevel(int[] blackLevel, int whiteLevel) {
         glUniform4f(glGetUniformLocation(mProgramSensorToIntermediate, "blackLevel"),
                 blackLevel[0], blackLevel[1], blackLevel[2], blackLevel[3]);
 
-        glUniform1f(glGetUniformLocation(mProgramSensorToIntermediate, "whiteLevel"), whiteLevel);
+        glUniform1f(glGetUniformLocation(mProgramSensorToIntermediate, "whiteLevel"),
+                whiteLevel);
     }
 
     public void setNeutralPoint(Rational[] neutralPoint) {
@@ -164,6 +165,12 @@ public class GLSquare {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, inWidth, inHeight, 0, GL_RGB, GL_FLOAT, null);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+        glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "intermediateWidth"),
+                inWidth);
+
+        glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "intermediateHeight"),
+                inHeight);
     }
 
     public void setToneMapCoeffs(float[] toneMapCoeffs) {
@@ -177,11 +184,6 @@ public class GLSquare {
 
         glUniformMatrix3fv(glGetUniformLocation(mProgramIntermediateToSRGB, "proPhotoToSRGB"),
                 1, true, proPhotoToSRGB, 0);
-    }
-
-    public void setDotFix(boolean dotFix) {
-        glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "dotFix"),
-                dotFix ? 1 : 0);
     }
 
     public void setPostProcCurve(float[] postProcCurve) {

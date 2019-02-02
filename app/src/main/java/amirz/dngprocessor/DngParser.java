@@ -102,8 +102,7 @@ public class DngParser implements Runnable, RawConverterCallback {
             cfa = CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGGB;
         }
 
-        String model = tags.get(TIFF.TAG_Model).toString();
-        boolean dotFix = model.startsWith("ONEPLUS A5");
+        //String model = tags.get(TIFF.TAG_Model).toString();
 
         int[] blackLevelPattern = tags.get(TIFF.TAG_BlackLevel).getIntArray();
         int whiteLevel = tags.get(TIFF.TAG_WhiteLevel).getInt();
@@ -123,18 +122,30 @@ public class DngParser implements Runnable, RawConverterCallback {
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
 
         // 0 to 1, where 0 is bleak and 1 is crunchy.
-        float crunchFactor = 0.6f;
+        float crunchFactor = 0.65f;
 
         // 0 is greyscale, 1 is the default, higher means oversaturation.
         // Best constant: 1.65f
-        float[] saturationCurve = new float[] {
+        /*float[] saturationCurve = new float[] {
                 -2f,
                 2f,
                 1.25f
+        };*/
+        float[] saturationCurve = new float[] {
+                0f,
+                0f,
+                1.65f
         };
 
         // 0 is the default, higher means more value sharpening.
-        float sharpenFactor = 0.2f;
+        //float sharpenFactor = 0.175f;
+        float sharpenFactor = 0.325f;
+
+        // Don't sharpen above ISO 400
+        int iso = tags.get(TIFF.TAG_ISOSpeedRatings).getInt();
+        if (iso > 400) {
+            sharpenFactor = 0.f;
+        }
 
         // 0 is the default, higher means more histogram equalization.
         float histoFactor = 0.025f;
@@ -148,11 +159,19 @@ public class DngParser implements Runnable, RawConverterCallback {
         };
 
         RenderScript rs = RenderScript.create(mContext);
-        RawConverter.convertToSRGB(this, rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
-                rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
-                forward1, forward2, neutral, /* shadingMap */ null,
-                defaultCropOrigin[0], defaultCropOrigin[1], dotFix, postProcCurve, saturationCurve,
-                sharpenFactor, histoFactor, argbOutput);
+//        if (true) {
+            RawConverter.convertToSRGB(this, rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
+                    rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
+                    forward1, forward2, neutral, /* shadingMap */ null,
+                    defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve, saturationCurve,
+                    sharpenFactor, histoFactor, argbOutput);
+//        } else {
+//            amirz.dngprocessor.renderscript.RawConverter.convertToSRGB(this, rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
+//                    rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
+//                    forward1, forward2, neutral, /* shadingMap */ null,
+//                    defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve, 1.65f,
+//                    sharpenFactor, histoFactor, argbOutput);
+//        }
         RenderScript.releaseAllContexts();
 
         String savePath = getSavePath();
