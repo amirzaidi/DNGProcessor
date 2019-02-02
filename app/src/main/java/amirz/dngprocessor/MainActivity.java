@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import amirz.dngprocessor.parser.DngParser;
+import amirz.dngprocessor.scheduler.DngParseService;
 import amirz.dngprocessor.scheduler.DngScanJob;
 
 public class MainActivity extends Activity {
@@ -69,7 +70,7 @@ public class MainActivity extends Activity {
             DngScanJob.scheduleJob(this);
 
             Intent picker = new Intent(Intent.ACTION_GET_CONTENT);
-            picker.setType("image/x-adobe-dng");
+            picker.setType(Path.MIME_RAW);
             startActivityForResult(picker, REQUEST_IMAGE);
         } else {
             requestPermissions(new String[] {
@@ -86,7 +87,7 @@ public class MainActivity extends Activity {
                     tryRequestImage();
                     break;
                 case REQUEST_IMAGE:
-                    new Thread(new DngParser(this, data.getData())).start();
+                    DngParseService.runForUri(this, data.getData());
                     break;
             }
         }

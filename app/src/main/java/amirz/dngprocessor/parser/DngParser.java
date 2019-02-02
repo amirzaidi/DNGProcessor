@@ -1,10 +1,10 @@
 package amirz.dngprocessor.parser;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.hardware.camera2.CameraCharacteristics;
 import android.support.media.ExifInterface;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.util.Log;
 import android.util.Rational;
@@ -15,19 +15,16 @@ import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 import amirz.dngprocessor.NotifHandler;
 import amirz.dngprocessor.Path;
 import amirz.dngprocessor.gl.RawConverter;
-import amirz.dngprocessor.renderscript.RawConverterCallback;
+import amirz.dngprocessor.gl.RawConverterCallback;
 
-public class DngParser implements Runnable, RawConverterCallback {
-    private static final String TAG = "Parser";
-    private static final int STEPS = amirz.dngprocessor.renderscript.RawConverter.STEPS + 2;
+public class DngParser implements RawConverterCallback {
+    private static final String TAG = "DngParser";
+    private static final int STEPS = RawConverter.STEPS + 2;
     private static final int JPEG_QUALITY = 95;
-
-    public static final ConcurrentSkipListSet<String> sProcessing = new ConcurrentSkipListSet<>();
 
     private final Context mContext;
     private final Uri mUri;
@@ -37,7 +34,6 @@ public class DngParser implements Runnable, RawConverterCallback {
         mContext = context;
         mUri = uri;
         mFile = Path.getFileFromUri(mContext, mUri);
-        sProcessing.add(mFile);
     }
 
     private String getSavePath() {
@@ -48,17 +44,9 @@ public class DngParser implements Runnable, RawConverterCallback {
         return Path.processedFile(mFile);
     }
 
-    @Override
     public void run() {
-        NotifHandler.create(mContext, mFile);
-        NotifHandler.progress(mContext, mFile, STEPS, 0);
+        NotifHandler.progress(mContext, STEPS, 0);
 
-        synchronized (sProcessing) {
-            runUnsafe();
-        }
-    }
-
-    private void runUnsafe() {
         ByteReader.ReaderWithExif reader = ByteReader.fromUri(mContext, mUri);
         Log.e(TAG, "Starting processing of " + mFile + " (" + mUri.toString() + ") size " +
                 reader.length);
@@ -182,7 +170,7 @@ public class DngParser implements Runnable, RawConverterCallback {
             e.printStackTrace();
         }
 
-        NotifHandler.progress(mContext, mFile, STEPS, STEPS - 1);
+        NotifHandler.progress(mContext, STEPS, STEPS - 1);
         argbOutput.recycle();
 
         try {
@@ -209,16 +197,16 @@ public class DngParser implements Runnable, RawConverterCallback {
             e.printStackTrace();
         }
 
-        MediaScannerConnection.scanFile(mContext,
-                new String[] { savePath }, null, null);
+        Intent mediaScannerIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        mediaScannerIntent.setData(Uri.fromFile(new File(savePath)));
+        mContext.sendBroadcast(mediaScannerIntent);
 
-        NotifHandler.done(mContext, mFile);
-        sProcessing.remove(mFile);
+        NotifHandler.progress(mContext, STEPS, STEPS);
     }
 
     @Override
     public void onProgress(int step) {
-        NotifHandler.progress(mContext, mFile, STEPS, step);
+        NotifHandler.progress(mContext, STEPS, step);
     }
 
     @SuppressWarnings("deprecation")

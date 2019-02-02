@@ -4,13 +4,14 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.util.SparseArray;
 
 public class NotifHandler {
     private static final String CHANNEL = "default";
-    private static SparseArray<Notification.Builder> sMap = new SparseArray<>();
+    private static final int FOREGROUND_ID = 1;
+    private static Notification.Builder mBuilder;
 
     public static void createChannel(Context context) {
         NotificationChannel channel = new NotificationChannel(CHANNEL, "Default",
@@ -20,24 +21,23 @@ public class NotifHandler {
         manager(context).createNotificationChannel(channel);
     }
 
-    public static void create(Context context, String name) {
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, new Intent(), 0);
-        sMap.append(name.hashCode(), new Notification.Builder(context, CHANNEL)
+    public static void create(Service service, String name) {
+        PendingIntent pendingIntent = PendingIntent.getActivity(service, 0, new Intent(), 0);
+        mBuilder = new Notification.Builder(service, CHANNEL)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("Processing " + name)
-                .setContentIntent(pendingIntent));
+                .setContentIntent(pendingIntent);
+
+        service.startForeground(FOREGROUND_ID, mBuilder.build());
     }
 
-    public static void progress(Context context, String name, int max, int progress) {
-        Notification notif = sMap.get(name.hashCode())
-                .setProgress(max, progress, false)
-                .build();
-        notif.flags |= Notification.FLAG_ONGOING_EVENT;
-        manager(context).notify(name.hashCode(), notif);
+    public static void progress(Context context, int max, int progress) {
+        Notification notif = mBuilder.setProgress(max, progress, false).build();
+        manager(context).notify(FOREGROUND_ID, notif);
     }
 
-    public static void done(Context context, String name) {
-        manager(context).cancel(name.hashCode());
+    public static void done(Service service) {
+        service.stopForeground(true);
     }
 
     private static NotificationManager manager(Context context) {

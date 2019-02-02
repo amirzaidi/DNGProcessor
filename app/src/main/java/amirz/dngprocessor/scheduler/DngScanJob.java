@@ -5,14 +5,12 @@ import android.app.job.JobParameters;
 import android.app.job.JobScheduler;
 import android.app.job.JobService;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 
-import java.io.File;
-
-import amirz.dngprocessor.parser.DngParser;
 import amirz.dngprocessor.Path;
 
 public class DngScanJob extends JobService {
@@ -49,16 +47,17 @@ public class DngScanJob extends JobService {
         StringBuilder sb = new StringBuilder();
         sb.append("onStartJob: Media content has changed: ");
 
+        ContentResolver contentResolver = getContentResolver();
+
         if (params.getTriggeredContentAuthorities() != null) {
             if (params.getTriggeredContentUris() != null) {
                 for (Uri uri : params.getTriggeredContentUris()) {
+                    if (Path.MIME_RAW.equals(contentResolver.getType(uri))) {
+                        DngParseService.runForUri(this, uri);
+                    }
+
                     try {
                         String file = Path.getFileFromUri(this, uri);
-                        if (file.endsWith(Path.EXT_RAW) &&
-                                !DngParser.sProcessing.contains(file) &&
-                                !new File(Path.processedFile(file)).exists()) {
-                            new Thread(new DngParser(this, uri)).start();
-                        }
                         sb.append(file);
                         sb.append(", ");
                     } catch (Exception ignored) {

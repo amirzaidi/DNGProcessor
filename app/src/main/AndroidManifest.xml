@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <!-- Tell the system this app requires OpenGL ES 3.2. -->
     <uses-feature android:glEsVersion="0x00030002" android:required="true" />
@@ -22,21 +23,19 @@
             </intent-filter>
         </activity>
 
-        <service
-            android:name=".scheduler.DngScanJob"
-            android:enabled="true"
-            android:exported="false"
-            android:permission="android.permission.BIND_JOB_SERVICE">
-        </service>
-
         <receiver
             android:name=".scheduler.BootReceiver"
-            android:enabled="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <service
+            android:name=".scheduler.DngScanJob"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <service android:name=".scheduler.DngParseService" />
     </application>
 
 </manifest>

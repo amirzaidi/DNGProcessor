@@ -12,6 +12,8 @@ public class Path {
     public static final String EXT_RAW = ".dng";
     public static final String EXT_JPG = ".jpg";
 
+    public static final String MIME_RAW = "image/x-adobe-dng";
+
     public static final String ROOT = Environment.getExternalStorageDirectory().toString();
 
     public static final String DCIM = ROOT + File.separator + "DCIM";

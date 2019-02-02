@@ -25,8 +25,6 @@ import android.util.SparseIntArray;
 
 import java.util.Arrays;
 
-import amirz.dngprocessor.renderscript.RawConverterCallback;
-
 /**
  * Utility class providing methods for rendering RAW16 images into other colorspaces.
  */
@@ -35,10 +33,8 @@ public class RawConverter {
     private static final boolean DEBUG = true;
 
     public static int STEPS = 0;
-    private static final int STEP_RAW_INTERMEDIATE_ALLOC = ++STEPS;
-    private static final int STEP_INTERMEDIATE_CALC = ++STEPS;
-    private static final int STEP_OUTPUT_ALLOC = ++STEPS;
-    private static final int STEP_OUTPUT_CALC = ++STEPS;
+    private static final int STEP_RAW_INTERMEDIATE = ++STEPS;
+    private static final int STEP_INTERMEDIATE_OUTPUT = ++STEPS;
 
     /**
      * Matrix to convert from CIE XYZ colorspace to sRGB, Bradford-adapted to D65.
@@ -228,6 +224,7 @@ public class RawConverter {
         square.setTransforms1(sensorToXYZ);
 
         square.draw1();
+        cb.onProgress(STEP_RAW_INTERMEDIATE);
 
         square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         square.setTransforms2(XYZtoProPhoto, proPhotoToSRGB);
@@ -240,6 +237,7 @@ public class RawConverter {
         square.setOut(outWidth, outHeight);
 
         square.draw2();
+        cb.onProgress(STEP_INTERMEDIATE_OUTPUT);
 
         core.save();
 
