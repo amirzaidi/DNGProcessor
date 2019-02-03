@@ -3,6 +3,7 @@ package amirz.dngprocessor;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 
 import amirz.dngprocessor.scheduler.DngParseService;
@@ -36,6 +37,7 @@ public class MainActivity extends Activity {
 
             Intent picker = new Intent(Intent.ACTION_GET_CONTENT);
             picker.setType(Path.MIME_RAW);
+            picker.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             startActivityForResult(picker, REQUEST_IMAGE);
         } else {
             requestPermissions(new String[] {
@@ -62,9 +64,19 @@ public class MainActivity extends Activity {
         switch (requestCode) {
             case REQUEST_IMAGE:
                 if (resultCode == RESULT_OK) {
-                    DngParseService.runForUri(this, data.getData());
+                    if (data.getClipData() != null) {
+                        for (int i = 0; i < data.getClipData().getItemCount(); i++) {
+                            process(data.getClipData().getItemAt(i).getUri());
+                        }
+                    } else {
+                        process(data.getData());
+                    }
                 }
                 break;
         }
+    }
+
+    private void process(Uri uri) {
+        DngParseService.runForUri(this, uri);
     }
 }
