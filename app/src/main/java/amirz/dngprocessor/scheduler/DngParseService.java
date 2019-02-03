@@ -4,8 +4,10 @@ import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.widget.Toast;
 
 import amirz.dngprocessor.NotifHandler;
 import amirz.dngprocessor.Path;
@@ -40,7 +42,14 @@ public class DngParseService extends IntentService {
         Log.e(TAG, "onHandleIntent " + file);
 
         NotifHandler.create(this, file);
-        new DngParser(this, uri).run();
+        try {
+            new DngParser(this, uri).run();
+        } catch (Exception e) {
+            e.printStackTrace();
+            new Handler(getMainLooper()).post(() ->
+                    Toast.makeText(this, "DNG Processor could not load " + file,
+                            Toast.LENGTH_SHORT).show());
+        }
         NotifHandler.done(this);
     }
 }
