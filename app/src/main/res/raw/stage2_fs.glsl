@@ -266,7 +266,7 @@ vec3 applyColorspace(vec3 intermediate) {
     intermediate = xyYtoXYZ(intermediate);
 
     proPhoto = intermediateToProPhoto * intermediate;
-    proPhoto = tonemap(proPhoto); // Broken?
+    proPhoto = tonemap(proPhoto);
 
     sRGB = proPhotoToSRGB * proPhoto;
     sRGB = gammaCorrectPixel(sRGB);
@@ -274,26 +274,24 @@ vec3 applyColorspace(vec3 intermediate) {
     return sRGB;
 }
 
-const vec3 gMonoMult = vec3(0.299f, 0.587f, 0.114f);
-vec3 saturate(vec3 rgb, float z) {
-    float saturationFactor = 1.f;
-
-    float maxv = max(max(rgb.r, rgb.g), rgb.b);
-    float minv = min(min(rgb.r, rgb.g), rgb.b);
-    if (maxv > minv) {
-        float s = (maxv - minv) / maxv;
-        saturationFactor = 1.7f - 1.2f * s;
-    }
-
-    return rgb * saturationFactor
-        - dot(rgb, gMonoMult) * (saturationFactor - 1.f);
-}
-
 // Applies post processing curve to all channels
+// Maps from [0,1] to [0,1]
 vec3 applyCurve(vec3 inValue) {
     return inValue*inValue*inValue * postProcCurve.x
         + inValue*inValue * postProcCurve.y
         + inValue * postProcCurve.z;
+}
+
+const vec3 gMonoMult = vec3(0.299f, 0.587f, 0.114f);
+vec3 saturate(vec3 rgb) {
+    float maxv = max(max(rgb.r, rgb.g), rgb.b);
+    float minv = min(min(rgb.r, rgb.g), rgb.b);
+    if (maxv > minv) {
+        float s = (maxv - minv) / maxv; // [0,1]
+        float saturationFactor = 1.7f - s; // [0.7, 1.7]
+        rgb = rgb * saturationFactor - dot(rgb, gMonoMult) * (saturationFactor - 1.f);
+    }
+    return rgb;
 }
 
 void main() {
@@ -305,9 +303,9 @@ void main() {
     // Convert to final colorspace
     vec3 sRGB = applyColorspace(intermediate);
 
-    // Apply additional contrast and saturation
+    // Add contrast and saturation
     sRGB = applyCurve(sRGB);
-    sRGB = saturate(sRGB, intermediate.z);
+    sRGB = saturate(sRGB);
     sRGB = clamp(sRGB, 0.f, 1.f);
 
     color = vec4(sRGB, 1.f);
