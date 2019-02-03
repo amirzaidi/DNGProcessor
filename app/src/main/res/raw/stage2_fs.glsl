@@ -18,7 +18,6 @@ uniform mat3 proPhotoToSRGB; // Color transform from wide-gamut colorspace to sR
 
 // Post processing
 uniform vec3 postProcCurve;
-uniform vec3 saturationCurve;
 uniform float sharpenFactor;
 uniform float histoFactor;
 
@@ -277,9 +276,14 @@ vec3 applyColorspace(vec3 intermediate) {
 
 const vec3 gMonoMult = vec3(0.299f, 0.587f, 0.114f);
 vec3 saturate(vec3 rgb, float z) {
-    float saturationFactor = z*z * saturationCurve[0]
-        + z * saturationCurve[1]
-        + saturationCurve[2];
+    float saturationFactor = 1.f;
+
+    float maxv = max(max(rgb.r, rgb.g), rgb.b);
+    float minv = min(min(rgb.r, rgb.g), rgb.b);
+    if (maxv > minv) {
+        float s = (maxv - minv) / maxv;
+        saturationFactor = 1.75f * (1.25f - s);
+    }
 
     return rgb * saturationFactor
         - dot(rgb, gMonoMult) * (saturationFactor - 1.f);

@@ -223,11 +223,6 @@ public class GLSquare {
                 postProcCurve[0], postProcCurve[1], postProcCurve[2]);
     }
 
-    public void setSaturationCurve(float[] saturationCurve) {
-        glUniform3f(glGetUniformLocation(mProgramIntermediateToSRGB, "saturationCurve"),
-                saturationCurve[0], saturationCurve[1], saturationCurve[2]);
-    }
-
     public void setSharpenFactor(float sharpenFactor) {
         glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "sharpenFactor"),
                 sharpenFactor);

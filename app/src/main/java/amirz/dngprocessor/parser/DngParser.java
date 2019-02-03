@@ -25,6 +25,12 @@ public class DngParser {
     private static final String TAG = "DngParser";
     private static final int JPEG_QUALITY = 95;
 
+    private static int STEPS = 0;
+    private static final int STEP_READ = STEPS++;
+    private static final int STEP_PROCESS = STEPS++;
+    private static final int STEP_SAVE = STEPS++;
+    private static final int STEP_META = STEPS++;
+
     private final Context mContext;
     private final Uri mUri;
     private final String mFile;
@@ -44,7 +50,7 @@ public class DngParser {
     }
 
     public void run() {
-        NotifHandler.progress(mContext, 3, 0);
+        NotifHandler.progress(mContext, STEPS, STEP_READ);
 
         ByteReader.ReaderWithExif reader = ByteReader.fromUri(mContext, mUri);
         Log.e(TAG, "Starting processing of " + mFile + " (" + mUri.toString() + ") size " +
@@ -139,6 +145,8 @@ public class DngParser {
                 0f
         };
 
+        NotifHandler.progress(mContext, STEPS, STEP_PROCESS);
+
 //        if (true) {
             Shaders.load(mContext);
             RawConverter.convertToSRGB(inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
@@ -156,7 +164,7 @@ public class DngParser {
 //            RenderScript.releaseAllContexts();
 //        }
 
-        NotifHandler.progress(mContext, 3, 1);
+        NotifHandler.progress(mContext, STEPS, STEP_SAVE);
 
         String savePath = getSavePath();
         try (FileOutputStream out = new FileOutputStream(savePath)) {
@@ -167,6 +175,8 @@ public class DngParser {
 
         NotifHandler.progress(mContext, 3, 2);
         argbOutput.recycle();
+
+        NotifHandler.progress(mContext, STEPS, STEP_META);
 
         try {
             ExifInterface newExif = new ExifInterface(savePath);
@@ -202,7 +212,7 @@ public class DngParser {
         mediaScannerIntent.setData(Uri.fromFile(new File(savePath)));
         mContext.sendBroadcast(mediaScannerIntent);
 
-        NotifHandler.progress(mContext, 3, 3);
+        NotifHandler.progress(mContext, STEPS, STEPS);
     }
 
     @SuppressWarnings("deprecation")
