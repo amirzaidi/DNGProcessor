@@ -110,47 +110,9 @@ public class DngParser {
         DeviceMap.Device device = DeviceMap.get(model);
         device.neutralPointCorrection(tags, neutral);
 
-        // 0 is greyscale, 1 is the default, higher means oversaturation.
-        // Best constant: 1.65f
-        /*float[] saturationCurve = new float[] {
-                -2f,
-                2f,
-                1.25f
-        };*/
-        float[] saturationCurve = new float[] {
-                0f,
-                0f,
-                1.65f
-        };
-
-        // 0 is the default, higher means more value sharpening.
-        //float sharpenFactor = 0.175f;
-        float sharpenFactor = 0.325f;
-
-        // Don't sharpen above ISO 400
-        TIFFTag iso = tags.get(TIFF.TAG_ISOSpeedRatings);
-        if (iso != null && iso.getInt() > 400) {
-            sharpenFactor = 0.f;
-        }
-
-        // 0 is the default, higher means more histogram equalization.
-        float histoFactor = 0.2f;
-
-        // 0 to 1, where 0 is crunchy and 1 is linear.
-        /*float curveFactor = 0.33f;
-        float[] postProcCurve = new float[] {
-                -2f + 2f * curveFactor,
-                3f - 3f * curveFactor,
-                curveFactor,
-                0f
-        };*/
-
-        float [] postProcCurve = new float[] {
-                -1f,
-                2f,
-                0f,
-                0f
-        };
+        float sharpenFactor = device.sharpenFactor(tags);
+        float histoFactor = device.histFactor(tags);
+        float[] postProcCurve = device.postProcCurve(tags);
 
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS);
 
@@ -158,7 +120,7 @@ public class DngParser {
         RawConverter.convertToSRGB(inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
                 rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
                 forward1, forward2, neutral, /* shadingMap */ null,
-                defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve, saturationCurve,
+                defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve,
                 sharpenFactor, histoFactor, argbOutput);
 
         NotifHandler.progress(mContext, STEPS, STEP_SAVE);

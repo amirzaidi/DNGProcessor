@@ -114,7 +114,7 @@ public class RawConverter {
                                      float[] calibrationTransform2, float[] colorMatrix1, float[] colorMatrix2,
                                      float[] forwardTransform1, float[] forwardTransform2, Rational[/*3*/] neutralColorPoint,
                                      LensShadingMap lensShadingMap, int outputOffsetX, int outputOffsetY,
-                                     float[] postProcCurve, float[] saturationCurve, float sharpenFactor,
+                                     float[] postProcCurve, float sharpenFactor,
                                      float histoFactor, Bitmap argbOutput) {
         // Validate arguments
         if (argbOutput == null || rawImageInput == null) {
@@ -224,7 +224,6 @@ public class RawConverter {
         square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         square.setTransforms2(XYZtoProPhoto, proPhotoToSRGB);
         square.setPostProcCurve(postProcCurve);
-        //square.setSaturationCurve(saturationCurve);
         square.setSharpenFactor(sharpenFactor);
         square.setHistoFactor(histoFactor);
 

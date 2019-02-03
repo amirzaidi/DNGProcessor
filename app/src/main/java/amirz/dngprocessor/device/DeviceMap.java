@@ -4,9 +4,7 @@ import android.util.Rational;
 import android.util.SparseArray;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import amirz.dngprocessor.parser.TIFFTag;
 
@@ -15,6 +13,15 @@ public class DeviceMap {
         boolean isModel(String model);
 
         void neutralPointCorrection(SparseArray<TIFFTag> tags, Rational[] neutral);
+
+        // 0 is the default, higher means more histogram equalization
+        float histFactor(SparseArray<TIFFTag> tags);
+
+        // 0 is the default, higher means more value sharpening.
+        float sharpenFactor(SparseArray<TIFFTag> tags);
+
+        // [0, 0, 1, 0] is the default
+        float[] postProcCurve(SparseArray<TIFFTag> tags);
     }
 
     private static final List<Device> sDevices = new ArrayList<>();
