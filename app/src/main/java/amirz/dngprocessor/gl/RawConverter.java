@@ -211,7 +211,7 @@ public class RawConverter {
 
         // Write the variables first
         GLCore core = new GLCore(argbOutput);
-        GLSquare square = core.getSquare();
+        GLProgram square = core.getSquare();
 
         square.setIn(rawImageInput, inputWidth, inputHeight);
         square.setCfaPattern(cfa);

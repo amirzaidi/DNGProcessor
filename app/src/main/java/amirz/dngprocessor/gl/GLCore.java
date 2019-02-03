@@ -10,6 +10,7 @@ import javax.microedition.khronos.opengles.GL10;
 import static android.opengl.EGL14.EGL_BIND_TO_TEXTURE_RGBA;
 import static android.opengl.EGL14.EGL_CONTEXT_CLIENT_VERSION;
 import static android.opengl.EGL14.EGL_OPENGL_ES2_BIT;
+import static android.opengl.EGL14.EGL_TRUE;
 import static javax.microedition.khronos.egl.EGL10.*;
 import static javax.microedition.khronos.opengles.GL10.GL_RGBA;
 import static javax.microedition.khronos.opengles.GL10.GL_UNSIGNED_BYTE;
@@ -18,7 +19,7 @@ public class GLCore {
     private final Bitmap mOut;
     private final int mOutWidth, mOutHeight;
     private final GL10 mGL;
-    private final GLSquare mSquare;
+    private final GLProgram mProgram;
 
     public GLCore(Bitmap out) {
         mOut = out;
@@ -39,7 +40,7 @@ public class GLCore {
                 EGL_GREEN_SIZE, 8,
                 EGL_BLUE_SIZE, 8,
                 EGL_ALPHA_SIZE, 8,
-                EGL_BIND_TO_TEXTURE_RGBA, 1,
+                EGL_BIND_TO_TEXTURE_RGBA, EGL_TRUE,
                 EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
                 EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
                 EGL_NONE
@@ -48,17 +49,26 @@ public class GLCore {
         // No error checking performed, minimum required code to elucidate logic
         // Expand on this logic to be more selective in choosing a configuration
         int[] numConfig = new int[1];
-        egl.eglChooseConfig(display, attribList2, null, 0, numConfig);
+        if (!egl.eglChooseConfig(display, attribList2, null, 0, numConfig) || numConfig[0] == 0) {
+            throw new RuntimeException("OpenGL config count zero");
+        }
 
         int configSize = numConfig[0];
-        EGLConfig[] mEGLConfigs = new EGLConfig[configSize];
-        egl.eglChooseConfig(display, attribList2, mEGLConfigs, configSize, numConfig);
+        EGLConfig[] configs = new EGLConfig[configSize];
+        if (!egl.eglChooseConfig(display, attribList2, configs, configSize, numConfig)) {
+            throw new RuntimeException("OpenGL config loading failed");
+        }
 
-        EGLContext context = egl.eglCreateContext(display, mEGLConfigs[0], EGL_NO_CONTEXT, new int[] {
-                EGL_CONTEXT_CLIENT_VERSION, 3, EGL10.EGL_NONE
+        if (configs[0] == null) {
+            throw new RuntimeException("OpenGL config is null");
+        }
+
+        EGLContext context = egl.eglCreateContext(display, configs[0], EGL_NO_CONTEXT, new int[] {
+                EGL_CONTEXT_CLIENT_VERSION, 3,
+                EGL_NONE
         });
 
-        EGLSurface surface = egl.eglCreatePbufferSurface(display, mEGLConfigs[0], new int[] {
+        EGLSurface surface = egl.eglCreatePbufferSurface(display, configs[0], new int[] {
                 EGL_WIDTH, mOutWidth,
                 EGL_HEIGHT, mOutHeight,
                 EGL_NONE
@@ -66,12 +76,11 @@ public class GLCore {
 
         egl.eglMakeCurrent(display, surface, surface, context);
         mGL = (GL10) context.getGL();
-
-        mSquare = new GLSquare();
+        mProgram = new GLProgram();
     }
 
-    public GLSquare getSquare() {
-        return mSquare;
+    public GLProgram getSquare() {
+        return mProgram;
     }
 
     public void save() {
