@@ -11,19 +11,16 @@ import java.io.InputStreamReader;
 import amirz.dngprocessor.R;
 
 public class Shaders {
-    public static String VS1;
+    public static String VS;
     public static String PS1;
-
-    public static String VS2;
     public static String PS2;
 
     public static void load(Context context) {
         Resources res = context.getResources();
 
-        VS1 = readRaw(res, R.raw.stage1_vs);
-        PS1 = readRaw(res, R.raw.stage1_fs);
+        VS = readRaw(res, R.raw.passthrough_vs);
 
-        VS2 = readRaw(res, R.raw.stage2_vs);
+        PS1 = readRaw(res, R.raw.stage1_fs);
         PS2 = readRaw(res, R.raw.stage2_fs);
     }
 

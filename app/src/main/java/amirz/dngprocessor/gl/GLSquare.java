@@ -41,30 +41,26 @@ public class GLSquare {
         vertexBuffer.put(COORDS);
         vertexBuffer.position(0);
 
-        int vertexShader1 = loadShader(
+        int vertexShader = loadShader(
                 GL_VERTEX_SHADER,
-                Shaders.VS1);
+                Shaders.VS);
 
         int fragmentShader1 = loadShader(
                 GL_FRAGMENT_SHADER,
                 Shaders.PS1);
 
         mProgramSensorToIntermediate = glCreateProgram();
-        glAttachShader(mProgramSensorToIntermediate, vertexShader1);
+        glAttachShader(mProgramSensorToIntermediate, vertexShader);
         glAttachShader(mProgramSensorToIntermediate, fragmentShader1);
         glLinkProgram(mProgramSensorToIntermediate);
         glUseProgram(mProgramSensorToIntermediate);
-
-        int vertexShader2 = loadShader(
-                GL_VERTEX_SHADER,
-                Shaders.VS2);
 
         int fragmentShader2 = loadShader(
                 GL_FRAGMENT_SHADER,
                 Shaders.PS2);
 
         mProgramIntermediateToSRGB = glCreateProgram();
-        glAttachShader(mProgramIntermediateToSRGB, vertexShader2);
+        glAttachShader(mProgramIntermediateToSRGB, vertexShader);
         glAttachShader(mProgramIntermediateToSRGB, fragmentShader2);
     }
 
