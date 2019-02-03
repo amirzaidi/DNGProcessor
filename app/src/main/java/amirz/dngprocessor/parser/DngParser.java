@@ -3,7 +3,6 @@ package amirz.dngprocessor.parser;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.hardware.camera2.CameraCharacteristics;
 import android.support.media.ExifInterface;
 import android.net.Uri;
 import android.util.Log;
@@ -14,7 +13,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 
 import amirz.dngprocessor.NotifHandler;
 import amirz.dngprocessor.Path;
@@ -152,22 +150,12 @@ public class DngParser {
 
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS);
 
-//        if (true) {
-            Shaders.load(mContext);
-            RawConverter.convertToSRGB(inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
-                    rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
-                    forward1, forward2, neutral, /* shadingMap */ null,
-                    defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve, saturationCurve,
-                    sharpenFactor, histoFactor, argbOutput);
-//        } else {
-//            RenderScript rs = RenderScript.create(mContext);
-//            amirz.dngprocessor.renderscript.RawConverter.convertToSRGB(this, rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
-//                    rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
-//                    forward1, forward2, neutral, /* shadingMap */ null,
-//                    defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve, 1.65f,
-//                    sharpenFactor, histoFactor, argbOutput);
-//            RenderScript.releaseAllContexts();
-//        }
+        Shaders.load(mContext);
+        RawConverter.convertToSRGB(inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
+                rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
+                forward1, forward2, neutral, /* shadingMap */ null,
+                defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve, saturationCurve,
+                sharpenFactor, histoFactor, argbOutput);
 
         NotifHandler.progress(mContext, STEPS, STEP_SAVE);
 
