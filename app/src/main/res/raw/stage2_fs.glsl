@@ -282,7 +282,7 @@ vec3 saturate(vec3 rgb, float z) {
     float minv = min(min(rgb.r, rgb.g), rgb.b);
     if (maxv > minv) {
         float s = (maxv - minv) / maxv;
-        saturationFactor = 1.75f * (1.25f - s);
+        saturationFactor = 1.7f - 1.2f * s;
     }
 
     return rgb * saturationFactor
