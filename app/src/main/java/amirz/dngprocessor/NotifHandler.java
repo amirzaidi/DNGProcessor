@@ -8,23 +8,32 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 
+import static amirz.dngprocessor.Utilities.ATLEAST_OREO;
+
 public class NotifHandler {
     private static final String CHANNEL = "default";
     private static final int FOREGROUND_ID = 1;
     private static Notification.Builder mBuilder;
 
     public static void createChannel(Context context) {
-        NotificationChannel channel = new NotificationChannel(CHANNEL, "Default",
-                NotificationManager.IMPORTANCE_LOW);
-        channel.enableLights(false);
-        channel.enableVibration(false);
-        manager(context).createNotificationChannel(channel);
+        if (ATLEAST_OREO) {
+            NotificationChannel channel = new NotificationChannel(CHANNEL, "Default",
+                    NotificationManager.IMPORTANCE_LOW);
+            channel.enableLights(false);
+            channel.enableVibration(false);
+            manager(context).createNotificationChannel(channel);
+        }
     }
 
     public static void create(Service service, String name) {
         PendingIntent pendingIntent = PendingIntent.getActivity(service, 0, new Intent(), 0);
-        mBuilder = new Notification.Builder(service, CHANNEL)
-                .setSmallIcon(R.drawable.ic_notif)
+        if (ATLEAST_OREO) {
+            mBuilder = new Notification.Builder(service, CHANNEL);
+        } else {
+            mBuilder = new Notification.Builder(service);
+        }
+
+        mBuilder.setSmallIcon(R.drawable.ic_notif)
                 .setContentTitle("Processing " + name)
                 .setContentIntent(pendingIntent);
 
