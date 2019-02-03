@@ -3,6 +3,7 @@ package amirz.dngprocessor.device;
 import android.util.Rational;
 import android.util.SparseArray;
 
+import amirz.dngprocessor.parser.TIFF;
 import amirz.dngprocessor.parser.TIFFTag;
 
 public class Generic implements DeviceMap.Device {
@@ -22,7 +23,9 @@ public class Generic implements DeviceMap.Device {
 
     @Override
     public float sharpenFactor(SparseArray<TIFFTag> tags) {
-        return 0.325f;
+        return lowLight(tags)
+                ? 0.1f
+                : 0.325f;
     }
 
     @Override
@@ -43,5 +46,11 @@ public class Generic implements DeviceMap.Device {
             0f,
             0f
         };
+    }
+
+    private boolean lowLight(SparseArray<TIFFTag> tags) {
+        // Note: OnePlus only reports ISOs up to 799
+        TIFFTag iso = tags.get(TIFF.TAG_ISOSpeedRatings);
+        return iso != null && iso.getInt() > 400;
     }
 }
