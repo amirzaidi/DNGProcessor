@@ -16,6 +16,7 @@ import java.nio.ByteOrder;
 
 import amirz.dngprocessor.NotifHandler;
 import amirz.dngprocessor.Path;
+import amirz.dngprocessor.device.DeviceMap;
 import amirz.dngprocessor.gl.RawConverter;
 import amirz.dngprocessor.gl.Shaders;
 
@@ -87,7 +88,7 @@ public class DngParser {
         ((ByteBuffer) wrap.position(startIndex)).get(rawImageInput);
 
         int cfa = CFAPattern.get(tags.get(TIFF.TAG_CFAPattern).getIntArray());
-        //String model = tags.get(TIFF.TAG_Model).toString();
+        String model = tags.get(TIFF.TAG_Model).toString();
 
         int[] blackLevelPattern = tags.get(TIFF.TAG_BlackLevel).getIntArray();
         int whiteLevel = tags.get(TIFF.TAG_WhiteLevel).getInt();
@@ -105,6 +106,9 @@ public class DngParser {
         int[] defaultCropOrigin = tags.get(TIFF.TAG_DefaultCropOrigin).getIntArray();
         int[] defaultCropSize = tags.get(TIFF.TAG_DefaultCropSize).getIntArray();
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
+
+        DeviceMap.Device device = DeviceMap.get(model);
+        device.neutralPointCorrection(tags, neutral);
 
         // 0 is greyscale, 1 is the default, higher means oversaturation.
         // Best constant: 1.65f
