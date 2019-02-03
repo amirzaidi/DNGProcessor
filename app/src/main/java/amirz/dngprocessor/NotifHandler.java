@@ -24,7 +24,7 @@ public class NotifHandler {
     public static void create(Service service, String name) {
         PendingIntent pendingIntent = PendingIntent.getActivity(service, 0, new Intent(), 0);
         mBuilder = new Notification.Builder(service, CHANNEL)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notif)
                 .setContentTitle("Processing " + name)
                 .setContentIntent(pendingIntent);
 
