@@ -254,9 +254,9 @@ float gammaEncode(float x) {
 // Apply gamma correction to each color channel in RGB pixel
 vec3 gammaCorrectPixel(vec3 rgb) {
     vec3 ret;
-    ret.x = gammaEncode(rgb.x);
-    ret.y = gammaEncode(rgb.y);
-    ret.z = gammaEncode(rgb.z);
+    ret.r = gammaEncode(rgb.r);
+    ret.g = gammaEncode(rgb.g);
+    ret.b = gammaEncode(rgb.b);
     return ret;
 }
 
@@ -265,10 +265,10 @@ vec3 applyColorspace(vec3 intermediate) {
 
     intermediate = xyYtoXYZ(intermediate);
 
-    proPhoto = intermediateToProPhoto * intermediate;
+    proPhoto = clamp(intermediateToProPhoto * intermediate, 0.f, 1.f);
     proPhoto = tonemap(proPhoto);
 
-    sRGB = proPhotoToSRGB * proPhoto;
+    sRGB = clamp(proPhotoToSRGB * proPhoto, 0.f, 1.f);
     sRGB = gammaCorrectPixel(sRGB);
 
     return sRGB;
