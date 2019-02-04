@@ -18,14 +18,14 @@ public class Generic implements DeviceMap.Device {
 
     @Override
     public float histFactor(SparseArray<TIFFTag> tags) {
-        return 0.2f;
+        return 0.15f;
     }
 
     @Override
     public float sharpenFactor(SparseArray<TIFFTag> tags) {
         return lowLight(tags)
-                ? 0.1f
-                : 0.325f;
+                ? 0.05f
+                : 0.25f;
     }
 
     @Override
