@@ -288,8 +288,10 @@ vec3 saturate(vec3 rgb) {
     float minv = min(min(rgb.r, rgb.g), rgb.b);
     if (maxv > minv) {
         float s = (maxv - minv) / maxv; // [0,1]
-        float saturationFactor = 1.7f - s; // [0.7, 1.7]
-        rgb = rgb * saturationFactor - dot(rgb, gMonoMult) * (saturationFactor - 1.f);
+        //float saturationFactor = 1.7f - s; // [0.7, 1.7]
+        float saturationFactor = 2.f - pow(s, 1.5f) - length(rgb) / sqrt(3.f); // [0, 2]
+        saturationFactor += 0.25f;
+        rgb = rgb * saturationFactor + dot(rgb, gMonoMult) * (1.f - saturationFactor);
     }
     return rgb;
 }
