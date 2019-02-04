@@ -1,8 +1,16 @@
 <resources>
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="android:Theme.Material.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
+    <style name="SettingsTheme" parent="@android:style/Theme.Material.Settings">
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:actionBarTheme">@style/SettingsTheme.ActionBar</item>
+        <item name="android:colorPrimary">@color/colorPrimary</item>
+        <item name="android:colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="android:colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="SettingsTheme.ActionBar">
+        <item name="android:textColorPrimary">@color/colorAccent</item>
+        <item name="android:colorControlNormal">@color/colorAccent</item>
     </style>
 
 </resources>

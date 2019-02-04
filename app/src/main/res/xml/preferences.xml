@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/category_features">
+
+        <Preference
+            android:key="pref_manual_select"
+            android:title="@string/pref_manual_select_title"
+            android:summary="@string/pref_manual_select_summary" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/category_settings">
+
+        <SwitchPreference
+            android:key="pref_background_process"
+            android:title="@string/pref_background_process_title"
+            android:summary="@string/pref_background_process_desc"
+            android:defaultValue="true" />
+
+        <SwitchPreference
+            android:key="pref_delete_original"
+            android:title="@string/pref_delete_original_title"
+            android:summary="@string/pref_delete_original_desc"
+            android:defaultValue="false" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

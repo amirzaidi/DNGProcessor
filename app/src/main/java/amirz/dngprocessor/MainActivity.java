@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.Preference;
 
 import amirz.dngprocessor.scheduler.DngParseService;
 import amirz.dngprocessor.scheduler.DngScanJob;
@@ -20,10 +21,11 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-        NotifHandler.createChannel(this);
-        tryRequestImage();
+        if (savedInstanceState == null) {
+            NotifHandler.createChannel(this);
+            tryLoad();
+        }
     }
 
     private boolean hasPermissions() {
@@ -31,14 +33,12 @@ public class MainActivity extends Activity {
                 == PERMISSION_GRANTED;
     }
 
-    private void tryRequestImage() {
+    private void tryLoad() {
         if (hasPermissions()) {
             DngScanJob.scheduleJob(this);
-
-            Intent picker = new Intent(Intent.ACTION_GET_CONTENT);
-            picker.setType(Path.MIME_RAW);
-            picker.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-            startActivityForResult(picker, REQUEST_IMAGE);
+            getFragmentManager().beginTransaction()
+                    .replace(android.R.id.content, new Settings.Fragment())
+                    .commit();
         } else {
             requestPermissions(new String[] {
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -53,10 +53,19 @@ public class MainActivity extends Activity {
         switch (requestCode) {
             case REQUEST_PERMISSIONS:
                 if (grantResults[0] == PERMISSION_GRANTED) {
-                    tryRequestImage();
+                    tryLoad();
                 }
                 break;
         }
+    }
+
+    public boolean requestImage(Preference preference) {
+        Intent picker = new Intent(Intent.ACTION_GET_CONTENT);
+        picker.setType(Path.MIME_RAW);
+        picker.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        startActivityForResult(picker, REQUEST_IMAGE);
+
+        return false;
     }
 
     @Override

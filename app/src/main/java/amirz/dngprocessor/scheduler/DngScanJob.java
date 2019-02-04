@@ -13,6 +13,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import amirz.dngprocessor.Path;
+import amirz.dngprocessor.Settings;
 import amirz.dngprocessor.Utilities;
 
 public class DngScanJob extends JobService {
@@ -46,6 +47,8 @@ public class DngScanJob extends JobService {
 
     @Override
     public boolean onStartJob(JobParameters params) {
+        boolean backgroundProcess = Settings.backgroundProcess(this);
+
         StringBuilder sb = new StringBuilder();
         sb.append("onStartJob: Media content has changed: ");
 
@@ -62,7 +65,9 @@ public class DngScanJob extends JobService {
                         // If this is an unprocessed RAW image, process it and save that we did.
                         if (Path.isRaw(contentResolver, uri, file) && prefs.getBoolean(key, true)) {
                             prefs.edit().putBoolean(key, false).apply();
-                            DngParseService.runForUri(this, uri);
+                            if (backgroundProcess) {
+                                DngParseService.runForUri(this, uri);
+                            }
                             sb.append("PROCESS@");
                         }
 

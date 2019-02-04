@@ -9,8 +9,11 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.io.File;
+
 import amirz.dngprocessor.NotifHandler;
 import amirz.dngprocessor.Path;
+import amirz.dngprocessor.Settings;
 import amirz.dngprocessor.parser.DngParser;
 
 import static amirz.dngprocessor.Utilities.ATLEAST_OREO;
@@ -44,6 +47,19 @@ public class DngParseService extends IntentService {
         NotifHandler.create(this, file);
         try {
             new DngParser(this, uri).run();
+            if (Settings.deleteOriginal(this)) {
+                String path = Path.getPathFromUri(this, uri);
+                Log.e(TAG, "Deleting " + path);
+                File resolvedFile = new File(path);
+                if (resolvedFile.delete()) {
+                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
+                            Uri.fromFile(resolvedFile)));
+                } else {
+                    new Handler(getMainLooper()).post(() ->
+                            Toast.makeText(this, "Could not delete " + file,
+                                    Toast.LENGTH_SHORT).show());
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
             new Handler(getMainLooper()).post(() ->

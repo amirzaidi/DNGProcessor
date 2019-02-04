@@ -52,7 +52,7 @@ public class DngParser {
         NotifHandler.progress(mContext, STEPS, STEP_READ);
 
         ByteReader.ReaderWithExif reader = ByteReader.fromUri(mContext, mUri);
-        Log.e(TAG, "Starting processing of " + mFile + " (" + mUri.toString() + ") size " +
+        Log.e(TAG, "Starting processing of " + mFile + " (" + mUri.getPath() + ") size " +
                 reader.length);
 
         ByteBuffer wrap = reader.wrap;
@@ -167,9 +167,8 @@ public class DngParser {
             e.printStackTrace();
         }
 
-        Intent mediaScannerIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-        mediaScannerIntent.setData(Uri.fromFile(new File(savePath)));
-        mContext.sendBroadcast(mediaScannerIntent);
+        mContext.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
+                Uri.fromFile(new File(savePath))));
 
         NotifHandler.progress(mContext, STEPS, STEPS);
     }

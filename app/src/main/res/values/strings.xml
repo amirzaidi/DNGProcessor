@@ -1,4 +1,13 @@
 <resources>
     <string name="app_name">DNG Processor</string>
-    <string name="main_message">This app is waiting for new DNG files, and will process them when found. Go take a RAW picture!</string>
+
+    <string name="category_features">Features</string>
+    <string name="pref_manual_select_title">Select manually</string>
+    <string name="pref_manual_select_summary">Pick files to process</string>
+
+    <string name="category_settings">Settings</string>
+    <string name="pref_background_process_title">Background processing</string>
+    <string name="pref_background_process_desc">Automatically detect new files</string>
+    <string name="pref_delete_original_title">Delete original</string>
+    <string name="pref_delete_original_desc">Remove files that were successfully processed</string>
 </resources>
