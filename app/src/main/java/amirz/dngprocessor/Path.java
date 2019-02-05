@@ -1,16 +1,21 @@
 package amirz.dngprocessor;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
+import android.util.Log;
 
 import java.io.File;
 
 public class Path {
+    private static final String TAG = "Path";
+
     public static final String EXT_RAW = ".dng";
     public static final String EXT_JPG = ".jpg";
 
@@ -35,51 +40,87 @@ public class Path {
     }
 
     public static String getFileFromUri(Context context, Uri uri) {
-        String result = getPathFromUri(context, uri);
-        int cut = result.lastIndexOf('/');
-        if (cut != -1) {
-            result = result.substring(cut + 1);
+        String fileName = getColumn(context, uri, OpenableColumns.DISPLAY_NAME);
+
+        /* document/raw:PATH */
+        if (fileName == null) {
+            String result = getPathFromUri(context, uri);
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                fileName = result.substring(cut + 1);
+            }
         }
-        return result;
+
+        Log.d(TAG, "Resolved " + uri.toString() + " to name " + fileName);
+        return fileName;
     }
 
     public static String getPathFromUri(Context context, Uri uri) {
-        ContentResolver cr = context.getContentResolver();
-        String[] column = { MediaStore.Images.Media.DATA };
-        String filePath = null;
+        String filePath = getColumn(context, uri, MediaStore.Images.Media.DATA);
 
-        // /document/image:NUM
+        /* document/raw:PATH */
+        if (filePath == null) {
+            filePath = uri.getPath();
+            if (filePath.contains(":")) {
+                String[] split = filePath.split(":");
+                filePath = split[split.length - 1];
+            }
+        }
+
+        Log.d(TAG, "Resolved " + uri.toString() + " to path " + filePath);
+        return filePath;
+    }
+
+    private static String getColumn(Context context, Uri uri, String column) {
+        ContentResolver cr = context.getContentResolver();
+        String result = null;
         if (DocumentsContract.isDocumentUri(context, uri)) {
-            String id = DocumentsContract.getDocumentId(uri).split(":")[1];
-            try (Cursor cursor = cr.query(
+            String id = DocumentsContract.getDocumentId(uri);
+            if (id.contains(":")) {
+                id = id.split(":")[1];
+            }
+
+            /* document/image:NUM */
+            result = query(cr,
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                     column,
                     MediaStore.Images.Media._ID + "=?",
-                    new String[] { id }, null)) {
-                int columnIndex = cursor.getColumnIndex(column[0]);
-                if (cursor.moveToFirst()) {
-                    filePath = cursor.getString(columnIndex);
+                    new String[] { id });
+
+            /* document/NUM */
+            if (result == null) {
+                try {
+                    long l = Long.valueOf(id);
+                    result = query(cr, ContentUris.withAppendedId(
+                            Uri.parse("content://downloads/public_downloads"), l),
+                            column);
+                } catch (Exception ignored) {
                 }
             }
         }
 
-        // content://media/external/images/media/NUM
-        if (filePath == null) {
-            try (Cursor cursor = cr.query(
-                    uri, column, null, null, null)) {
-                int columnIndex = cursor.getColumnIndex(column[0]);
+        /* media/external/images/media/NUM */
+        if (result == null) {
+            result = query(cr, uri, column);
+        }
+
+        return result;
+    }
+
+    private static String query(ContentResolver cr, Uri uri, String column) {
+        return query(cr, uri, column, null, null);
+    }
+
+    private static String query(ContentResolver cr, Uri uri, String column, String selection, String[] selectionArgs) {
+        try (Cursor cursor = cr.query(
+                uri, new String[] { column }, selection, selectionArgs, null)) {
+            if (cursor != null) {
+                int columnIndex = cursor.getColumnIndex(column);
                 if (cursor.moveToFirst()) {
-                    filePath = cursor.getString(columnIndex);
+                    return cursor.getString(columnIndex);
                 }
             }
         }
-
-        // /document/raw:PATH
-        if (filePath == null) {
-            String[] split = uri.getPath().split(":");
-            filePath = split[split.length - 1];
-        }
-
-        return filePath;
+        return null;
     }
 }
