@@ -16,6 +16,7 @@ import java.nio.ByteOrder;
 
 import amirz.dngprocessor.NotifHandler;
 import amirz.dngprocessor.Path;
+import amirz.dngprocessor.Settings;
 import amirz.dngprocessor.device.DeviceMap;
 import amirz.dngprocessor.gl.RawConverter;
 import amirz.dngprocessor.gl.Shaders;
@@ -113,6 +114,12 @@ public class DngParser {
         float sharpenFactor = device.sharpenFactor(tags);
         float histoFactor = device.histFactor(tags);
         float[] postProcCurve = device.postProcCurve(tags);
+
+        if (!Settings.postProcess(mContext)) {
+            sharpenFactor = 0.f;
+            histoFactor = 0.f;
+            postProcCurve = new float[] { 0f, 0f, 1f, 0f };
+        }
 
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS);
 
