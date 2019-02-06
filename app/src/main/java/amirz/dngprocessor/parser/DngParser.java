@@ -110,16 +110,25 @@ public class DngParser {
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
 
         ProcessParams process = new ProcessParams();
-        if (Settings.noiseReduce(mContext)) {
-            process.denoiseRadius = 150;
-        }
-        if (Settings.postProcess(mContext)) {
-            DeviceMap.Device device = DeviceMap.get(model);
-            device.neutralPointCorrection(tags, sensor.neutralColorPoint);
-
-            process.sharpenFactor = device.sharpenFactor(tags);
-            process.histFactor = device.histFactor(tags);
-            process.saturationCurve = new float[] { 2f, 1.5f, 1.25f }; // x - y * s^z
+        process.denoiseRadius = Settings.noiseReduce(mContext) ? 150 : 0;
+        switch (Settings.postProcess(mContext)) {
+            case Disabled:
+                process.sharpenFactor = 0f;
+                process.histFactor = 0f;
+                process.saturationCurve = new float[] { 1f, 0f, 0f };
+                break;
+            case Adaptive:
+                DeviceMap.Device device = DeviceMap.get(model);
+                device.neutralPointCorrection(tags, sensor.neutralColorPoint);
+                process.sharpenFactor = device.sharpenFactor(tags);
+                process.histFactor = device.histFactor(tags);
+                process.saturationCurve = new float[] { 2f, 1.5f, 1.25f };
+                break;
+            case Boosted:
+                process.sharpenFactor = 0.35f;
+                process.histFactor = 0.25f;
+                process.saturationCurve = new float[] { 2.5f, 0.5f, 1f };
+                break;
         }
 
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS_INIT);

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array translatable="false" name="post_processing_preset_names">
+        <item>@string/post_processing_disabled</item>
+        <item>@string/post_processing_adaptive</item>
+        <item>@string/post_processing_boosted</item>
+    </string-array>
+
+    <string-array translatable="false" name="post_processing_preset_values">
+        <item>Disabled</item>
+        <item>Adaptive</item>
+        <item>Boosted</item>
+    </string-array>
+</resources>

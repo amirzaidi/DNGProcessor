@@ -10,7 +10,13 @@ public class Settings {
     private static final String PREF_DELETE_ORIGINAL = "pref_delete_original";
     private static final String PREF_SAVE_PATH = "pref_save_path";
     private static final String PREF_NOISE_REDUCE = "pref_noise_reduce";
-    private static final String PREF_POST_PROCESS = "pref_post_process";
+    private static final String PREF_POST_PROCESS = "pref_post_process_type";
+
+    public enum PostProcessMode {
+        Disabled,
+        Adaptive,
+        Boosted
+    }
 
     public static class Fragment extends PreferenceFragment {
         private MainActivity mActivity;
@@ -44,7 +50,7 @@ public class Settings {
         return Utilities.prefs(context).getBoolean(PREF_NOISE_REDUCE, true);
     }
 
-    public static boolean postProcess(Context context) {
-        return Utilities.prefs(context).getBoolean(PREF_POST_PROCESS, true);
+    public static PostProcessMode postProcess(Context context) {
+        return PostProcessMode.valueOf(Utilities.prefs(context).getString(PREF_POST_PROCESS, "Adaptive"));
     }
 }

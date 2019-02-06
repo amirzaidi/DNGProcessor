@@ -40,11 +40,13 @@
             android:summary="@string/pref_noise_reduce_desc"
             android:defaultValue="true" />
 
-        <SwitchPreference
-            android:key="pref_post_process"
+        <ListPreference
+            android:key="pref_post_process_type"
             android:title="@string/pref_post_process_title"
-            android:summary="@string/pref_post_process_desc"
-            android:defaultValue="true" />
+            android:summary="%s"
+            android:entries="@array/post_processing_preset_names"
+            android:entryValues="@array/post_processing_preset_values"
+            android:defaultValue="Adaptive" />
 
     </PreferenceCategory>
 

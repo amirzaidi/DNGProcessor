@@ -17,6 +17,8 @@
     <string name="category_pipeline">Pipeline</string>
     <string name="pref_noise_reduce_title">Noise reduction</string>
     <string name="pref_noise_reduce_desc">Removes chromatic irregularities</string>
-    <string name="pref_post_process_title">Post-processing</string>
-    <string name="pref_post_process_desc">Sharpening, histogram equalization, saturation</string>
+    <string name="pref_post_process_title">Post processing</string>
+    <string name="post_processing_disabled">Disabled</string>
+    <string name="post_processing_adaptive">Adaptive</string>
+    <string name="post_processing_boosted">Boosted</string>
 </resources>
