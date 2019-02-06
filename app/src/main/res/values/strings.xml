@@ -10,6 +10,9 @@
     <string name="pref_background_process_desc">Automatically detect new files</string>
     <string name="pref_delete_original_title">Delete original</string>
     <string name="pref_delete_original_desc">Remove files that were successfully processed</string>
+    <string name="pref_save_path_title">Save path</string>
+    <string name="pref_save_path_desc">Directory where the results are stored</string>
+    <string name="pref_save_path_default">DCIM/Processed</string>
 
     <string name="category_pipeline">Pipeline</string>
     <string name="pref_noise_reduce_title">Noise reduction</string>

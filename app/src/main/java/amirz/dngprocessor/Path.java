@@ -24,19 +24,18 @@ public class Path {
 
     public static final String ROOT = Environment.getExternalStorageDirectory().toString();
 
-    public static final String DCIM = ROOT + File.separator + "DCIM";
-
-    public static final String CAMERA = DCIM + File.separator + "Camera";
-
-    public static final String PROCESSED = DCIM + File.separator + "Processed";
-
     public static boolean isRaw(ContentResolver contentResolver, Uri uri, String file) {
         String mime = contentResolver.getType(uri);
         return MIME_RAW.equals(mime) || (MIME_JPG.equals(mime) && file.endsWith(Path.EXT_RAW));
     }
 
-    public static String processedFile(String name) {
-        return PROCESSED + File.separator + name.replace(EXT_RAW, EXT_JPG);
+    public static String processedPath(String dir, String name) {
+        dir = ROOT + File.separator + dir;
+        File folder = new File(dir);
+        if (!folder.exists() && !folder.mkdir()) {
+            throw new RuntimeException("Cannot create " + dir);
+        }
+        return dir + File.separator + name.replace(EXT_RAW, EXT_JPG);
     }
 
     public static String getFileFromUri(Context context, Uri uri) {

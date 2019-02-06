@@ -43,14 +43,6 @@ public class DngParser {
         mFile = Path.getFileFromUri(mContext, mUri);
     }
 
-    private String getSavePath() {
-        File folder = new File(Path.PROCESSED);
-        if (!folder.exists() && !folder.mkdir()) {
-            throw new RuntimeException("Cannot create " + Path.PROCESSED);
-        }
-        return Path.processedFile(mFile);
-    }
-
     public void run() {
         NotifHandler.progress(mContext, STEPS, STEP_READ);
 
@@ -135,7 +127,7 @@ public class DngParser {
 
         NotifHandler.progress(mContext, STEPS, STEP_SAVE);
 
-        String savePath = getSavePath();
+        String savePath = Path.processedPath(Settings.savePath(mContext), mFile);
         try (FileOutputStream out = new FileOutputStream(savePath)) {
             argbOutput.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out);
         } catch (Exception e) {

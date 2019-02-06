@@ -24,6 +24,12 @@
             android:summary="@string/pref_delete_original_desc"
             android:defaultValue="false" />
 
+        <EditTextPreference
+            android:key="pref_save_path"
+            android:title="@string/pref_save_path_title"
+            android:summary="@string/pref_save_path_desc"
+            android:defaultValue="@string/pref_save_path_default" />
+
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/category_pipeline">

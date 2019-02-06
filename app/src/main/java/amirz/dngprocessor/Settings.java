@@ -8,6 +8,7 @@ public class Settings {
     private static final String PREF_MANUAL_SELECT = "pref_manual_select";
     private static final String PREF_BACKGROUND_PROCESS = "pref_background_process";
     private static final String PREF_DELETE_ORIGINAL = "pref_delete_original";
+    private static final String PREF_SAVE_PATH = "pref_save_path";
     private static final String PREF_NOISE_REDUCE = "pref_noise_reduce";
     private static final String PREF_POST_PROCESS = "pref_post_process";
 
@@ -32,6 +33,11 @@ public class Settings {
 
     public static boolean deleteOriginal(Context context) {
         return Utilities.prefs(context).getBoolean(PREF_DELETE_ORIGINAL, false);
+    }
+
+    public static String savePath(Context context) {
+        return Utilities.prefs(context).getString(PREF_SAVE_PATH,
+                context.getString(R.string.pref_save_path_default));
     }
 
     public static boolean noiseReduce(Context context) {
