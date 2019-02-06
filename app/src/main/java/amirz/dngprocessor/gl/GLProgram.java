@@ -152,7 +152,7 @@ public class GLProgram {
         float a = 0f;
         float b = 1f;
         if (histCurve) {
-            float mid = cumulativeHist[histBins / 16]; // [0,1]
+            float mid = cumulativeHist[histBins / 12]; // [0,1]
             a = 1f - 2f * mid;
             b = 2f * mid;
             // ax² + bx
