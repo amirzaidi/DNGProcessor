@@ -29,7 +29,9 @@ public class DngParser {
 
     private static int STEPS = 0;
     private static final int STEP_READ = STEPS++;
-    private static final int STEP_PROCESS = STEPS++;
+    private static final int STEP_PROCESS_INIT = STEPS++;
+    private static final int STEP_PROCESS_SENSOR = STEPS++;
+    private static final int STEP_PROCESS_XYZ = STEPS++;
     private static final int STEP_SAVE = STEPS++;
     private static final int STEP_META = STEPS++;
 
@@ -120,13 +122,20 @@ public class DngParser {
             process.saturationCurve = new float[] { 2f, 1.5f, 1.25f }; // x - y * s^z
         }
 
-        NotifHandler.progress(mContext, STEPS, STEP_PROCESS);
-
+        NotifHandler.progress(mContext, STEPS, STEP_PROCESS_INIT);
         Shaders.load(mContext);
-        RawConverter.convertToSRGB(sensor, process, rawImageInput, argbOutput);
+        RawConverter converter = new RawConverter(sensor, process, rawImageInput, argbOutput);
+        Log.w(TAG, "Raw conversion 1/3");
+
+        NotifHandler.progress(mContext, STEPS, STEP_PROCESS_SENSOR);
+        converter.sensorToIntermediate();
+        Log.w(TAG, "Raw conversion 2/3");
+
+        NotifHandler.progress(mContext, STEPS, STEP_PROCESS_XYZ);
+        converter.intermediateToOutput();
+        Log.w(TAG, "Raw conversion 3/3");
 
         NotifHandler.progress(mContext, STEPS, STEP_SAVE);
-
         String savePath = Path.processedPath(Settings.savePath(mContext), mFile);
         try (FileOutputStream out = new FileOutputStream(savePath)) {
             argbOutput.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out);

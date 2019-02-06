@@ -116,7 +116,7 @@ public class GLProgram {
                 1, true, sensorToIntermediate, 0);
     }
 
-    public void draw1(boolean histCurve) {
+    public void sensorToIntermediate(boolean histCurve) {
         mSquare.draw(glGetAttribLocation(mProgramSensorToIntermediate, "vPosition"));
 
         // Calculate a histogram on the result
@@ -225,7 +225,7 @@ public class GLProgram {
                 offsetX, offsetY);
     }
 
-    public void draw2() {
+    public void intermediateToOutput() {
         mSquare.draw(glGetAttribLocation(mProgramSensorToIntermediate, "vPosition"));
 
         // Clean everything up

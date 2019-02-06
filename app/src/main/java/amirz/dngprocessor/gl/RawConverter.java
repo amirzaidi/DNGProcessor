@@ -17,7 +17,6 @@ package amirz.dngprocessor.gl;
 
 import android.graphics.Bitmap;
 import android.hardware.camera2.CameraMetadata;
-import android.hardware.camera2.params.ColorSpaceTransform;
 import android.util.Log;
 import android.util.Rational;
 import android.util.SparseIntArray;
@@ -61,13 +60,14 @@ public class RawConverter {
             0.000000f, 0.000000f, 1.211968f
     };
 
-    /**
+    /*
      * Coefficients for a 3rd order polynomial, ordered from highest to lowest power.  This
      * polynomial approximates the default tonemapping curve used for ACR3.
-     */
+     *
     private static final float[] DEFAULT_ACR3_TONEMAP_CURVE_COEFFS = new float[]{
             -0.7836f, 0.8469f, 0.943f, 0.0209f
     };
+    */
 
     /**
      * Coefficients for a 3rd order polynomial, ordered from highest to lowest power.
@@ -118,11 +118,23 @@ public class RawConverter {
         */
     }
 
+    private int outWidth;
+    private int outHeight;
+    private SensorParams sensor;
+    private ProcessParams process;
+    private float[] XYZtoProPhoto;
+    private float[] proPhotoToSRGB;
+    private GLCore core;
+    private GLProgram square;
+
     /**
      * Convert a RAW16 buffer into an sRGB buffer, and write the result into a bitmap.
      */
-    public static void convertToSRGB(SensorParams sensor, ProcessParams process,
-                                     byte[] rawImageInput, Bitmap argbOutput) {
+    public RawConverter(SensorParams sensor, ProcessParams process,
+                        byte[] rawImageInput, Bitmap argbOutput) {
+        this.sensor = sensor;
+        this.process = process;
+
         // Validate arguments
         if (argbOutput == null || rawImageInput == null) {
             throw new IllegalArgumentException("Null argument to convertToSRGB");
@@ -142,8 +154,8 @@ public class RawConverter {
             throw new IllegalArgumentException("Invalid stride for RAW16 format, see graphics.h.");
         }
 
-        int outWidth = argbOutput.getWidth();
-        int outHeight = argbOutput.getHeight();
+        outWidth = argbOutput.getWidth();
+        outHeight = argbOutput.getHeight();
         if (outWidth + sensor.outputOffsetX > sensor.inputWidth || outHeight + sensor.outputOffsetY > sensor.inputHeight) {
             throw new IllegalArgumentException("Raw image with dimensions (w=" + sensor.inputWidth +
                     ", h=" + sensor.inputHeight + "), cannot converted into sRGB image with dimensions (w="
@@ -205,26 +217,30 @@ public class RawConverter {
                 interpolationFactor, /*out*/sensorToXYZ);
         if (DEBUG) Log.d(TAG, "sensorToXYZ xform used: " + Arrays.toString(sensorToXYZ));
 
-        float[] XYZtoProPhoto = new float[9];
+        XYZtoProPhoto = new float[9];
         System.arraycopy(sXYZtoProPhoto, 0, XYZtoProPhoto, 0, sXYZtoProPhoto.length);
         if (DEBUG) Log.d(TAG, "XYZtoProPhoto xform used: " + Arrays.toString(XYZtoProPhoto));
 
-        float[] proPhotoToSRGB = new float[9];
+        proPhotoToSRGB = new float[9];
         multiply(sXYZtoRGBBradford, sProPhotoToXYZ, /*out*/proPhotoToSRGB);
         if (DEBUG) Log.d(TAG, "proPhotoToSRGB xform used: " + Arrays.toString(proPhotoToSRGB));
 
         // Write the variables first
-        GLCore core = new GLCore(argbOutput);
-        GLProgram square = core.getSquare();
+        core = new GLCore(argbOutput);
+        square = core.getSquare();
 
         square.setIn(rawImageInput, sensor.inputWidth, sensor.inputHeight);
         square.setCfaPattern(sensor.cfa);
         square.setBlackWhiteLevel(sensor.blackLevelPattern, sensor.whiteLevel);
         square.setNeutralPoint(sensor.neutralColorPoint);
         square.setTransforms1(sensorToXYZ);
+    }
 
-        square.draw1(process.histFactor > 0.f);
+    public void sensorToIntermediate() {
+        square.sensorToIntermediate(process.histFactor > 0.f);
+    }
 
+    public void intermediateToOutput() {
         square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         square.setTransforms2(XYZtoProPhoto, proPhotoToSRGB);
         square.setDenoiseRadius(process.denoiseRadius);
@@ -234,11 +250,8 @@ public class RawConverter {
 
         square.setOutDimens(outWidth, outHeight, sensor.outputOffsetX, sensor.outputOffsetY);
 
-        square.draw2();
-
+        square.intermediateToOutput();
         core.save();
-
-        Log.w(TAG, "Raw conversion complete");
     }
 
     /**
@@ -297,21 +310,6 @@ public class RawConverter {
     private static void lerp(float[] a, float[] b, double f, /*out*/float[] result) {
         for (int i = 0; i < 9; i++) {
             result[i] = (float) lerp(a[i], b[i], f);
-        }
-    }
-
-    /**
-     * Convert a 9x9 {@link ColorSpaceTransform} to a matrix and write the matrix into the
-     * output.
-     *
-     * @param xform  a {@link ColorSpaceTransform} to transform.
-     * @param output the 3x3 matrix to overwrite.
-     */
-    private static void convertColorspaceTransform(ColorSpaceTransform xform, /*out*/float[] output) {
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                output[i * 3 + j] = xform.getElement(j, i).floatValue();
-            }
         }
     }
 
@@ -492,30 +490,12 @@ public class RawConverter {
     }
 
     /**
-     * Transpose a 3x3 matrix in-place.
-     *
-     * @param m the matrix to transpose.
-     * @return the transposed matrix.
-     */
-    private static float[] transpose(/*inout*/float[/*9*/] m) {
-        float t = m[1];
-        m[1] = m[3];
-        m[3] = t;
-        t = m[2];
-        m[2] = m[6];
-        m[6] = t;
-        t = m[5];
-        m[5] = m[7];
-        m[7] = t;
-        return m;
-    }
-
-    /**
      * Invert a 3x3 matrix, or return false if the matrix is singular.
      *
      * @param m      matrix to invert.
      * @param output set the output to be the inverse of m.
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private static boolean invert(float[] m, /*out*/float[] output) {
         double a00 = m[0];
         double a01 = m[1];
@@ -561,18 +541,6 @@ public class RawConverter {
         for (int i = 0; i < 9; i++) {
             matrix[i] *= factor;
         }
-    }
-
-    /**
-     * Clamp a value to a given range.
-     *
-     * @param low   lower bound to clamp to.
-     * @param high  higher bound to clamp to.
-     * @param value the value to clamp.
-     * @return the clamped value.
-     */
-    private static double clamp(double low, double high, double value) {
-        return Math.max(low, Math.min(high, value));
     }
 
     /**
