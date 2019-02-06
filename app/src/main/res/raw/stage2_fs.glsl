@@ -51,52 +51,41 @@ vec3 processPatch(ivec2 xyPos) {
     /**
     CHROMA NOISE REDUCE
     **/
-    vec2 minxy = impatch[0].xy, maxxy = minxy;
-    for (int i = 1; i < 9; i++) {
-        minxy = min(impatch[i].xy, minxy);
-        maxxy = max(impatch[i].xy, maxxy);
-    }
-
-    // Threshold that needs to be reached to abort averaging.
-    float threshold = distance(minxy, maxxy);
-    int radiusDenoise = 50;
-
-    // Use logistics to determine best denoise intensity
+    // Use logistics to determine a noise level
     vec2 mean;
     for (int i = 0; i < 9; i++) {
         mean += impatch[i].xy;
     }
     mean /= 9.f;
 
-    float s2;
+    float s;
     for (int i = 0; i < 9; i++) {
         vec2 diff = mean - impatch[i].xy;
-        s2 += diff.x * diff.x + diff.y * diff.y;
+        s += diff.x * diff.x + diff.y * diff.y;
+    }
+    s = sqrt(s);
+
+    // Threshold that needs to be reached to abort averaging.
+    vec2 minxy = impatch[0].xy, maxxy = minxy;
+    for (int i = 1; i < 9; i++) {
+        minxy = min(impatch[i].xy, minxy);
+        maxxy = max(impatch[i].xy, maxxy);
     }
 
-    if (s2 > 0.05f) {
-        threshold *= 2.f;
-        radiusDenoise = 100;
-    } else if (s2 > 0.005f) {
-        threshold *= 1.5f;
-        radiusDenoise = 75;
-    } else {
-        threshold *= 1.1f;
-    }
+    float threshold = distance(minxy, maxxy) * (1.f + min(5.f * s, 1.f));
+    int radiusDenoise = 50 + min(int(200.f * s), 100);
 
     // Expand in a plus
-    vec2 neighbour, oldNeighbour, sum = xy;
+    vec2 neighbour, sum = xy;
     int coord, bound, count = 1;
 
     // Left
     bound = max(xyPos.x - radiusDenoise, 0);
     coord = xyPos.x;
-    oldNeighbour = mean;
     while (coord-- > bound) {
         neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y), 0).xy;
-        if (distance(oldNeighbour, neighbour) <= threshold) {
+        if (distance(mean, neighbour) <= threshold) {
             sum += neighbour;
-            oldNeighbour = neighbour;
             count++;
         } else {
             break;
@@ -106,12 +95,10 @@ vec3 processPatch(ivec2 xyPos) {
     // Right
     bound = min(xyPos.x + radiusDenoise, intermediateWidth - 1);
     coord = xyPos.x;
-    oldNeighbour = mean;
     while (coord++ < bound) {
         neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y), 0).xy;
-        if (distance(oldNeighbour, neighbour) <= threshold) {
+        if (distance(mean, neighbour) <= threshold) {
             sum += neighbour;
-            oldNeighbour = neighbour;
             count++;
         } else {
             break;
@@ -121,12 +108,10 @@ vec3 processPatch(ivec2 xyPos) {
     // Up
     bound = max(xyPos.y - radiusDenoise, 0);
     coord = xyPos.y;
-    oldNeighbour = mean;
     while (coord-- > bound) {
         neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord), 0).xy;
-        if (distance(oldNeighbour, neighbour) <= threshold) {
+        if (distance(mean, neighbour) <= threshold) {
             sum += neighbour;
-            oldNeighbour = neighbour;
             count++;
         } else {
             break;
@@ -136,12 +121,10 @@ vec3 processPatch(ivec2 xyPos) {
     // Down
     bound = min(xyPos.y + radiusDenoise, intermediateHeight - 1);
     coord = xyPos.y;
-    oldNeighbour = mean;
     while (coord++ < bound) {
         neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord), 0).xy;
-        if (distance(oldNeighbour, neighbour) <= threshold) {
+        if (distance(mean, neighbour) <= threshold) {
             sum += neighbour;
-            oldNeighbour = neighbour;
             count++;
         } else {
             break;
@@ -153,7 +136,6 @@ vec3 processPatch(ivec2 xyPos) {
     /**
     SHARPEN
     **/
-
     float z = impatch[4].z;
     if (sharpenFactor > 0.f) {
         // Sum of difference with all pixels nearby
@@ -180,7 +162,7 @@ vec3 processPatch(ivec2 xyPos) {
         z = z + sharpenFactor * dz;
     }
 
-    // Contrast stretching followed by histogram equalization
+    // Histogram equalization
     int bin = clamp(int(z * float(histBins)), 0, histBins - 1);
     z = histCurve.x * z*z + histCurve.y * z;
     z = (1.f - histFactor) * z + histFactor * intermediateHist[bin];
@@ -329,7 +311,7 @@ void main() {
     // Convert to final colorspace
     vec3 sRGB = applyColorspace(intermediate);
 
-    // Add contrast and saturation
+    // Add saturation
     sRGB = saturate(sRGB);
     sRGB = clamp(sRGB, 0.f, 1.f);
 
