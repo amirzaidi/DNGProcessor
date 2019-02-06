@@ -117,7 +117,7 @@ public class DngParser {
 
             process.sharpenFactor = device.sharpenFactor(tags);
             process.histFactor = device.histFactor(tags);
-            process.saturationCurve = new float[] { 2f, 1.5f };
+            process.saturationCurve = new float[] { 2f, 1.5f, 1.25f }; // x - y * s^z
         }
 
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS);

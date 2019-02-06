@@ -210,8 +210,8 @@ public class GLProgram {
     }
 
     public void setSaturationCurve(float[] saturationFactor) {
-        glUniform2f(glGetUniformLocation(mProgramIntermediateToSRGB, "saturationCurve"),
-                saturationFactor[0], saturationFactor[1]);
+        glUniform3f(glGetUniformLocation(mProgramIntermediateToSRGB, "saturationCurve"),
+                saturationFactor[0], saturationFactor[1], saturationFactor[2]);
     }
 
     public void setHistoFactor(float histoFactor) {
