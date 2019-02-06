@@ -29,6 +29,12 @@
     <PreferenceCategory android:title="@string/category_pipeline">
 
         <SwitchPreference
+            android:key="pref_noise_reduce"
+            android:title="@string/pref_noise_reduce_title"
+            android:summary="@string/pref_noise_reduce_desc"
+            android:defaultValue="true" />
+
+        <SwitchPreference
             android:key="pref_post_process"
             android:title="@string/pref_post_process_title"
             android:summary="@string/pref_post_process_desc"

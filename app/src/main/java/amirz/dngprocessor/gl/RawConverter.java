@@ -223,10 +223,11 @@ public class RawConverter {
         square.setNeutralPoint(sensor.neutralColorPoint);
         square.setTransforms1(sensorToXYZ);
 
-        square.draw1(process.histCurve);
+        square.draw1(process.histFactor > 0.f);
 
         square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         square.setTransforms2(XYZtoProPhoto, proPhotoToSRGB);
+        square.setDenoiseRadius(process.denoiseRadius);
         square.setSharpenFactor(process.sharpenFactor);
         square.setSaturationCurve(process.saturationCurve);
         square.setHistoFactor(process.histFactor);

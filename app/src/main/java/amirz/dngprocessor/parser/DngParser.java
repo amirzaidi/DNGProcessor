@@ -116,15 +116,16 @@ public class DngParser {
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
 
         ProcessParams process = new ProcessParams();
+        if (Settings.noiseReduce(mContext)) {
+            process.denoiseRadius = 150;
+        }
         if (Settings.postProcess(mContext)) {
             DeviceMap.Device device = DeviceMap.get(model);
             device.neutralPointCorrection(tags, sensor.neutralColorPoint);
 
             process.sharpenFactor = device.sharpenFactor(tags);
             process.histFactor = device.histFactor(tags);
-
             process.saturationCurve = new float[] { 1.75f, 1f };
-            process.histCurve = true;
         }
 
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS);

@@ -6,6 +6,7 @@ uniform sampler2D intermediateBuffer;
 uniform int intermediateWidth;
 uniform int intermediateHeight;
 
+uniform int maxRadiusDenoise;
 const int histBins = 513;
 uniform float intermediateHist[histBins];
 
@@ -73,7 +74,7 @@ vec3 processPatch(ivec2 xyPos) {
     }
 
     float threshold = distance(minxy, maxxy) * (1.f + min(5.f * s, 1.f));
-    int radiusDenoise = 50 + min(int(200.f * s), 100);
+    int radiusDenoise = min(50 + int(200.f * s), maxRadiusDenoise);
 
     // Expand in a plus
     vec2 neighbour, sum = xy;

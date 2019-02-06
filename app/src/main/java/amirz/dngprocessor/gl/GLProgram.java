@@ -199,6 +199,11 @@ public class GLProgram {
                 1, true, proPhotoToSRGB, 0);
     }
 
+    public void setDenoiseRadius(int maxRadiusDenoise) {
+        glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "maxRadiusDenoise"),
+                maxRadiusDenoise);
+    }
+
     public void setSharpenFactor(float sharpenFactor) {
         glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "sharpenFactor"),
                 sharpenFactor);
