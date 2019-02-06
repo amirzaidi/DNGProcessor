@@ -214,12 +214,10 @@ public class GLProgram {
                 histoFactor);
     }
 
-    public void setOffset(int offsetX, int offsetY) {
-        glUniform2i(glGetUniformLocation(mProgramIntermediateToSRGB, "outOffset"), offsetX, offsetY);
-    }
-
-    public void setOut(int outWidth, int outHeight) {
+    public void setOutDimens(int outWidth, int outHeight, int offsetX, int offsetY) {
         glViewport(0, 0, outWidth, outHeight);
+        glUniform2i(glGetUniformLocation(mProgramIntermediateToSRGB, "outOffset"),
+                offsetX, offsetY);
     }
 
     public void draw2() {

@@ -20,6 +20,8 @@ import amirz.dngprocessor.Settings;
 import amirz.dngprocessor.device.DeviceMap;
 import amirz.dngprocessor.gl.RawConverter;
 import amirz.dngprocessor.gl.Shaders;
+import amirz.dngprocessor.params.ProcessParams;
+import amirz.dngprocessor.params.SensorParams;
 
 public class DngParser {
     private static final String TAG = "DngParser";
@@ -75,62 +77,60 @@ public class DngParser {
         if (rowsPerStrip != 1)
             throw new ParseException("Can only parse RowsPerStrip = 1");
 
+        SensorParams sensor = new SensorParams();
+
         // Continue image parsing.
-        int inputHeight = tags.get(TIFF.TAG_ImageLength).getInt();
-        int inputWidth = tags.get(TIFF.TAG_ImageWidth).getInt();
+        sensor.inputHeight = tags.get(TIFF.TAG_ImageLength).getInt();
+        sensor.inputWidth = tags.get(TIFF.TAG_ImageWidth).getInt();
 
         int[] stripOffsets = tags.get(TIFF.TAG_StripOffsets).getIntArray();
         int[] stripByteCounts = tags.get(TIFF.TAG_StripByteCounts).getIntArray();
 
         int startIndex = stripOffsets[0];
-        int inputStride = stripByteCounts[0];
+        sensor.inputStride = stripByteCounts[0];
 
-        byte[] rawImageInput = new byte[inputStride * inputHeight];
+        byte[] rawImageInput = new byte[sensor.inputStride * sensor.inputHeight];
         ((ByteBuffer) wrap.position(startIndex)).get(rawImageInput);
 
-        int cfa = CFAPattern.get(tags.get(TIFF.TAG_CFAPattern).getIntArray());
+        sensor.cfa = CFAPattern.get(tags.get(TIFF.TAG_CFAPattern).getIntArray());
         String model = tags.get(TIFF.TAG_Model).toString();
 
-        int[] blackLevelPattern = tags.get(TIFF.TAG_BlackLevel).getIntArray();
-        int whiteLevel = tags.get(TIFF.TAG_WhiteLevel).getInt();
-        int ref1 = tags.get(TIFF.TAG_CalibrationIlluminant1).getInt();
-        int ref2 = tags.get(TIFF.TAG_CalibrationIlluminant2).getInt();
-        float[] calib1 = tags.get(TIFF.TAG_CameraCalibration1).getFloatArray();
-        float[] calib2 = tags.get(TIFF.TAG_CameraCalibration2).getFloatArray();
-        float[] color1 = tags.get(TIFF.TAG_ColorMatrix1).getFloatArray();
-        float[] color2 = tags.get(TIFF.TAG_ColorMatrix2).getFloatArray();
-        float[] forward1 = tags.get(TIFF.TAG_ForwardMatrix1).getFloatArray();
-        float[] forward2 = tags.get(TIFF.TAG_ForwardMatrix2).getFloatArray();
-        Rational[] neutral = tags.get(TIFF.TAG_AsShotNeutral).getRationalArray();
+        sensor.blackLevelPattern = tags.get(TIFF.TAG_BlackLevel).getIntArray();
+        sensor.whiteLevel = tags.get(TIFF.TAG_WhiteLevel).getInt();
+        sensor.referenceIlluminant1 = tags.get(TIFF.TAG_CalibrationIlluminant1).getInt();
+        sensor.referenceIlluminant2 = tags.get(TIFF.TAG_CalibrationIlluminant2).getInt();
+        sensor.calibrationTransform1 = tags.get(TIFF.TAG_CameraCalibration1).getFloatArray();
+        sensor.calibrationTransform2 = tags.get(TIFF.TAG_CameraCalibration2).getFloatArray();
+        sensor.colorMatrix1 = tags.get(TIFF.TAG_ColorMatrix1).getFloatArray();
+        sensor.colorMatrix2 = tags.get(TIFF.TAG_ColorMatrix2).getFloatArray();
+        sensor.forwardTransform1 = tags.get(TIFF.TAG_ForwardMatrix1).getFloatArray();
+        sensor.forwardTransform2 = tags.get(TIFF.TAG_ForwardMatrix2).getFloatArray();
+        sensor.neutralColorPoint = tags.get(TIFF.TAG_AsShotNeutral).getRationalArray();
         //LensShadingMap shadingMap = dynamicMetadata.get(CaptureResult.STATISTICS_LENS_SHADING_CORRECTION_MAP);
 
         int[] defaultCropOrigin = tags.get(TIFF.TAG_DefaultCropOrigin).getIntArray();
+        sensor.outputOffsetX = defaultCropOrigin[0];
+        sensor.outputOffsetY = defaultCropOrigin[1];
+
         int[] defaultCropSize = tags.get(TIFF.TAG_DefaultCropSize).getIntArray();
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
 
-        float sharpenFactor = 0f;
-        float[] saturationFactor = { 1f, 0f };
-        float histFactor = 0f;
-        boolean histCurve = false;
+        ProcessParams process = new ProcessParams();
         if (Settings.postProcess(mContext)) {
             DeviceMap.Device device = DeviceMap.get(model);
-            device.neutralPointCorrection(tags, neutral);
+            device.neutralPointCorrection(tags, sensor.neutralColorPoint);
 
-            sharpenFactor = device.sharpenFactor(tags);
-            histFactor = device.histFactor(tags);
+            process.sharpenFactor = device.sharpenFactor(tags);
+            process.histFactor = device.histFactor(tags);
 
-            saturationFactor = new float[] { 1.75f, 1f };
-            histCurve = true;
+            process.saturationCurve = new float[] { 1.75f, 1f };
+            process.histCurve = true;
         }
 
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS);
 
         Shaders.load(mContext);
-        RawConverter.convertToSRGB(inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
-                rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
-                forward1, forward2, neutral, /* shadingMap */ null,
-                defaultCropOrigin[0], defaultCropOrigin[1],
-                sharpenFactor, saturationFactor, histFactor, histCurve, argbOutput);
+        RawConverter.convertToSRGB(sensor, process, rawImageInput, argbOutput);
 
         NotifHandler.progress(mContext, STEPS, STEP_SAVE);
 
@@ -165,11 +165,10 @@ public class DngParser {
                         String.valueOf(tags.get(TIFF.TAG_ExposureTime).getFloat()));
             }
 
-            /*
-            Broken on OP3(T)
-            newExif.setAttribute(ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY,
-                     String.valueOf(tags.get(TIFF.TAG_ISOSpeedRatings).getInt()));
-            */
+            if (tags.get(TIFF.TAG_ISOSpeedRatings) != null) {
+                newExif.setAttribute(ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY,
+                        String.valueOf(tags.get(TIFF.TAG_ISOSpeedRatings).getInt()));
+            }
 
             newExif.saveAttributes();
         } catch (Exception e) {

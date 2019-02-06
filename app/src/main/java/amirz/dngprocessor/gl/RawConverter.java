@@ -18,12 +18,14 @@ package amirz.dngprocessor.gl;
 import android.graphics.Bitmap;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.params.ColorSpaceTransform;
-import android.hardware.camera2.params.LensShadingMap;
 import android.util.Log;
 import android.util.Rational;
 import android.util.SparseIntArray;
 
 import java.util.Arrays;
+
+import amirz.dngprocessor.params.ProcessParams;
+import amirz.dngprocessor.params.SensorParams;
 
 /**
  * Utility class providing methods for rendering RAW16 images into other colorspaces.
@@ -103,22 +105,24 @@ public class RawConverter {
         sStandardIlluminants.append(
                 CameraMetadata.SENSOR_REFERENCE_ILLUMINANT1_WHITE_FLUORESCENT, 3450);
         // TODO: Add the rest of the illuminants included in the LightSource EXIF tag.
+
+        /*
+        public static final int SENSOR_REFERENCE_ILLUMINANT1_FLUORESCENT = 2;
+        public static final int SENSOR_REFERENCE_ILLUMINANT1_TUNGSTEN = 3;
+        public static final int SENSOR_REFERENCE_ILLUMINANT1_FLASH = 4;
+        public static final int SENSOR_REFERENCE_ILLUMINANT1_FINE_WEATHER = 9;
+        public static final int SENSOR_REFERENCE_ILLUMINANT1_CLOUDY_WEATHER = 10;
+        public static final int SENSOR_REFERENCE_ILLUMINANT1_SHADE = 11;
+        public static final int SENSOR_REFERENCE_ILLUMINANT1_DAY_WHITE_FLUORESCENT = 13;
+        public static final int SENSOR_REFERENCE_ILLUMINANT1_ISO_STUDIO_TUNGSTEN = 24;
+        */
     }
 
     /**
      * Convert a RAW16 buffer into an sRGB buffer, and write the result into a bitmap.
      */
-    public static void convertToSRGB(int inputWidth, int inputHeight,
-                                     int inputStride, int cfa, int[] blackLevelPattern, int whiteLevel, byte[] rawImageInput,
-                                     int referenceIlluminant1, int referenceIlluminant2, float[] calibrationTransform1,
-                                     float[] calibrationTransform2, float[] colorMatrix1, float[] colorMatrix2,
-                                     float[] forwardTransform1, float[] forwardTransform2, Rational[/*3*/] neutralColorPoint,
-                                     LensShadingMap lensShadingMap, int outputOffsetX, int outputOffsetY,
-                                     float sharpenFactor,
-                                     float[] saturationCurve,
-                                     float histFactor,
-                                     boolean histCurve,
-                                     Bitmap argbOutput) {
+    public static void convertToSRGB(SensorParams sensor, ProcessParams process,
+                                     byte[] rawImageInput, Bitmap argbOutput) {
         // Validate arguments
         if (argbOutput == null || rawImageInput == null) {
             throw new IllegalArgumentException("Null argument to convertToSRGB");
@@ -128,58 +132,58 @@ public class RawConverter {
                     "Output bitmap passed to convertToSRGB is not ARGB_8888 format");
         }
 
-        if (outputOffsetX < 0 || outputOffsetY < 0) {
+        if (sensor.outputOffsetX < 0 || sensor.outputOffsetY < 0) {
             throw new IllegalArgumentException("Negative offset passed to convertToSRGB");
         }
-        if ((inputStride / 2) < inputWidth) {
+        if ((sensor.inputStride / 2) < sensor.inputWidth) {
             throw new IllegalArgumentException("Stride too small.");
         }
-        if ((inputStride % 2) != 0) {
+        if ((sensor.inputStride % 2) != 0) {
             throw new IllegalArgumentException("Invalid stride for RAW16 format, see graphics.h.");
         }
 
         int outWidth = argbOutput.getWidth();
         int outHeight = argbOutput.getHeight();
-        if (outWidth + outputOffsetX > inputWidth || outHeight + outputOffsetY > inputHeight) {
-            throw new IllegalArgumentException("Raw image with dimensions (w=" + inputWidth +
-                    ", h=" + inputHeight + "), cannot converted into sRGB image with dimensions (w="
+        if (outWidth + sensor.outputOffsetX > sensor.inputWidth || outHeight + sensor.outputOffsetY > sensor.inputHeight) {
+            throw new IllegalArgumentException("Raw image with dimensions (w=" + sensor.inputWidth +
+                    ", h=" + sensor.inputHeight + "), cannot converted into sRGB image with dimensions (w="
                     + outWidth + ", h=" + outHeight + ").");
         }
-        if (cfa < 0 || cfa > 3) {
-            throw new IllegalArgumentException("Unsupported cfa pattern " + cfa + " used.");
+        if (sensor.cfa < 0 || sensor.cfa > 3) {
+            throw new IllegalArgumentException("Unsupported cfa pattern " + sensor.cfa + " used.");
         }
 
         if (DEBUG) {
             Log.d(TAG, "Metadata Used:");
-            Log.d(TAG, "Input width,height: " + inputWidth + "," + inputHeight);
-            Log.d(TAG, "Output offset x,y: " + outputOffsetX + "," + outputOffsetY);
+            Log.d(TAG, "Input width,height: " + sensor.inputWidth + "," + sensor.inputHeight);
+            Log.d(TAG, "Output offset x,y: " + sensor.outputOffsetX + "," + sensor.outputOffsetY);
             Log.d(TAG, "Output width,height: " + outWidth + "," + outHeight);
-            Log.d(TAG, "CFA: " + cfa);
-            Log.d(TAG, "BlackLevelPattern: " + Arrays.toString(blackLevelPattern));
-            Log.d(TAG, "WhiteLevel: " + whiteLevel);
-            Log.d(TAG, "ReferenceIlluminant1: " + referenceIlluminant1);
-            Log.d(TAG, "ReferenceIlluminant2: " + referenceIlluminant2);
-            Log.d(TAG, "CalibrationTransform1: " + Arrays.toString(calibrationTransform1));
-            Log.d(TAG, "CalibrationTransform2: " + Arrays.toString(calibrationTransform2));
-            Log.d(TAG, "ColorMatrix1: " + Arrays.toString(colorMatrix1));
-            Log.d(TAG, "ColorMatrix2: " + Arrays.toString(colorMatrix2));
-            Log.d(TAG, "ForwardTransform1: " + Arrays.toString(forwardTransform1));
-            Log.d(TAG, "ForwardTransform2: " + Arrays.toString(forwardTransform2));
-            Log.d(TAG, "NeutralColorPoint: " + Arrays.toString(neutralColorPoint));
+            Log.d(TAG, "CFA: " + sensor.cfa);
+            Log.d(TAG, "BlackLevelPattern: " + Arrays.toString(sensor.blackLevelPattern));
+            Log.d(TAG, "WhiteLevel: " + sensor.whiteLevel);
+            Log.d(TAG, "ReferenceIlluminant1: " + sensor.referenceIlluminant1);
+            Log.d(TAG, "ReferenceIlluminant2: " + sensor.referenceIlluminant2);
+            Log.d(TAG, "CalibrationTransform1: " + Arrays.toString(sensor.calibrationTransform1));
+            Log.d(TAG, "CalibrationTransform2: " + Arrays.toString(sensor.calibrationTransform2));
+            Log.d(TAG, "ColorMatrix1: " + Arrays.toString(sensor.colorMatrix1));
+            Log.d(TAG, "ColorMatrix2: " + Arrays.toString(sensor.colorMatrix2));
+            Log.d(TAG, "ForwardTransform1: " + Arrays.toString(sensor.forwardTransform1));
+            Log.d(TAG, "ForwardTransform2: " + Arrays.toString(sensor.forwardTransform2));
+            Log.d(TAG, "NeutralColorPoint: " + Arrays.toString(sensor.neutralColorPoint));
         }
 
-        float[] normalizedForwardTransform1 = Arrays.copyOf(forwardTransform1,
-                forwardTransform1.length);
+        float[] normalizedForwardTransform1 = Arrays.copyOf(sensor.forwardTransform1,
+                sensor.forwardTransform1.length);
         normalizeFM(normalizedForwardTransform1);
 
-        float[] normalizedForwardTransform2 = Arrays.copyOf(forwardTransform2,
-                forwardTransform2.length);
+        float[] normalizedForwardTransform2 = Arrays.copyOf(sensor.forwardTransform2,
+                sensor.forwardTransform2.length);
         normalizeFM(normalizedForwardTransform2);
 
-        float[] normalizedColorMatrix1 = Arrays.copyOf(colorMatrix1, colorMatrix1.length);
+        float[] normalizedColorMatrix1 = Arrays.copyOf(sensor.colorMatrix1, sensor.colorMatrix1.length);
         normalizeCM(normalizedColorMatrix1);
 
-        float[] normalizedColorMatrix2 = Arrays.copyOf(colorMatrix2, colorMatrix2.length);
+        float[] normalizedColorMatrix2 = Arrays.copyOf(sensor.colorMatrix2, sensor.colorMatrix2.length);
         normalizeCM(normalizedColorMatrix2);
 
         if (DEBUG) {
@@ -190,48 +194,44 @@ public class RawConverter {
         }
 
         // Calculate full sensor colorspace to sRGB colorspace transform.
-        double interpolationFactor = findDngInterpolationFactor(referenceIlluminant1,
-                referenceIlluminant2, calibrationTransform1, calibrationTransform2,
-                normalizedColorMatrix1, normalizedColorMatrix2, neutralColorPoint);
+        double interpolationFactor = findDngInterpolationFactor(sensor.referenceIlluminant1,
+                sensor.referenceIlluminant2, sensor.calibrationTransform1, sensor.calibrationTransform2,
+                normalizedColorMatrix1, normalizedColorMatrix2, sensor.neutralColorPoint);
         if (DEBUG) Log.d(TAG, "Interpolation factor used: " + interpolationFactor);
 
         float[] sensorToXYZ = new float[9];
         calculateCameraToXYZD50Transform(normalizedForwardTransform1, normalizedForwardTransform2,
-                calibrationTransform1, calibrationTransform2, neutralColorPoint,
+                sensor.calibrationTransform1, sensor.calibrationTransform2, sensor.neutralColorPoint,
                 interpolationFactor, /*out*/sensorToXYZ);
         if (DEBUG) Log.d(TAG, "sensorToXYZ xform used: " + Arrays.toString(sensorToXYZ));
 
-        float[] sensorToProPhoto = new float[9];
-        multiply(sXYZtoProPhoto, sensorToXYZ, /*out*/sensorToProPhoto);
-        if (DEBUG)
-            Log.d(TAG, "sensorToProPhoto used: " + Arrays.toString(sensorToProPhoto));
+        float[] XYZtoProPhoto = new float[9];
+        System.arraycopy(sXYZtoProPhoto, 0, XYZtoProPhoto, 0, sXYZtoProPhoto.length);
+        if (DEBUG) Log.d(TAG, "XYZtoProPhoto xform used: " + Arrays.toString(XYZtoProPhoto));
 
         float[] proPhotoToSRGB = new float[9];
         multiply(sXYZtoRGBBradford, sProPhotoToXYZ, /*out*/proPhotoToSRGB);
-
-        float[] XYZtoProPhoto = new float[9];
-        System.arraycopy(sXYZtoProPhoto, 0, XYZtoProPhoto, 0, sXYZtoProPhoto.length);
+        if (DEBUG) Log.d(TAG, "proPhotoToSRGB xform used: " + Arrays.toString(proPhotoToSRGB));
 
         // Write the variables first
         GLCore core = new GLCore(argbOutput);
         GLProgram square = core.getSquare();
 
-        square.setIn(rawImageInput, inputWidth, inputHeight);
-        square.setCfaPattern(cfa);
-        square.setBlackWhiteLevel(blackLevelPattern, whiteLevel);
-        square.setNeutralPoint(neutralColorPoint);
+        square.setIn(rawImageInput, sensor.inputWidth, sensor.inputHeight);
+        square.setCfaPattern(sensor.cfa);
+        square.setBlackWhiteLevel(sensor.blackLevelPattern, sensor.whiteLevel);
+        square.setNeutralPoint(sensor.neutralColorPoint);
         square.setTransforms1(sensorToXYZ);
 
-        square.draw1(histCurve);
+        square.draw1(process.histCurve);
 
         square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         square.setTransforms2(XYZtoProPhoto, proPhotoToSRGB);
-        square.setSharpenFactor(sharpenFactor);
-        square.setSaturationCurve(saturationCurve);
-        square.setHistoFactor(histFactor);
+        square.setSharpenFactor(process.sharpenFactor);
+        square.setSaturationCurve(process.saturationCurve);
+        square.setHistoFactor(process.histFactor);
 
-        square.setOffset(outputOffsetX, outputOffsetY);
-        square.setOut(outWidth, outHeight);
+        square.setOutDimens(outWidth, outHeight, sensor.outputOffsetX, sensor.outputOffsetY);
 
         square.draw2();
 
