@@ -19,6 +19,6 @@
     <string name="pref_noise_reduce_desc">Removes chromatic irregularities</string>
     <string name="pref_post_process_title">Post processing mode</string>
     <string name="post_processing_disabled">Disabled</string>
-    <string name="post_processing_adaptive">Adaptive</string>
+    <string name="post_processing_natural">Natural</string>
     <string name="post_processing_boosted">Boosted</string>
 </resources>

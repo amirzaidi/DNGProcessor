@@ -117,7 +117,7 @@ public class DngParser {
                 process.histFactor = 0f;
                 process.saturationCurve = new float[] { 1f, 0f, 0f };
                 break;
-            case Adaptive:
+            case Natural:
                 DeviceMap.Device device = DeviceMap.get(model);
                 device.neutralPointCorrection(tags, sensor.neutralColorPoint);
                 process.sharpenFactor = device.sharpenFactor(tags);

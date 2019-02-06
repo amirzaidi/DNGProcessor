@@ -14,7 +14,7 @@ public class Settings {
 
     public enum PostProcessMode {
         Disabled,
-        Adaptive,
+        Natural,
         Boosted
     }
 
@@ -51,6 +51,6 @@ public class Settings {
     }
 
     public static PostProcessMode postProcess(Context context) {
-        return PostProcessMode.valueOf(Utilities.prefs(context).getString(PREF_POST_PROCESS, "Adaptive"));
+        return PostProcessMode.valueOf(Utilities.prefs(context).getString(PREF_POST_PROCESS, "Natural"));
     }
 }
