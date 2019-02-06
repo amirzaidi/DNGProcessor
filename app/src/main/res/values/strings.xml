@@ -13,5 +13,5 @@
 
     <string name="category_pipeline">Pipeline</string>
     <string name="pref_post_process_title">Post-processing</string>
-    <string name="pref_post_process_desc">Histogram equalization, saturation, crunch curves</string>
+    <string name="pref_post_process_desc">Sharpening, histogram equalization, saturation</string>
 </resources>

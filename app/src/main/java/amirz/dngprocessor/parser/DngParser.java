@@ -108,17 +108,19 @@ public class DngParser {
         int[] defaultCropSize = tags.get(TIFF.TAG_DefaultCropSize).getIntArray();
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
 
-        DeviceMap.Device device = DeviceMap.get(model);
-        device.neutralPointCorrection(tags, neutral);
+        float sharpenFactor = 0f;
+        float[] saturationFactor = { 1f, 0f };
+        float histFactor = 0f;
+        boolean histCurve = false;
+        if (Settings.postProcess(mContext)) {
+            DeviceMap.Device device = DeviceMap.get(model);
+            device.neutralPointCorrection(tags, neutral);
 
-        float sharpenFactor = device.sharpenFactor(tags);
-        float histoFactor = device.histFactor(tags);
-        float[] postProcCurve = device.postProcCurve(tags);
+            sharpenFactor = device.sharpenFactor(tags);
+            histFactor = device.histFactor(tags);
 
-        if (!Settings.postProcess(mContext)) {
-            sharpenFactor = 0.f;
-            histoFactor = 0.f;
-            postProcCurve = new float[] { 0f, 0f, 1f, 0f };
+            saturationFactor = new float[] { 1.75f, 1f };
+            histCurve = true;
         }
 
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS);
@@ -127,8 +129,8 @@ public class DngParser {
         RawConverter.convertToSRGB(inputWidth, inputHeight, inputStride, cfa, blackLevelPattern, whiteLevel,
                 rawImageInput, ref1, ref2, calib1, calib2, color1, color2,
                 forward1, forward2, neutral, /* shadingMap */ null,
-                defaultCropOrigin[0], defaultCropOrigin[1], postProcCurve,
-                sharpenFactor, histoFactor, argbOutput);
+                defaultCropOrigin[0], defaultCropOrigin[1],
+                sharpenFactor, saturationFactor, histFactor, histCurve, argbOutput);
 
         NotifHandler.progress(mContext, STEPS, STEP_SAVE);
 

@@ -17,9 +17,10 @@ uniform mat3 intermediateToProPhoto; // Color transform from XYZ to a wide-gamut
 uniform mat3 proPhotoToSRGB; // Color transform from wide-gamut colorspace to sRGB
 
 // Post processing
-uniform vec3 postProcCurve;
 uniform float sharpenFactor;
-uniform float histoFactor;
+uniform vec2 saturationCurve;
+uniform float histFactor;
+uniform vec2 histCurve;
 
 // Size
 uniform ivec2 outOffset;
@@ -43,14 +44,13 @@ vec3[9] load3x3(ivec2 xy) {
     return outputArray;
 }
 
-vec3 processPatch(ivec2 xy) {
-    vec3[9] impatch = load3x3(xy);
+vec3 processPatch(ivec2 xyPos) {
+    vec3[9] impatch = load3x3(xyPos);
+    vec2 xy = impatch[4].xy;
 
     /**
     CHROMA NOISE REDUCE
     **/
-
-    // Get denoising threshold
     vec2 minxy = impatch[0].xy, maxxy = minxy;
     for (int i = 1; i < 9; i++) {
         minxy = min(impatch[i].xy, minxy);
@@ -58,20 +58,45 @@ vec3 processPatch(ivec2 xy) {
     }
 
     // Threshold that needs to be reached to abort averaging.
-    float threshold = distance(minxy, maxxy) * 1.1f;
+    float threshold = distance(minxy, maxxy);
+    int radiusDenoise = 50;
+
+    // Use logistics to determine best denoise intensity
+    vec2 mean;
+    for (int i = 0; i < 9; i++) {
+        mean += impatch[i].xy;
+    }
+    mean /= 9.f;
+
+    float s2;
+    for (int i = 0; i < 9; i++) {
+        vec2 diff = mean - impatch[i].xy;
+        s2 += diff.x * diff.x + diff.y * diff.y;
+    }
+
+    if (s2 > 0.05f) {
+        threshold *= 2.f;
+        radiusDenoise = 100;
+    } else if (s2 > 0.005f) {
+        threshold *= 1.5f;
+        radiusDenoise = 75;
+    } else {
+        threshold *= 1.1f;
+    }
 
     // Expand in a plus
-    const int radiusDenoise = 50;
-    vec2 neighbour, px = impatch[4].xy, sum = px;
+    vec2 neighbour, oldNeighbour, sum = xy;
     int coord, bound, count = 1;
 
     // Left
-    bound = max(xy.x - radiusDenoise, 0);
-    coord = xy.x;
+    bound = max(xyPos.x - radiusDenoise, 0);
+    coord = xyPos.x;
+    oldNeighbour = mean;
     while (coord-- > bound) {
-        neighbour = texelFetch(intermediateBuffer, ivec2(coord, xy.y), 0).xy;
-        if (distance(px, neighbour) <= threshold) {
+        neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y), 0).xy;
+        if (distance(oldNeighbour, neighbour) <= threshold) {
             sum += neighbour;
+            oldNeighbour = neighbour;
             count++;
         } else {
             break;
@@ -79,12 +104,14 @@ vec3 processPatch(ivec2 xy) {
     }
 
     // Right
-    bound = min(xy.x + radiusDenoise, intermediateWidth - 1);
-    coord = xy.x;
+    bound = min(xyPos.x + radiusDenoise, intermediateWidth - 1);
+    coord = xyPos.x;
+    oldNeighbour = mean;
     while (coord++ < bound) {
-        neighbour = texelFetch(intermediateBuffer, ivec2(coord, xy.y), 0).xy;
-        if (distance(px, neighbour) <= threshold) {
+        neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y), 0).xy;
+        if (distance(oldNeighbour, neighbour) <= threshold) {
             sum += neighbour;
+            oldNeighbour = neighbour;
             count++;
         } else {
             break;
@@ -92,12 +119,14 @@ vec3 processPatch(ivec2 xy) {
     }
 
     // Up
-    bound = max(xy.y - radiusDenoise, 0);
-    coord = xy.y;
+    bound = max(xyPos.y - radiusDenoise, 0);
+    coord = xyPos.y;
+    oldNeighbour = mean;
     while (coord-- > bound) {
-        neighbour = texelFetch(intermediateBuffer, ivec2(xy.x, coord), 0).xy;
-        if (distance(px, neighbour) <= threshold) {
+        neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord), 0).xy;
+        if (distance(oldNeighbour, neighbour) <= threshold) {
             sum += neighbour;
+            oldNeighbour = neighbour;
             count++;
         } else {
             break;
@@ -105,17 +134,21 @@ vec3 processPatch(ivec2 xy) {
     }
 
     // Down
-    bound = min(xy.y + radiusDenoise, intermediateHeight - 1);
-    coord = xy.y;
+    bound = min(xyPos.y + radiusDenoise, intermediateHeight - 1);
+    coord = xyPos.y;
+    oldNeighbour = mean;
     while (coord++ < bound) {
-        neighbour = texelFetch(intermediateBuffer, ivec2(xy.x, coord), 0).xy;
-        if (distance(px, neighbour) <= threshold) {
+        neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord), 0).xy;
+        if (distance(oldNeighbour, neighbour) <= threshold) {
             sum += neighbour;
+            oldNeighbour = neighbour;
             count++;
         } else {
             break;
         }
     }
+
+    xy = sum / float(count);
 
     /**
     SHARPEN
@@ -147,11 +180,12 @@ vec3 processPatch(ivec2 xy) {
         z = z + sharpenFactor * dz;
     }
 
-    // Histogram equalization
+    // Contrast stretching followed by histogram equalization
     int bin = clamp(int(z * float(histBins)), 0, histBins - 1);
-    z = (1.f - histoFactor) * z + histoFactor * intermediateHist[bin];
+    z = histCurve.x * z*z + histCurve.y * z;
+    z = (1.f - histFactor) * z + histFactor * intermediateHist[bin];
 
-    return vec3(sum / float(count), z);
+    return vec3(xy, z);
 }
 
 vec3 xyYtoXYZ(vec3 xyY) {
@@ -274,24 +308,14 @@ vec3 applyColorspace(vec3 intermediate) {
     return sRGB;
 }
 
-// Applies post processing curve to all channels
-// Maps from [0,1] to [0,1]
-vec3 applyCurve(vec3 inValue) {
-    return inValue*inValue*inValue * postProcCurve.x
-        + inValue*inValue * postProcCurve.y
-        + inValue * postProcCurve.z;
-}
-
 const vec3 gMonoMult = vec3(0.299f, 0.587f, 0.114f);
 vec3 saturate(vec3 rgb) {
     float maxv = max(max(rgb.r, rgb.g), rgb.b);
     float minv = min(min(rgb.r, rgb.g), rgb.b);
     if (maxv > minv) {
-        float s = (maxv - minv) / maxv; // [0,1]
-        //float saturationFactor = 1.7f - s; // [0.7, 1.7]
-        float saturationFactor = 2.f - pow(s, 1.5f) - length(rgb) / sqrt(3.f); // [0, 2]
-        saturationFactor += 0.25f;
-        rgb = rgb * saturationFactor + dot(rgb, gMonoMult) * (1.f - saturationFactor);
+        float s = maxv - minv; // [0,1]
+        float saturation = saturationCurve.x - saturationCurve.y * s;
+        rgb = rgb * saturation + dot(rgb, gMonoMult) * (1.f - saturation);
     }
     return rgb;
 }
@@ -306,7 +330,6 @@ void main() {
     vec3 sRGB = applyColorspace(intermediate);
 
     // Add contrast and saturation
-    sRGB = applyCurve(sRGB);
     sRGB = saturate(sRGB);
     sRGB = clamp(sRGB, 0.f, 1.f);
 

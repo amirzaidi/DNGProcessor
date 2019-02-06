@@ -116,7 +116,7 @@ public class GLProgram {
                 1, true, sensorToIntermediate, 0);
     }
 
-    public void draw1() {
+    public void draw1(boolean histCurve) {
         mSquare.draw(glGetAttribLocation(mProgramSensorToIntermediate, "vPosition"));
 
         // Calculate a histogram on the result
@@ -149,6 +149,15 @@ public class GLProgram {
             cumulativeHist[i] /= max;
         }
 
+        float a = 0f;
+        float b = 1f;
+        if (histCurve) {
+            float mid = cumulativeHist[histBins / 16]; // [0,1]
+            a = 1f - 2f * mid;
+            b = 2f * mid;
+            // ax² + bx
+        }
+
         // Now switch to the second program
         glLinkProgram(mProgramIntermediateToSRGB);
         glUseProgram(mProgramIntermediateToSRGB);
@@ -172,6 +181,9 @@ public class GLProgram {
 
         glUniform1fv(glGetUniformLocation(mProgramIntermediateToSRGB, "intermediateHist"),
                 cumulativeHist.length, cumulativeHist, 0);
+
+        glUniform2f(glGetUniformLocation(mProgramIntermediateToSRGB, "histCurve"),
+                a, b);
     }
 
     public void setToneMapCoeffs(float[] toneMapCoeffs) {
@@ -187,18 +199,18 @@ public class GLProgram {
                 1, true, proPhotoToSRGB, 0);
     }
 
-    public void setPostProcCurve(float[] postProcCurve) {
-        glUniform3f(glGetUniformLocation(mProgramIntermediateToSRGB, "postProcCurve"),
-                postProcCurve[0], postProcCurve[1], postProcCurve[2]);
-    }
-
     public void setSharpenFactor(float sharpenFactor) {
         glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "sharpenFactor"),
                 sharpenFactor);
     }
 
+    public void setSaturationCurve(float[] saturationFactor) {
+        glUniform2f(glGetUniformLocation(mProgramIntermediateToSRGB, "saturationCurve"),
+                saturationFactor[0], saturationFactor[1]);
+    }
+
     public void setHistoFactor(float histoFactor) {
-        glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "histoFactor"),
+        glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "histFactor"),
                 histoFactor);
     }
 

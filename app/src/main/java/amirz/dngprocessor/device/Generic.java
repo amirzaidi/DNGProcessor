@@ -18,7 +18,7 @@ public class Generic implements DeviceMap.Device {
 
     @Override
     public float histFactor(SparseArray<TIFFTag> tags) {
-        return 0.15f;
+        return 0.1f;
     }
 
     @Override

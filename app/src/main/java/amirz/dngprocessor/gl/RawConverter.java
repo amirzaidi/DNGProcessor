@@ -114,8 +114,11 @@ public class RawConverter {
                                      float[] calibrationTransform2, float[] colorMatrix1, float[] colorMatrix2,
                                      float[] forwardTransform1, float[] forwardTransform2, Rational[/*3*/] neutralColorPoint,
                                      LensShadingMap lensShadingMap, int outputOffsetX, int outputOffsetY,
-                                     float[] postProcCurve, float sharpenFactor,
-                                     float histoFactor, Bitmap argbOutput) {
+                                     float sharpenFactor,
+                                     float[] saturationCurve,
+                                     float histFactor,
+                                     boolean histCurve,
+                                     Bitmap argbOutput) {
         // Validate arguments
         if (argbOutput == null || rawImageInput == null) {
             throw new IllegalArgumentException("Null argument to convertToSRGB");
@@ -219,13 +222,13 @@ public class RawConverter {
         square.setNeutralPoint(neutralColorPoint);
         square.setTransforms1(sensorToXYZ);
 
-        square.draw1();
+        square.draw1(histCurve);
 
         square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         square.setTransforms2(XYZtoProPhoto, proPhotoToSRGB);
-        square.setPostProcCurve(postProcCurve);
         square.setSharpenFactor(sharpenFactor);
-        square.setHistoFactor(histoFactor);
+        square.setSaturationCurve(saturationCurve);
+        square.setHistoFactor(histFactor);
 
         square.setOffset(outputOffsetX, outputOffsetY);
         square.setOut(outWidth, outHeight);
