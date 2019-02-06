@@ -219,15 +219,18 @@ public class GLProgram {
                 histoFactor);
     }
 
-    public void setOutDimens(int outWidth, int outHeight, int offsetX, int offsetY) {
-        glViewport(0, 0, outWidth, outHeight);
+    public void setOutOffset(int offsetX, int offsetY) {
         glUniform2i(glGetUniformLocation(mProgramIntermediateToSRGB, "outOffset"),
                 offsetX, offsetY);
     }
 
-    public void intermediateToOutput() {
+    public void intermediateToOutput(int outWidth, int y, int height) {
+        glViewport(0, 0, outWidth, height);
+        glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "yOffset"), y);
         mSquare.draw(glGetAttribLocation(mProgramSensorToIntermediate, "vPosition"));
+    }
 
+    public void close() {
         // Clean everything up
         glDeleteProgram(mProgramSensorToIntermediate);
         glDeleteProgram(mProgramIntermediateToSRGB);

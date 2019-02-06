@@ -29,7 +29,7 @@ import amirz.dngprocessor.params.SensorParams;
 /**
  * Utility class providing methods for rendering RAW16 images into other colorspaces.
  */
-public class RawConverter {
+public class RawConverter implements AutoCloseable {
     private static final String TAG = "RawConverter";
     private static final boolean DEBUG = true;
 
@@ -248,10 +248,14 @@ public class RawConverter {
         square.setSaturationCurve(process.saturationCurve);
         square.setHistoFactor(process.histFactor);
 
-        square.setOutDimens(outWidth, outHeight, sensor.outputOffsetX, sensor.outputOffsetY);
+        square.setOutOffset(sensor.outputOffsetX, sensor.outputOffsetY);
 
-        square.intermediateToOutput();
-        core.save();
+        core.intermediateToOutput();
+    }
+
+    @Override
+    public void close() {
+        core.close();
     }
 
     /**

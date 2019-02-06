@@ -124,16 +124,17 @@ public class DngParser {
 
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS_INIT);
         Shaders.load(mContext);
-        RawConverter converter = new RawConverter(sensor, process, rawImageInput, argbOutput);
-        Log.w(TAG, "Raw conversion 1/3");
+        try (RawConverter converter = new RawConverter(sensor, process, rawImageInput, argbOutput)) {
+            Log.w(TAG, "Raw conversion 1/3");
 
-        NotifHandler.progress(mContext, STEPS, STEP_PROCESS_SENSOR);
-        converter.sensorToIntermediate();
-        Log.w(TAG, "Raw conversion 2/3");
+            NotifHandler.progress(mContext, STEPS, STEP_PROCESS_SENSOR);
+            converter.sensorToIntermediate();
+            Log.w(TAG, "Raw conversion 2/3");
 
-        NotifHandler.progress(mContext, STEPS, STEP_PROCESS_XYZ);
-        converter.intermediateToOutput();
-        Log.w(TAG, "Raw conversion 3/3");
+            NotifHandler.progress(mContext, STEPS, STEP_PROCESS_XYZ);
+            converter.intermediateToOutput();
+            Log.w(TAG, "Raw conversion 3/3");
+        }
 
         NotifHandler.progress(mContext, STEPS, STEP_SAVE);
         String savePath = Path.processedPath(Settings.savePath(mContext), mFile);

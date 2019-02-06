@@ -6,6 +6,8 @@ uniform sampler2D intermediateBuffer;
 uniform int intermediateWidth;
 uniform int intermediateHeight;
 
+uniform int yOffset;
+
 uniform int maxRadiusDenoise;
 const int histBins = 513;
 uniform float intermediateHist[histBins];
@@ -305,6 +307,7 @@ vec3 saturate(vec3 rgb) {
 
 void main() {
     ivec2 xy = ivec2(gl_FragCoord.xy) + outOffset;
+    xy.y += yOffset;
 
     // Sharpen and denoise value
     vec3 intermediate = processPatch(xy);
