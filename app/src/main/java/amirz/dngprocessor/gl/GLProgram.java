@@ -116,7 +116,7 @@ public class GLProgram {
                 1, true, sensorToIntermediate, 0);
     }
 
-    public void sensorToIntermediate(boolean histCurve) {
+    public void sensorToIntermediate(boolean histEqualization, float stretchPerc) {
         mSquare.draw(glGetAttribLocation(mProgramSensorToIntermediate, "vPosition"));
 
         // Calculate a histogram on the result
@@ -144,19 +144,38 @@ public class GLProgram {
         for (int i = 1; i < cumulativeHist.length; i++) {
             cumulativeHist[i] = cumulativeHist[i - 1] + hist[i - 1];
         }
+
         float max = cumulativeHist[histBins];
+        int minZ = 0;
+        int maxZ = histBins;
         for (int i = 0; i < cumulativeHist.length; i++) {
             cumulativeHist[i] /= max;
+            if (cumulativeHist[i] < stretchPerc) {
+                minZ = i;
+            } else if (cumulativeHist[i] > 1f - stretchPerc) {
+                maxZ = Math.min(maxZ, i);
+            }
         }
 
         float a = 0f;
         float b = 1f;
-        if (histCurve) {
-            float mid = cumulativeHist[histBins / 12]; // [0,1]
-            a = 1f - 2f * mid;
-            b = 2f * mid;
+        if (histEqualization) {
+            // What fraction of pixels are in the first 25% of luminance
+            float brightenFactor = cumulativeHist[histBins / 4]; // [0,1]
+
+            // Bias this number to be lower, so it is at 0.5 when 80% is in here
+            brightenFactor = (float) Math.pow(brightenFactor, 2);
+
+            // Set quadratic compensation curve based on it
+            a = 1f - 2f * brightenFactor;
+            b = 2f * brightenFactor;
             // ax² + bx
         }
+
+        float[] zRange = {
+                0.5f * ((float) minZ) / histBins,
+                0.5f * ((float) maxZ) / histBins + 0.5f
+        };
 
         // Now switch to the second program
         glLinkProgram(mProgramIntermediateToSRGB);
@@ -179,8 +198,8 @@ public class GLProgram {
         glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "intermediateHeight"),
                 inHeight);
 
-        glUniform1fv(glGetUniformLocation(mProgramIntermediateToSRGB, "intermediateHist"),
-                cumulativeHist.length, cumulativeHist, 0);
+        glUniform2f(glGetUniformLocation(mProgramIntermediateToSRGB, "zRange"),
+                zRange[0], zRange[1]);
 
         glUniform2f(glGetUniformLocation(mProgramIntermediateToSRGB, "histCurve"),
                 a, b);
@@ -212,11 +231,6 @@ public class GLProgram {
     public void setSaturationCurve(float[] saturationFactor) {
         glUniform3f(glGetUniformLocation(mProgramIntermediateToSRGB, "saturationCurve"),
                 saturationFactor[0], saturationFactor[1], saturationFactor[2]);
-    }
-
-    public void setHistoFactor(float histoFactor) {
-        glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "histFactor"),
-                histoFactor);
     }
 
     public void setOutOffset(int offsetX, int offsetY) {

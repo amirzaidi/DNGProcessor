@@ -8,9 +8,8 @@ uniform int intermediateHeight;
 
 uniform int yOffset;
 
+uniform vec2 zRange;
 uniform int maxRadiusDenoise;
-const int histBins = 513;
-uniform float intermediateHist[histBins];
 
 // Sensor and picture variables
 uniform vec4 toneMapCoeffs; // Coefficients for a polynomial tonemapping curve
@@ -165,10 +164,9 @@ vec3 processPatch(ivec2 xyPos) {
         z = z + sharpenFactor * dz;
     }
 
-    // Histogram equalization
-    int bin = clamp(int(z * float(histBins)), 0, histBins - 1);
+    // Histogram equalization and contrast stretching
+    z = clamp((z - zRange.x) / (zRange.y - zRange.x), 0.f, 1.f);
     z = histCurve.x * z*z + histCurve.y * z;
-    z = (1.f - histFactor) * z + histFactor * intermediateHist[bin];
 
     return vec3(xy, z);
 }

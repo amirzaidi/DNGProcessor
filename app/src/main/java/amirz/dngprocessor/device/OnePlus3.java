@@ -24,10 +24,10 @@ public class OnePlus3 extends Generic {
     }
 
     @Override
-    public float histFactor(SparseArray<TIFFTag> tags) {
+    public float stretchPerc(SparseArray<TIFFTag> tags) {
         return noLight(tags)
-                ? 0.025f
-                : super.histFactor(tags);
+                ? 0f
+                : super.stretchPerc(tags);
     }
 
     private boolean lowLight(SparseArray<TIFFTag> tags) {

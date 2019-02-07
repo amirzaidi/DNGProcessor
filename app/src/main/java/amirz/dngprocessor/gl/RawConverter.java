@@ -237,7 +237,7 @@ public class RawConverter implements AutoCloseable {
     }
 
     public void sensorToIntermediate() {
-        square.sensorToIntermediate(process.histFactor > 0.f);
+        square.sensorToIntermediate(process.histEqualization, process.stretchPerc);
     }
 
     public void intermediateToOutput() {
@@ -246,7 +246,6 @@ public class RawConverter implements AutoCloseable {
         square.setDenoiseRadius(process.denoiseRadius);
         square.setSharpenFactor(process.sharpenFactor);
         square.setSaturationCurve(process.saturationCurve);
-        square.setHistoFactor(process.histFactor);
 
         square.setOutOffset(sensor.outputOffsetX, sensor.outputOffsetY);
 

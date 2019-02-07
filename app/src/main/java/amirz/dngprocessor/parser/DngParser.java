@@ -114,20 +114,23 @@ public class DngParser {
         switch (Settings.postProcess(mContext)) {
             case Disabled:
                 process.sharpenFactor = 0f;
-                process.histFactor = 0f;
                 process.saturationCurve = new float[] { 1f, 0f, 0f };
+                process.stretchPerc = 0f;
+                process.histEqualization = false;
                 break;
             case Natural:
                 DeviceMap.Device device = DeviceMap.get(model);
                 device.neutralPointCorrection(tags, sensor.neutralColorPoint);
                 process.sharpenFactor = device.sharpenFactor(tags);
-                process.histFactor = device.histFactor(tags);
                 process.saturationCurve = new float[] { 2f, 1.5f, 1.25f };
+                process.stretchPerc = device.stretchPerc(tags);
+                process.histEqualization = true;
                 break;
             case Boosted:
                 process.sharpenFactor = 0.35f;
-                process.histFactor = 0.25f;
                 process.saturationCurve = new float[] { 2.5f, 0.5f, 1f };
+                process.stretchPerc = 0.05f;
+                process.histEqualization = true;
                 break;
         }
 

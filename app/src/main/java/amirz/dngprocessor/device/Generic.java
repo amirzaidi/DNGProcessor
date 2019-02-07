@@ -17,11 +17,6 @@ public class Generic implements DeviceMap.Device {
     }
 
     @Override
-    public float histFactor(SparseArray<TIFFTag> tags) {
-        return 0.1f;
-    }
-
-    @Override
     public float sharpenFactor(SparseArray<TIFFTag> tags) {
         return lowLight(tags)
                 ? 0.05f
@@ -29,23 +24,8 @@ public class Generic implements DeviceMap.Device {
     }
 
     @Override
-    public float[] postProcCurve(SparseArray<TIFFTag> tags) {
-        // 0 to 1, where 0 is crunchy and 1 is linear.
-        /*float curveFactor = 0.33f;
-        return new float[] {
-                -2f + 2f * curveFactor,
-                3f - 3f * curveFactor,
-                curveFactor,
-                0f
-        };*/
-
-        // Crush shadows
-        return new float[] {
-            -1f,
-            2f,
-            0f,
-            0f
-        };
+    public float stretchPerc(SparseArray<TIFFTag> tags) {
+        return 0.01f;
     }
 
     private boolean lowLight(SparseArray<TIFFTag> tags) {
