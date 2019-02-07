@@ -16,42 +16,36 @@ import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MIN_FILTER;
 public class GLProgram {
     private final GLSquare mSquare = new GLSquare();
     private final int mProgramSensorToIntermediate;
+    private final int mProgramIntermediateAnalysis;
     private final int mProgramIntermediateToSRGB;
 
+    private int inWidth, inHeight;
     private final int[] mIntermediateTex = new int[1];
+    private float a, b;
+    private float[] zRange;
 
     public GLProgram() {
         int vertexShader = loadShader(
                 GL_VERTEX_SHADER,
                 Shaders.VS);
 
-        int fragmentShader1 = loadShader(
-                GL_FRAGMENT_SHADER,
-                Shaders.PS1);
-
         mProgramSensorToIntermediate = glCreateProgram();
         glAttachShader(mProgramSensorToIntermediate, vertexShader);
-        glAttachShader(mProgramSensorToIntermediate, fragmentShader1);
-        glLinkProgram(mProgramSensorToIntermediate);
-        glUseProgram(mProgramSensorToIntermediate);
+        glAttachShader(mProgramSensorToIntermediate, loadShader(GL_FRAGMENT_SHADER, Shaders.FS1));
 
-        int fragmentShader2 = loadShader(
-                GL_FRAGMENT_SHADER,
-                Shaders.PS2);
+        mProgramIntermediateAnalysis = glCreateProgram();
+        glAttachShader(mProgramIntermediateAnalysis, vertexShader);
+        glAttachShader(mProgramIntermediateAnalysis, loadShader(GL_FRAGMENT_SHADER, Shaders.FS2));
 
         mProgramIntermediateToSRGB = glCreateProgram();
         glAttachShader(mProgramIntermediateToSRGB, vertexShader);
-        glAttachShader(mProgramIntermediateToSRGB, fragmentShader2);
+        glAttachShader(mProgramIntermediateToSRGB, loadShader(GL_FRAGMENT_SHADER, Shaders.FS3));
+
+        // Link first program
+        glLinkProgram(mProgramSensorToIntermediate);
+        glUseProgram(mProgramSensorToIntermediate);
     }
 
-    public static int loadShader(int type, String shaderCode) {
-        int shader = glCreateShader(type);
-        glShaderSource(shader, shaderCode);
-        glCompileShader(shader);
-        return shader;
-    }
-
-    private int inWidth, inHeight;
 
     public void setIn(byte[] in, int inWidth, int inHeight) {
         this.inWidth = inWidth;
@@ -86,9 +80,9 @@ public class GLProgram {
         glUniform1i(glGetUniformLocation(mProgramSensorToIntermediate, "rawHeight"), inHeight);
 
         // Configure frame buffer
-        int[] fb = new int[1];
-        glGenFramebuffers(1, fb, 0);
-        glBindFramebuffer(GL_FRAMEBUFFER, fb[0]);
+        int[] frameBuffer = new int[1];
+        glGenFramebuffers(1, frameBuffer, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer[0]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mIntermediateTex[0], 0);
 
         glViewport(0, 0, inWidth, inHeight);
@@ -116,28 +110,67 @@ public class GLProgram {
                 1, true, sensorToIntermediate, 0);
     }
 
-    public void sensorToIntermediate(boolean histEqualization, float[] stretchPerc) {
+    public void sensorToIntermediate() {
         mSquare.draw(glGetAttribLocation(mProgramSensorToIntermediate, "vPosition"));
+    }
 
-        // Calculate a histogram on the result
-        int histBins = 512;
-        int sampling = 32;
-        int[] hist = new int[histBins];
+    public void setOutOffset(int offsetX, int offsetY) {
+        glUniform2i(glGetUniformLocation(mProgramIntermediateToSRGB, "outOffset"),
+                offsetX, offsetY);
+    }
 
-        float[] f = new float[inWidth * 4];
+    public void analyzeIntermediate(int w, int h, int samplingFactor,
+                                    boolean histEqualization, float[] stretchPerc) {
+        // Analyze
+        glLinkProgram(mProgramIntermediateAnalysis);
+        glUseProgram(mProgramIntermediateAnalysis);
+
+        w /= samplingFactor;
+        h /= samplingFactor;
+
+        int[] analyzeTex = new int[1];
+        glGenTextures(1, analyzeTex, 0);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, analyzeTex[0]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, null);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+        // Load intermediate buffer as texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, mIntermediateTex[0]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, inWidth, inHeight, 0, GL_RGB, GL_FLOAT, null);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+        // Configure frame buffer
+        int[] frameBuffer = new int[1];
+        glGenFramebuffers(1, frameBuffer, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer[0]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, analyzeTex[0], 0);
+
+        glViewport(0, 0, w, h);
+        glUniform1i(glGetUniformLocation(mProgramIntermediateAnalysis, "samplingFactor"),
+                samplingFactor);
+        mSquare.draw(glGetAttribLocation(mProgramIntermediateAnalysis, "vPosition"));
+
+        float[] f = new float[w * h * 4];
         FloatBuffer fb = ByteBuffer.allocateDirect(f.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         fb.mark();
 
-        for (int y = 0; y < inHeight; y += sampling) {
-            glReadPixels(0, y, inWidth, 1, GL_RGBA, GL_FLOAT, fb.reset());
-            fb.get(f);
+        glReadPixels(0, 0, w, h, GL_RGBA, GL_FLOAT, fb.reset());
+        fb.get(f);
 
-            // Loop over all z values
-            for (int i = 2; i < f.length; i += 4 * sampling) {
-                int bin = (int) (f[i] * histBins);
-                if (bin >= histBins) bin = histBins - 1;
-                hist[bin]++;
-            }
+        // Calculate a histogram on the result
+        int histBins = 512;
+        int[] hist = new int[histBins];
+
+        // Loop over all z values
+        for (int i = 0; i < f.length; i += 4) {
+            int bin = (int) (f[i] * histBins);
+            if (bin >= histBins) bin = histBins - 1;
+            hist[bin]++;
         }
 
         float[] cumulativeHist = new float[histBins + 1];
@@ -157,8 +190,8 @@ public class GLProgram {
             }
         }
 
-        float a = 0f;
-        float b = 1f;
+        a = 0f;
+        b = 1f;
         if (histEqualization) {
             // What fraction of pixels are in the first 25% of luminance
             float brightenFactor = cumulativeHist[histBins / 4]; // [0,1]
@@ -172,20 +205,20 @@ public class GLProgram {
             // ax² + bx
         }
 
-        float[] zRange = {
+        zRange = new float[] {
                 0.5f * ((float) minZ) / histBins,
                 0.5f * ((float) maxZ) / histBins + 0.5f
         };
+    }
 
+    public void prepareForOutput() {
         // Now switch to the second program
         glLinkProgram(mProgramIntermediateToSRGB);
         glUseProgram(mProgramIntermediateToSRGB);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        int[] intermediateTex = new int[1];
-        glGenTextures(1, intermediateTex, 0);
-
+        // Load intermediate buffer as texture
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, mIntermediateTex[0]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, inWidth, inHeight, 0, GL_RGB, GL_FLOAT, null);
@@ -233,11 +266,6 @@ public class GLProgram {
                 saturationFactor[0], saturationFactor[1], saturationFactor[2]);
     }
 
-    public void setOutOffset(int offsetX, int offsetY) {
-        glUniform2i(glGetUniformLocation(mProgramIntermediateToSRGB, "outOffset"),
-                offsetX, offsetY);
-    }
-
     public void intermediateToOutput(int outWidth, int y, int height) {
         glViewport(0, 0, outWidth, height);
         glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "yOffset"), y);
@@ -247,6 +275,14 @@ public class GLProgram {
     public void close() {
         // Clean everything up
         glDeleteProgram(mProgramSensorToIntermediate);
+        glDeleteProgram(mProgramIntermediateAnalysis);
         glDeleteProgram(mProgramIntermediateToSRGB);
+    }
+
+    private static int loadShader(int type, String shaderCode) {
+        int shader = glCreateShader(type);
+        glShaderSource(shader, shaderCode);
+        glCompileShader(shader);
+        return shader;
     }
 }

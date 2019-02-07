@@ -244,16 +244,19 @@ public class RawConverter implements AutoCloseable {
     }
 
     public void sensorToIntermediate() {
-        square.sensorToIntermediate(process.histEqualization, process.stretchPerc);
+        square.sensorToIntermediate();
+        square.setOutOffset(sensor.outputOffsetX, sensor.outputOffsetY);
+        square.analyzeIntermediate(outWidth, outHeight, 32,
+                process.histEqualization, process.stretchPerc);
     }
 
     public void intermediateToOutput() {
+        square.prepareForOutput();
         square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         square.setTransforms2(XYZtoProPhoto, proPhotoToRGB);
         square.setDenoiseRadius(process.denoiseRadius);
         square.setSharpenFactor(process.sharpenFactor);
         square.setSaturationCurve(process.saturationCurve);
-
         square.setOutOffset(sensor.outputOffsetX, sensor.outputOffsetY);
 
         core.intermediateToOutput();
