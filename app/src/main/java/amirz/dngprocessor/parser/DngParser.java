@@ -68,7 +68,8 @@ public class DngParser {
         SparseArray<TIFFTag> tags = parseTags(wrap);
 
         TIFFTag subIFD = tags.get(TIFF.TAG_SubIFDs);
-        if (subIFD != null) {
+        TIFFTag type = tags.get(TIFF.TAG_NewSubfileType);
+        if (subIFD != null && type != null && type.getInt() == 1) {
             wrap.position(subIFD.getInt());
             SparseArray<TIFFTag> subTags = parseTags(wrap);
             for (int i = 0; i < subTags.size(); i++) {
