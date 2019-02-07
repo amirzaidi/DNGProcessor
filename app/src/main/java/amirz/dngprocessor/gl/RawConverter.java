@@ -184,13 +184,19 @@ public class RawConverter implements AutoCloseable {
             Log.d(TAG, "NeutralColorPoint: " + Arrays.toString(sensor.neutralColorPoint));
         }
 
-        float[] normalizedForwardTransform1 = Arrays.copyOf(sensor.forwardTransform1,
-                sensor.forwardTransform1.length);
-        normalizeFM(normalizedForwardTransform1);
+        float[] normalizedForwardTransform1 = new float[] { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
+        float[] normalizedForwardTransform2 = Arrays.copyOf(normalizedForwardTransform1,
+                normalizedForwardTransform1.length);
 
-        float[] normalizedForwardTransform2 = Arrays.copyOf(sensor.forwardTransform2,
-                sensor.forwardTransform2.length);
-        normalizeFM(normalizedForwardTransform2);
+        if (sensor.forwardTransform1 != null && sensor.forwardTransform2 != null) {
+            normalizedForwardTransform1 = Arrays.copyOf(sensor.forwardTransform1,
+                    sensor.forwardTransform1.length);
+            normalizeFM(normalizedForwardTransform1);
+
+            normalizedForwardTransform2 = Arrays.copyOf(sensor.forwardTransform2,
+                    sensor.forwardTransform2.length);
+            normalizeFM(normalizedForwardTransform2);
+        }
 
         float[] normalizedColorMatrix1 = Arrays.copyOf(sensor.colorMatrix1, sensor.colorMatrix1.length);
         normalizeCM(normalizedColorMatrix1);

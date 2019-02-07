@@ -23,6 +23,7 @@ public class TIFF {
     public static final int TAG_ResolutionUnit = 296;
     public static final int TAG_Software = 305;
     public static final int TAG_Hardware = 306;
+    public static final int TAG_SubIFDs = 330;
     public static final int TAG_CFARepeatPatternDim = 33421;
     public static final int TAG_CFAPattern = 33422;
     public static final int TAG_Copyright = 33432;
