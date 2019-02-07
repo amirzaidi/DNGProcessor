@@ -46,7 +46,7 @@
             android:summary="%s"
             android:entries="@array/post_processing_preset_names"
             android:entryValues="@array/post_processing_preset_values"
-            android:defaultValue="Adaptive" />
+            android:defaultValue="Natural" />
 
     </PreferenceCategory>
 
