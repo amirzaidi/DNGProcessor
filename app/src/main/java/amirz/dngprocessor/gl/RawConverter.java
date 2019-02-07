@@ -123,7 +123,7 @@ public class RawConverter implements AutoCloseable {
     private SensorParams sensor;
     private ProcessParams process;
     private float[] XYZtoProPhoto;
-    private float[] proPhotoToSRGB;
+    private float[] proPhotoToRGB;
     private GLCore core;
     private GLProgram square;
 
@@ -184,20 +184,6 @@ public class RawConverter implements AutoCloseable {
             Log.d(TAG, "NeutralColorPoint: " + Arrays.toString(sensor.neutralColorPoint));
         }
 
-        float[] normalizedForwardTransform1 = new float[] { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
-        float[] normalizedForwardTransform2 = Arrays.copyOf(normalizedForwardTransform1,
-                normalizedForwardTransform1.length);
-
-        if (sensor.forwardTransform1 != null && sensor.forwardTransform2 != null) {
-            normalizedForwardTransform1 = Arrays.copyOf(sensor.forwardTransform1,
-                    sensor.forwardTransform1.length);
-            normalizeFM(normalizedForwardTransform1);
-
-            normalizedForwardTransform2 = Arrays.copyOf(sensor.forwardTransform2,
-                    sensor.forwardTransform2.length);
-            normalizeFM(normalizedForwardTransform2);
-        }
-
         float[] normalizedColorMatrix1 = Arrays.copyOf(sensor.colorMatrix1, sensor.colorMatrix1.length);
         normalizeCM(normalizedColorMatrix1);
 
@@ -205,31 +191,46 @@ public class RawConverter implements AutoCloseable {
         normalizeCM(normalizedColorMatrix2);
 
         if (DEBUG) {
-            Log.d(TAG, "Normalized ForwardTransform1: " + Arrays.toString(normalizedForwardTransform1));
-            Log.d(TAG, "Normalized ForwardTransform2: " + Arrays.toString(normalizedForwardTransform2));
             Log.d(TAG, "Normalized ColorMatrix1: " + Arrays.toString(normalizedColorMatrix1));
             Log.d(TAG, "Normalized ColorMatrix2: " + Arrays.toString(normalizedColorMatrix2));
         }
 
         // Calculate full sensor colorspace to sRGB colorspace transform.
+        float[] sensorToXYZ = new float[9];
         double interpolationFactor = findDngInterpolationFactor(sensor.referenceIlluminant1,
                 sensor.referenceIlluminant2, sensor.calibrationTransform1, sensor.calibrationTransform2,
-                normalizedColorMatrix1, normalizedColorMatrix2, sensor.neutralColorPoint);
+                normalizedColorMatrix1, normalizedColorMatrix2, sensor.neutralColorPoint,
+                sensorToXYZ);
         if (DEBUG) Log.d(TAG, "Interpolation factor used: " + interpolationFactor);
 
-        float[] sensorToXYZ = new float[9];
-        calculateCameraToXYZD50Transform(normalizedForwardTransform1, normalizedForwardTransform2,
-                sensor.calibrationTransform1, sensor.calibrationTransform2, sensor.neutralColorPoint,
-                interpolationFactor, /*out*/sensorToXYZ);
+        if (sensor.forwardTransform1 != null && sensor.forwardTransform2 != null) {
+            float[] normalizedForwardTransform1 = Arrays.copyOf(sensor.forwardTransform1,
+                    sensor.forwardTransform1.length);
+            normalizeFM(normalizedForwardTransform1);
+
+            float[] normalizedForwardTransform2 = Arrays.copyOf(sensor.forwardTransform2,
+                    sensor.forwardTransform2.length);
+            normalizeFM(normalizedForwardTransform2);
+
+            if (DEBUG) {
+                Log.d(TAG, "Normalized ForwardTransform1: " + Arrays.toString(normalizedForwardTransform1));
+                Log.d(TAG, "Normalized ForwardTransform2: " + Arrays.toString(normalizedForwardTransform2));
+            }
+
+            calculateCameraToXYZD50TransformFM(normalizedForwardTransform1, normalizedForwardTransform2,
+                    sensor.calibrationTransform1, sensor.calibrationTransform2, sensor.neutralColorPoint,
+                    interpolationFactor, sensorToXYZ);
+        }
+
         if (DEBUG) Log.d(TAG, "sensorToXYZ xform used: " + Arrays.toString(sensorToXYZ));
 
         XYZtoProPhoto = new float[9];
         System.arraycopy(sXYZtoProPhoto, 0, XYZtoProPhoto, 0, sXYZtoProPhoto.length);
         if (DEBUG) Log.d(TAG, "XYZtoProPhoto xform used: " + Arrays.toString(XYZtoProPhoto));
 
-        proPhotoToSRGB = new float[9];
-        multiply(sXYZtoRGBBradford, sProPhotoToXYZ, /*out*/proPhotoToSRGB);
-        if (DEBUG) Log.d(TAG, "proPhotoToSRGB xform used: " + Arrays.toString(proPhotoToSRGB));
+        proPhotoToRGB = new float[9];
+        multiply(sXYZtoRGBBradford, sProPhotoToXYZ, /*out*/proPhotoToRGB);
+        if (DEBUG) Log.d(TAG, "proPhotoToRGB xform used: " + Arrays.toString(proPhotoToRGB));
 
         // Write the variables first
         core = new GLCore(argbOutput);
@@ -248,7 +249,7 @@ public class RawConverter implements AutoCloseable {
 
     public void intermediateToOutput() {
         square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
-        square.setTransforms2(XYZtoProPhoto, proPhotoToSRGB);
+        square.setTransforms2(XYZtoProPhoto, proPhotoToRGB);
         square.setDenoiseRadius(process.denoiseRadius);
         square.setSharpenFactor(process.sharpenFactor);
         square.setSaturationCurve(process.saturationCurve);
@@ -338,7 +339,8 @@ public class RawConverter implements AutoCloseable {
      */
     private static double findDngInterpolationFactor(int referenceIlluminant1,
                                                      int referenceIlluminant2, float[] calibrationTransform1, float[] calibrationTransform2,
-                                                     float[] colorMatrix1, float[] colorMatrix2, Rational[/*3*/] neutralColorPoint) {
+                                                     float[] colorMatrix1, float[] colorMatrix2, Rational[/*3*/] neutralColorPoint,
+                                                     float[] interpXYZToCameraInverse) {
         int colorTemperature1 = sStandardIlluminants.get(referenceIlluminant1, NO_ILLUMINANT);
         if (colorTemperature1 == NO_ILLUMINANT) {
             throw new IllegalArgumentException("No such illuminant for reference illuminant 1: " +
@@ -363,7 +365,6 @@ public class RawConverter implements AutoCloseable {
                 neutralColorPoint[1].floatValue(), neutralColorPoint[2].floatValue()};
         float[] neutralGuess = new float[3];
         float[] interpXYZToCamera = new float[9];
-        float[] interpXYZToCameraInverse = new float[9];
         double lower = Math.min(colorTemperature1, colorTemperature2);
         double upper = Math.max(colorTemperature1, colorTemperature2);
         if (DEBUG) {
@@ -433,13 +434,14 @@ public class RawConverter implements AutoCloseable {
      *                              calibration transforms.
      * @param outputTransform       set to the full sensor to XYZ colorspace transform.
      */
-    private static void calculateCameraToXYZD50Transform(float[] forwardTransform1,
-                                                         float[] forwardTransform2, float[] calibrationTransform1, float[] calibrationTransform2,
-                                                         Rational[/*3*/] neutralColorPoint, double interpolationFactor,
-            /*out*/float[] outputTransform) {
+    private static void calculateCameraToXYZD50TransformFM(float[] forwardTransform1, float[] forwardTransform2,
+                                                           float[] calibrationTransform1, float[] calibrationTransform2,
+                                                           Rational[/*3*/] neutralColorPoint, double interpolationFactor,
+                                                           float[] outputTransform) {
         float[] cameraNeutral = new float[]{neutralColorPoint[0].floatValue(),
                 neutralColorPoint[1].floatValue(), neutralColorPoint[2].floatValue()};
         if (DEBUG) Log.d(TAG, "Camera neutral: " + Arrays.toString(cameraNeutral));
+
         float[] interpolatedCC = new float[9];
         lerp(calibrationTransform1, calibrationTransform2, interpolationFactor,
                 interpolatedCC);
@@ -450,21 +452,25 @@ public class RawConverter implements AutoCloseable {
         }
         if (DEBUG) Log.d(TAG, "Inverted interpolated CalibrationTransform: " +
                 Arrays.toString(inverseInterpolatedCC));
+
         float[] referenceNeutral = new float[3];
         map(inverseInterpolatedCC, cameraNeutral, /*out*/referenceNeutral);
         if (DEBUG) Log.d(TAG, "Reference neutral: " + Arrays.toString(referenceNeutral));
+
         float maxNeutral = Math.max(Math.max(referenceNeutral[0], referenceNeutral[1]),
                 referenceNeutral[2]);
         float[] D = new float[]{maxNeutral / referenceNeutral[0], 0, 0,
                 0, maxNeutral / referenceNeutral[1], 0,
                 0, 0, maxNeutral / referenceNeutral[2]};
         if (DEBUG) Log.d(TAG, "Reference Neutral Diagonal: " + Arrays.toString(D));
-        float[] intermediate = new float[9];
+
+        float[] FM = new float[9];
         float[] intermediate2 = new float[9];
-        lerp(forwardTransform1, forwardTransform2, interpolationFactor, /*out*/intermediate);
-        if (DEBUG) Log.d(TAG, "Interpolated ForwardTransform: " + Arrays.toString(intermediate));
+        lerp(forwardTransform1, forwardTransform2, interpolationFactor, /*out*/FM);
+        if (DEBUG) Log.d(TAG, "Interpolated ForwardTransform: " + Arrays.toString(FM));
+
         multiply(D, inverseInterpolatedCC, /*out*/intermediate2);
-        multiply(intermediate, intermediate2, /*out*/outputTransform);
+        multiply(FM, intermediate2, /*out*/outputTransform);
     }
 
     /**
