@@ -163,8 +163,8 @@ public class GLProgram {
             // What fraction of pixels are in the first 25% of luminance
             float brightenFactor = cumulativeHist[histBins / 4]; // [0,1]
 
-            // Bias this number to be lower, so it is at 0.5 when 80% is in here
-            brightenFactor = (float) Math.pow(brightenFactor, 2);
+            // Bring closer to 0.5 to reduce the effect strength
+            brightenFactor = (float) Math.sqrt(brightenFactor) * 0.6f;
 
             // Set quadratic compensation curve based on it
             a = 1f - 2f * brightenFactor;
