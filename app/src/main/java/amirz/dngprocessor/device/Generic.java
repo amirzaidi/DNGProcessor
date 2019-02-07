@@ -20,7 +20,7 @@ public class Generic implements DeviceMap.Device {
     public float sharpenFactor(SparseArray<TIFFTag> tags) {
         return lowLight(tags)
                 ? 0.05f
-                : 0.25f;
+                : 0.35f;
     }
 
     @Override
