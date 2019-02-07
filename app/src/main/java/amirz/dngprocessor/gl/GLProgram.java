@@ -23,6 +23,7 @@ public class GLProgram {
     private final int[] mIntermediateTex = new int[1];
     private float a, b;
     private float[] zRange;
+    private float chromaSigma;
 
     public GLProgram() {
         int vertexShader = loadShader(
@@ -155,7 +156,8 @@ public class GLProgram {
                 samplingFactor);
         mSquare.draw(glGetAttribLocation(mProgramIntermediateAnalysis, "vPosition"));
 
-        float[] f = new float[w * h * 4];
+        int whPixels = w * h;
+        float[] f = new float[whPixels * 4];
         FloatBuffer fb = ByteBuffer.allocateDirect(f.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         fb.mark();
 
@@ -166,12 +168,21 @@ public class GLProgram {
         int histBins = 512;
         int[] hist = new int[histBins];
 
-        // Loop over all z values
+        float chromaSigmaTotal = 0f;
+        //float lumaSigmaTotal = 0f;
+
+        // Loop over all values
         for (int i = 0; i < f.length; i += 4) {
             int bin = (int) (f[i] * histBins);
             if (bin >= histBins) bin = histBins - 1;
             hist[bin]++;
+
+            chromaSigmaTotal += f[i + 1];
+            //lumaSigmaTotal += f[i + 2];
         }
+
+        chromaSigma = chromaSigmaTotal / whPixels; // [0, 0.6]
+        //lumaSigma = lumaSigmaTotal / whPixels; // Does not give useful info
 
         float[] cumulativeHist = new float[histBins + 1];
         for (int i = 1; i < cumulativeHist.length; i++) {
@@ -197,7 +208,9 @@ public class GLProgram {
             float brightenFactor = cumulativeHist[histBins / 4]; // [0,1]
 
             // Bring closer to 0.5 to reduce the effect strength
-            brightenFactor = (float) Math.sqrt(brightenFactor) * 0.6f;
+            brightenFactor = (float) (Math.sqrt(brightenFactor) - Math.sqrt(chromaSigma));
+            if (brightenFactor < 0f) brightenFactor = 0f;
+            brightenFactor *= 0.6f;
 
             // Set quadratic compensation curve based on it
             a = 1f - 2f * brightenFactor;
@@ -236,6 +249,9 @@ public class GLProgram {
 
         glUniform2f(glGetUniformLocation(mProgramIntermediateToSRGB, "histCurve"),
                 a, b);
+
+        glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "chromaSigma"),
+                chromaSigma);
     }
 
     public void setToneMapCoeffs(float[] toneMapCoeffs) {
@@ -258,7 +274,7 @@ public class GLProgram {
 
     public void setSharpenFactor(float sharpenFactor) {
         glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "sharpenFactor"),
-                sharpenFactor);
+                Math.max(sharpenFactor - 1.5f * chromaSigma, 0));
     }
 
     public void setSaturationCurve(float[] saturationFactor) {

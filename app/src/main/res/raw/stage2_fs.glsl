@@ -31,11 +31,20 @@ void main() {
     // Load patch
     vec3[9] impatch = load3x3(xy);
 
-    // Calculate values
-    float z = impatch[4].z;
-    float lumaNoise = 0.1f;
-    float chromaNoise1 = 0.2f;
-    float chromaNoise2 = 0.3f;
+    /**
+     * STANDARD DEVIATIONS
+     */
+    vec3 mean;
+    for (int i = 0; i < 9; i++) {
+        mean += impatch[i];
+    }
+    mean /= 9.f;
+    float chromaSigma, lumaSigma;
+    for (int i = 0; i < 9; i++) {
+        vec3 diff = mean - impatch[i];
+        chromaSigma += diff.x * diff.x + diff.y * diff.y;
+        lumaSigma += diff.z * diff.z;
+    }
 
-    analysis = vec4(z, lumaNoise, chromaNoise1, chromaNoise2);
+    analysis = vec4(impatch[4].z, sqrt(chromaSigma), sqrt(lumaSigma), 1.f);
 }
