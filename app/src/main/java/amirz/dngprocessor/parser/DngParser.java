@@ -115,7 +115,7 @@ public class DngParser {
             case Disabled:
                 process.sharpenFactor = 0f;
                 process.saturationCurve = new float[] { 1f, 0f, 0f };
-                process.stretchPerc = 0f;
+                process.stretchPerc = new float[] { 0f, 1f };
                 process.histEqualization = false;
                 break;
             case Natural:
@@ -129,7 +129,7 @@ public class DngParser {
             case Boosted:
                 process.sharpenFactor = 0.35f;
                 process.saturationCurve = new float[] { 2.5f, 0.5f, 1f };
-                process.stretchPerc = 0.05f;
+                process.stretchPerc = new float[] { 0.1f, 0.95f };
                 process.histEqualization = true;
                 break;
         }

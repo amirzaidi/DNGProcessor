@@ -24,9 +24,9 @@ public class OnePlus3 extends Generic {
     }
 
     @Override
-    public float stretchPerc(SparseArray<TIFFTag> tags) {
+    public float[] stretchPerc(SparseArray<TIFFTag> tags) {
         return noLight(tags)
-                ? 0f
+                ? new float[] { 0f, 1f }
                 : super.stretchPerc(tags);
     }
 

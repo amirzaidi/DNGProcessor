@@ -116,7 +116,7 @@ public class GLProgram {
                 1, true, sensorToIntermediate, 0);
     }
 
-    public void sensorToIntermediate(boolean histEqualization, float stretchPerc) {
+    public void sensorToIntermediate(boolean histEqualization, float[] stretchPerc) {
         mSquare.draw(glGetAttribLocation(mProgramSensorToIntermediate, "vPosition"));
 
         // Calculate a histogram on the result
@@ -150,9 +150,9 @@ public class GLProgram {
         int maxZ = histBins;
         for (int i = 0; i < cumulativeHist.length; i++) {
             cumulativeHist[i] /= max;
-            if (cumulativeHist[i] < stretchPerc) {
+            if (cumulativeHist[i] < stretchPerc[0]) {
                 minZ = i;
-            } else if (cumulativeHist[i] > 1f - stretchPerc) {
+            } else if (cumulativeHist[i] > stretchPerc[1]) {
                 maxZ = Math.min(maxZ, i);
             }
         }

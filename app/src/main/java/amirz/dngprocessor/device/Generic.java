@@ -24,8 +24,8 @@ public class Generic implements DeviceMap.Device {
     }
 
     @Override
-    public float stretchPerc(SparseArray<TIFFTag> tags) {
-        return 0.01f;
+    public float[] stretchPerc(SparseArray<TIFFTag> tags) {
+        return new float[] { 0.01f, 0.995f };
     }
 
     private boolean lowLight(SparseArray<TIFFTag> tags) {
