@@ -152,7 +152,8 @@ public class RawConverter implements AutoCloseable {
             throw new IllegalArgumentException("Stride too small.");
         }
         if ((sensor.inputStride % 2) != 0) {
-            throw new IllegalArgumentException("Invalid stride for RAW16 format, see graphics.h.");
+            throw new IllegalArgumentException("Invalid stride for RAW16 format ("
+                    + sensor.inputStride + "), see graphics.h.");
         }
 
         outWidth = argbOutput.getWidth();
