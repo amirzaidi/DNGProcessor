@@ -9,7 +9,7 @@ uniform int intermediateHeight;
 uniform int yOffset;
 
 uniform vec2 zRange;
-uniform int maxRadiusDenoise;
+uniform int radiusDenoise;
 
 // Sensor and picture variables
 uniform vec4 toneMapCoeffs; // Coefficients for a polynomial tonemapping curve
@@ -19,7 +19,7 @@ uniform mat3 intermediateToProPhoto; // Color transform from XYZ to a wide-gamut
 uniform mat3 proPhotoToSRGB; // Color transform from wide-gamut colorspace to sRGB
 
 uniform float chromaSigma;
-//uniform float lumaSigma;
+uniform float lumaSigma;
 
 // Post processing
 uniform float sharpenFactor;
@@ -51,32 +51,46 @@ vec3[9] load3x3(ivec2 xy) {
 
 vec3 processPatch(ivec2 xyPos) {
     vec3[9] impatch = load3x3(xyPos);
+    float midz = impatch[4].z;
+
+    // Sort first half of impatch, to get median xyz
+    float tmp;
+    for (int i = 0; i < 8; i++) {
+        for (int j = i + 1; j < 9; j++) {
+            if (impatch[j].x < impatch[i].x) {
+                tmp = impatch[j].x;
+                impatch[j].x = impatch[i].x;
+                impatch[i].x = tmp;
+            }
+            if (impatch[j].y < impatch[i].y) {
+                tmp = impatch[j].y;
+                impatch[j].y = impatch[i].y;
+                impatch[i].y = tmp;
+            }
+            if (impatch[j].z < impatch[i].z) {
+                tmp = impatch[j].z;
+                impatch[j].z = impatch[i].z;
+                impatch[i].z = tmp;
+            }
+        }
+    }
+
+    // Take median
     vec2 xy = impatch[4].xy;
+    float z = impatch[4].z;
 
     /**
     CHROMA NOISE REDUCE
     **/
-    vec3 mean;
-    for (int i = 0; i < 9; i++) {
-        mean += impatch[i];
-    }
-    mean /= 9.f;
 
-    // Threshold that needs to be reached to abort averaging.
-    vec3 minxyz = impatch[0], maxxyz = minxyz;
-    for (int i = 1; i < 9; i++) {
-        minxyz = min(impatch[i], minxyz);
-        maxxyz = max(impatch[i], maxxyz);
-    }
-
-    float threshold = distance(minxyz, maxxyz) * (1.f + min(2.f * chromaSigma, 1.f));
-    int radiusDenoise = maxRadiusDenoise;
+    // Set thresholds as an average of local and global variance
+    float thXY = chromaSigma + distance(impatch[0].xy, impatch[8].xy);
+    float thZ = lumaSigma + distance(impatch[0].z, impatch[8].z);
 
     // Expand in a plus
-    vec3 oldNeighbour, neighbour;
+    vec3 neighbour;
     vec2 sum = xy;
-    int coord, bound, count, totalCount = 1;
-    int shiftFactor = 32;
+    int coord, bound, count, totalCount = 1, shiftFactor = 16;
 
     // Left
     coord = xyPos.x;
@@ -84,11 +98,10 @@ vec3 processPatch(ivec2 xyPos) {
     count = 0;
     while (coord > bound) {
         neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y), 0).xyz;
-        if (distance(mean, neighbour) <= threshold) {
+        coord -= 1 << (count / shiftFactor);
+        if (distance(xy, neighbour.xy) <= thXY && distance(z, neighbour.z) <= thZ) {
             sum += neighbour.xy;
-            coord -= 1 << (count++ / shiftFactor);
-        } else {
-            break;
+            count++;
         }
     }
     totalCount += count;
@@ -99,11 +112,10 @@ vec3 processPatch(ivec2 xyPos) {
     count = 0;
     while (coord < bound) {
         neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y), 0).xyz;
-        if (distance(mean, neighbour) <= threshold) {
+        coord += 1 << (count / shiftFactor);
+        if (distance(xy, neighbour.xy) <= thXY && distance(z, neighbour.z) <= thZ) {
             sum += neighbour.xy;
-            coord += 1 << (count++ / shiftFactor);
-        } else {
-            break;
+            count++;
         }
     }
     totalCount += count;
@@ -114,11 +126,10 @@ vec3 processPatch(ivec2 xyPos) {
     count = 0;
     while (coord > bound) {
         neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord), 0).xyz;
-        if (distance(mean, neighbour) <= threshold) {
+        coord -= 1 << (count / shiftFactor);
+        if (distance(xy, neighbour.xy) <= thXY && distance(z, neighbour.z) <= thZ) {
             sum += neighbour.xy;
-            coord -= 1 << (count++ / shiftFactor);
-        } else {
-            break;
+            count++;
         }
     }
     totalCount += count;
@@ -129,11 +140,10 @@ vec3 processPatch(ivec2 xyPos) {
     count = 0;
     while (coord < bound) {
         neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord), 0).xyz;
-        if (distance(mean, neighbour) <= threshold) {
+        coord += 1 << (count / shiftFactor);
+        if (distance(xy, neighbour.xy) <= thXY && distance(z, neighbour.z) <= thZ) {
             sum += neighbour.xy;
-            coord += 1 << (count++ / shiftFactor);
-        } else {
-            break;
+            count++;
         }
     }
     totalCount += count;
@@ -143,28 +153,15 @@ vec3 processPatch(ivec2 xyPos) {
     /**
     SHARPEN
     **/
-    float z = impatch[4].z;
     if (sharpenFactor > 0.f) {
-        // Sort impatch z
-        float tmp;
-        for (int i = 0; i < 5; i++) {
-            for (int j = i + 1; j < 9; j++) {
-                if (impatch[j].z < impatch[i].z) {
-                    tmp = impatch[j].z;
-                    impatch[j].z = impatch[i].z;
-                    impatch[i].z = tmp;
-                }
-            }
-        }
-
         // Sum of difference with all pixels nearby
-        float dz = (z + impatch[4].z) * 4.5f;
+        float dz = midz * 9.f;
         for (int i = 0; i < 9; i++) {
             dz -= impatch[i].z;
         }
 
         // Use this difference to boost sharpness
-        z = z + sharpenFactor * dz;
+        z += sharpenFactor * dz;
     }
 
     // Histogram equalization and contrast stretching

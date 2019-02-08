@@ -305,7 +305,7 @@ public class RawConverter implements AutoCloseable {
         square.prepareForOutput();
         square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         square.setTransforms2(XYZtoProPhoto, proPhotoToSRGB);
-        square.setDenoiseRadius(process.denoiseRadius);
+        square.setDenoiseFactor(process.denoiseFactor);
         square.setSharpenFactor(process.sharpenFactor);
         square.setSaturationCurve(process.saturationCurve);
         square.setOutOffset(sensor.outputOffsetX, sensor.outputOffsetY);

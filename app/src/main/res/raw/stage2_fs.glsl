@@ -45,6 +45,8 @@ void main() {
         chromaSigma += diff.x * diff.x + diff.y * diff.y;
         lumaSigma += diff.z * diff.z;
     }
+    chromaSigma /= 9.f;
+    lumaSigma /= 9.f;
 
     analysis = vec4(impatch[4].z, sqrt(chromaSigma), sqrt(lumaSigma), 1.f);
 }

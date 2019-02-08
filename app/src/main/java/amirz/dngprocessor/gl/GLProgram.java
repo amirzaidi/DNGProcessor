@@ -1,10 +1,12 @@
 package amirz.dngprocessor.gl;
 
+import android.util.Log;
 import android.util.Rational;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 import static android.opengl.GLES20.*;
 import static android.opengl.GLES30.*;
@@ -14,6 +16,8 @@ import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MAG_FILTER;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MIN_FILTER;
 
 public class GLProgram {
+    private static final String TAG = "GLProgram";
+
     private final GLSquare mSquare = new GLSquare();
     private final int mProgramSensorToIntermediate;
     private final int mProgramIntermediateAnalysis;
@@ -24,6 +28,7 @@ public class GLProgram {
     private float a, b;
     private float[] zRange;
     private float chromaSigma;
+    private float lumaSigma;
 
     public GLProgram() {
         int vertexShader = loadShader(
@@ -169,7 +174,7 @@ public class GLProgram {
         int[] hist = new int[histBins];
 
         float chromaSigmaTotal = 0f;
-        //float lumaSigmaTotal = 0f;
+        float lumaSigmaTotal = 0f;
 
         // Loop over all values
         for (int i = 0; i < f.length; i += 4) {
@@ -178,11 +183,11 @@ public class GLProgram {
             hist[bin]++;
 
             chromaSigmaTotal += f[i + 1];
-            //lumaSigmaTotal += f[i + 2];
+            lumaSigmaTotal += f[i + 2];
         }
 
-        chromaSigma = chromaSigmaTotal / whPixels; // [0, 0.6]
-        //lumaSigma = lumaSigmaTotal / whPixels; // Does not give useful info
+        chromaSigma = chromaSigmaTotal / whPixels; // [0, 0.2]
+        lumaSigma = lumaSigmaTotal / whPixels;
 
         float[] cumulativeHist = new float[histBins + 1];
         for (int i = 1; i < cumulativeHist.length; i++) {
@@ -201,27 +206,30 @@ public class GLProgram {
             }
         }
 
-        a = 0f;
-        b = 1f;
+        float brightenFactor = 0.5f;
         if (histEqualization) {
             // What fraction of pixels are in the first 25% of luminance
-            float brightenFactor = cumulativeHist[histBins / 4]; // [0,1]
+            brightenFactor = cumulativeHist[histBins / 4]; // [0,1]
 
             // Bring closer to 0.5 to reduce the effect strength
             brightenFactor = (float) (Math.sqrt(brightenFactor) - Math.sqrt(chromaSigma));
             if (brightenFactor < 0f) brightenFactor = 0f;
             brightenFactor *= 0.6f;
-
-            // Set quadratic compensation curve based on it
-            a = 1f - 2f * brightenFactor;
-            b = 2f * brightenFactor;
-            // ax² + bx
         }
+
+        // Set quadratic compensation curve based on brightenFactor
+        // ax² + bx
+        a = 1f - 2f * brightenFactor;
+        b = 2f * brightenFactor;
 
         zRange = new float[] {
                 0.5f * ((float) minZ) / histBins,
                 0.5f * ((float) maxZ) / histBins + 0.5f
         };
+
+        Log.d(TAG, "ChromaSigma " + chromaSigma + ", LumaSigma " + lumaSigma);
+        Log.d(TAG, "Histogram EQ Curve: " + brightenFactor + ", " + a + ", " + b);
+        Log.d(TAG, "Z Range: " + Arrays.toString(zRange));
     }
 
     public void prepareForOutput() {
@@ -252,6 +260,9 @@ public class GLProgram {
 
         glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "chromaSigma"),
                 chromaSigma);
+
+        glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "lumaSigma"),
+                lumaSigma);
     }
 
     public void setToneMapCoeffs(float[] toneMapCoeffs) {
@@ -267,14 +278,14 @@ public class GLProgram {
                 1, true, proPhotoToSRGB, 0);
     }
 
-    public void setDenoiseRadius(int maxRadiusDenoise) {
-        glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "maxRadiusDenoise"),
-                maxRadiusDenoise);
+    public void setDenoiseFactor(int denoiseFactor) {
+        glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "radiusDenoise"),
+                (int)((float) denoiseFactor * chromaSigma));
     }
 
     public void setSharpenFactor(float sharpenFactor) {
         glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "sharpenFactor"),
-                Math.max(sharpenFactor - 1.5f * chromaSigma, 0));
+                Math.max(sharpenFactor - 9f * chromaSigma, 0));
     }
 
     public void setSaturationCurve(float[] saturationFactor) {

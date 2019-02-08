@@ -132,7 +132,7 @@ public class DngParser {
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
 
         ProcessParams process = new ProcessParams();
-        process.denoiseRadius = Settings.noiseReduce(mContext) ? 400 : 0;
+        process.denoiseFactor = Settings.noiseReduce(mContext) ? 1500 : 0;
         switch (Settings.postProcess(mContext)) {
             case Disabled:
                 process.sharpenFactor = 0f;
@@ -149,7 +149,7 @@ public class DngParser {
                 process.histEqualization = true;
                 break;
             case Boosted:
-                process.sharpenFactor = 0.5f;
+                process.sharpenFactor = 1f;
                 process.saturationCurve = new float[] { 2.5f, 0.5f, 1f };
                 process.stretchPerc = new float[] { 0.1f, 0.95f };
                 process.histEqualization = true;
