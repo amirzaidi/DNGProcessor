@@ -53,7 +53,7 @@ vec3 processPatch(ivec2 xyPos) {
     vec3[9] impatch = load3x3(xyPos);
     float midz = impatch[4].z;
 
-    // Sort first half of impatch, to get median xyz
+    // Sort impatch, to get median xyz and distance xy, z
     float tmp;
     for (int i = 0; i < 8; i++) {
         for (int j = i + 1; j < 9; j++) {
