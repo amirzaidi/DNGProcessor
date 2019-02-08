@@ -36,7 +36,7 @@ public class RawConverter implements AutoCloseable {
     /**
      * Matrix to convert from CIE XYZ colorspace to sRGB, Bradford-adapted to D65.
      */
-    private static final float[] sXYZtoRGBBradford = new float[]{
+    private static final float[] sXYZtoSRGB = new float[]{
             3.1338561f, -1.6168667f, -0.4906146f,
             -0.9787684f, 1.9161415f, 0.0334540f,
             0.0719453f, -0.2289914f, 1.4052427f
@@ -53,6 +53,7 @@ public class RawConverter implements AutoCloseable {
 
     /**
      * Matrix to convert from CIE XYZ colorspace to ProPhoto RGB colorspace.
+     * Tone-mapping is done in that colorspace before converting back.
      */
     private static final float[] sXYZtoProPhoto = new float[]{
             1.345753f, -0.255603f, -0.051025f,
@@ -123,7 +124,7 @@ public class RawConverter implements AutoCloseable {
     private SensorParams sensor;
     private ProcessParams process;
     private float[] XYZtoProPhoto;
-    private float[] proPhotoToRGB;
+    private float[] proPhotoToSRGB;
     private GLCore core;
     private GLProgram square;
 
@@ -203,6 +204,7 @@ public class RawConverter implements AutoCloseable {
                 sensorToXYZ);
         if (DEBUG) Log.d(TAG, "Interpolation factor used: " + interpolationFactor);
 
+        float[] sensorToXYZ_D50 = new float[9];
         if (sensor.forwardTransform1 != null && sensor.forwardTransform2 != null) {
             float[] normalizedForwardTransform1 = Arrays.copyOf(sensor.forwardTransform1,
                     sensor.forwardTransform1.length);
@@ -219,18 +221,34 @@ public class RawConverter implements AutoCloseable {
 
             calculateCameraToXYZD50TransformFM(normalizedForwardTransform1, normalizedForwardTransform2,
                     sensor.calibrationTransform1, sensor.calibrationTransform2, sensor.neutralColorPoint,
-                    interpolationFactor, sensorToXYZ);
+                    interpolationFactor, sensorToXYZ_D50);
+        } else {
+            float[] neutralColorPoint = {
+                sensor.neutralColorPoint[0].floatValue(),
+                sensor.neutralColorPoint[1].floatValue(),
+                sensor.neutralColorPoint[2].floatValue()
+            };
+
+            float[] XYZ = new float[3];
+            map(sensorToXYZ, neutralColorPoint, XYZ);
+
+            XYZ[0] /= XYZ[1];
+            XYZ[2] /= XYZ[1];
+            XYZ[1] = 1f;
+
+            float[] CA = mapWhiteMatrix(XYZ, D50_XYZ);
+            multiply(CA, sensorToXYZ, sensorToXYZ_D50);
         }
 
-        if (DEBUG) Log.d(TAG, "sensorToXYZ xform used: " + Arrays.toString(sensorToXYZ));
+        if (DEBUG) Log.d(TAG, "sensorToXYZ xform used: " + Arrays.toString(sensorToXYZ_D50));
 
         XYZtoProPhoto = new float[9];
         System.arraycopy(sXYZtoProPhoto, 0, XYZtoProPhoto, 0, sXYZtoProPhoto.length);
         if (DEBUG) Log.d(TAG, "XYZtoProPhoto xform used: " + Arrays.toString(XYZtoProPhoto));
 
-        proPhotoToRGB = new float[9];
-        multiply(sXYZtoRGBBradford, sProPhotoToXYZ, /*out*/proPhotoToRGB);
-        if (DEBUG) Log.d(TAG, "proPhotoToRGB xform used: " + Arrays.toString(proPhotoToRGB));
+        proPhotoToSRGB = new float[9];
+        multiply(sXYZtoSRGB, sProPhotoToXYZ, /*out*/proPhotoToSRGB);
+        if (DEBUG) Log.d(TAG, "proPhotoToSRGB xform used: " + Arrays.toString(proPhotoToSRGB));
 
         // Write the variables first
         core = new GLCore(argbOutput);
@@ -240,7 +258,39 @@ public class RawConverter implements AutoCloseable {
         square.setCfaPattern(sensor.cfa);
         square.setBlackWhiteLevel(sensor.blackLevelPattern, sensor.whiteLevel);
         square.setNeutralPoint(sensor.neutralColorPoint);
-        square.setTransforms1(sensorToXYZ);
+        square.setTransforms1(sensorToXYZ_D50);
+    }
+
+    private float[] mapWhiteMatrix(float[] white_d50, float[] white_xyz) {
+        float[] Mb = {
+                0.8951f,  0.2664f, -0.1614f,
+                -0.7502f, 1.7135f,  0.0367f,
+                0.0389f, -0.0685f, 1.0296f
+        };
+
+        float[] w1 = new float[3];
+        map(Mb, white_d50, w1);
+
+        float[] w2 = new float[3];
+        map(Mb, white_xyz, w2);
+
+        float[] A = new float[9];
+        A[0] = (float) Math.max(0.1, Math.min(w1[0] > 0 ? w2[0] / w1[0] : 10, 10));
+        A[4] = (float) Math.max(0.1, Math.min(w1[1] > 0 ? w2[1] / w1[1] : 10, 10));
+        A[8] = (float) Math.max(0.1, Math.min(w1[2] > 0 ? w2[2] / w1[2] : 10, 10));
+
+        float[] MbInv = new float[9];
+        if (!invert(Mb, MbInv)) {
+            throw new IllegalArgumentException("Cannot invert mb");
+        }
+
+        float[] MbInvA = new float[9];
+        multiply(MbInv, A, MbInvA);
+
+        float[] MbInvAMb = new float[9];
+        multiply(MbInvA, Mb, MbInvAMb);
+
+        return MbInvAMb;
     }
 
     public void sensorToIntermediate() {
@@ -253,7 +303,7 @@ public class RawConverter implements AutoCloseable {
     public void intermediateToOutput() {
         square.prepareForOutput();
         square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
-        square.setTransforms2(XYZtoProPhoto, proPhotoToRGB);
+        square.setTransforms2(XYZtoProPhoto, proPhotoToSRGB);
         square.setDenoiseRadius(process.denoiseRadius);
         square.setSharpenFactor(process.sharpenFactor);
         square.setSaturationCurve(process.saturationCurve);
