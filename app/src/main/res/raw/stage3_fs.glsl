@@ -83,6 +83,8 @@ vec3 processPatch(ivec2 xyPos) {
         minxy = min(minxy, impatch[i].xy);
         maxxy = max(maxxy, impatch[i].xy);
     }
+    float distxy = distance(minxy, maxxy);
+    float distz = distance(impatch[0].z, impatch[8].z);
 
     // Take mean for xy, median for z
     vec2 xy = mean.xy;
@@ -100,15 +102,19 @@ vec3 processPatch(ivec2 xyPos) {
     vec3 neighbour;
     vec2 sum = xy;
     int coord, bound, count, totalCount = 1, shiftFactor = 16;
+    float localdistz;
+    float thZStop = thZ * 10.f;
 
     // Left
     coord = xyPos.x;
     bound = max(coord - radiusDenoise, 0);
     count = 0;
-    while (coord > bound) {
+    localdistz = 0.f;
+    while (coord > bound && localdistz < thZStop) {
         neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y), 0).xyz;
         coord -= 1 << (count / shiftFactor);
-        if (distance(xy, neighbour.xy) <= thXY && distance(z, neighbour.z) <= thZ) {
+        localdistz = distance(z, neighbour.z);
+        if (distance(xy, neighbour.xy) <= thXY && localdistz <= thZ) {
             sum += neighbour.xy;
             count++;
         }
@@ -119,10 +125,12 @@ vec3 processPatch(ivec2 xyPos) {
     coord = xyPos.x;
     bound = min(coord + radiusDenoise, intermediateWidth - 1);
     count = 0;
-    while (coord < bound) {
+    localdistz = 0.f;
+    while (coord < bound && localdistz < thZStop) {
         neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y), 0).xyz;
         coord += 1 << (count / shiftFactor);
-        if (distance(xy, neighbour.xy) <= thXY && distance(z, neighbour.z) <= thZ) {
+        localdistz = distance(z, neighbour.z);
+        if (distance(xy, neighbour.xy) <= thXY && localdistz <= thZ) {
             sum += neighbour.xy;
             count++;
         }
@@ -133,10 +141,12 @@ vec3 processPatch(ivec2 xyPos) {
     coord = xyPos.y;
     bound = max(coord - radiusDenoise, 0);
     count = 0;
-    while (coord > bound) {
+    localdistz = 0.f;
+    while (coord > bound && localdistz < thZStop) {
         neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord), 0).xyz;
         coord -= 1 << (count / shiftFactor);
-        if (distance(xy, neighbour.xy) <= thXY && distance(z, neighbour.z) <= thZ) {
+        localdistz = distance(z, neighbour.z);
+        if (distance(xy, neighbour.xy) <= thXY && localdistz <= thZ) {
             sum += neighbour.xy;
             count++;
         }
@@ -147,10 +157,12 @@ vec3 processPatch(ivec2 xyPos) {
     coord = xyPos.y;
     bound = min(coord + radiusDenoise, intermediateHeight - 1);
     count = 0;
-    while (coord < bound) {
+    localdistz = 0.f;
+    while (coord < bound && localdistz < thZStop) {
         neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord), 0).xyz;
         coord += 1 << (count / shiftFactor);
-        if (distance(xy, neighbour.xy) <= thXY && distance(z, neighbour.z) <= thZ) {
+        localdistz = distance(z, neighbour.z);
+        if (distance(xy, neighbour.xy) <= thXY && localdistz <= thZ) {
             sum += neighbour.xy;
             count++;
         }
@@ -158,14 +170,18 @@ vec3 processPatch(ivec2 xyPos) {
     totalCount += count;
 
     xy = sum / float(totalCount);
-    if (radiusDenoise > 0) {
-        z *= max(1.f - 7.5f * chromaSigma * distance(minxy, maxxy), 0.f);
-    }
 
     /**
-    SHARPEN
+    LUMA DENOISE AND SHARPEN
     **/
-    if (sharpenFactor > 0.f) {
+    float effectiveSharpen = sharpenFactor;
+    if (radiusDenoise > 0) {
+        // Bias in favour of edges and against noise
+        effectiveSharpen *= clamp(0.75f + distz - 2.f * distxy, 0.f, 1.f);
+        //return vec3(0.35f, 0.35f, effectiveSharpen / sharpenFactor);
+    }
+
+    if (effectiveSharpen > 0.f) {
         // Sum of difference with all pixels nearby
         float dz = midz * 9.f;
         for (int i = 0; i < 9; i++) {
@@ -173,12 +189,17 @@ vec3 processPatch(ivec2 xyPos) {
         }
 
         // Use this difference to boost sharpness
-        z += sharpenFactor * dz;
+        z += effectiveSharpen * dz;
     }
 
     // Histogram equalization and contrast stretching
     z = clamp((z - zRange.x) / (zRange.y - zRange.x), 0.f, 1.f);
     z = histCurve.x * z*z + histCurve.y * z;
+
+    // Reduce z based on noise levels
+    if (radiusDenoise > 0) {
+        z *= max(1.f - 7.f * chromaSigma * distxy, 0.f);
+    }
 
     return vec3(xy, z);
 }
