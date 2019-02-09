@@ -213,8 +213,11 @@ public class GLProgram {
 
             // Bring closer to 0.5 to reduce the effect strength
             brightenFactor = (float) (Math.sqrt(brightenFactor) - Math.sqrt(chromaSigma));
-            if (brightenFactor < 0f) brightenFactor = 0f;
-            brightenFactor *= 0.6f;
+            if (brightenFactor < 0f) {
+                brightenFactor = 0f;
+            } else {
+                brightenFactor *= 0.6f;
+            }
         }
 
         // Set quadratic compensation curve based on brightenFactor
