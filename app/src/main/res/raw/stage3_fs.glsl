@@ -53,20 +53,23 @@ vec3 processPatch(ivec2 xyPos) {
     vec3[9] impatch = load3x3(xyPos);
     float midz = impatch[4].z;
 
-    // Sort impatch, to get median xyz and distance xy, z
+    vec3 mean;
+    for (int i = 0; i < 9; i++) {
+        mean += impatch[i];
+    }
+    mean /= 9.f;
+    float chromaSigmaLocal, lumaSigmaLocal;
+    for (int i = 0; i < 9; i++) {
+        vec3 diff = mean - impatch[i];
+        chromaSigmaLocal += diff.x * diff.x + diff.y * diff.y;
+        lumaSigmaLocal += diff.z * diff.z;
+    }
+    chromaSigmaLocal /= 9.f;
+    lumaSigmaLocal /= 9.f;
+
     float tmp;
     for (int i = 0; i < 8; i++) {
         for (int j = i + 1; j < 9; j++) {
-            if (impatch[j].x < impatch[i].x) {
-                tmp = impatch[j].x;
-                impatch[j].x = impatch[i].x;
-                impatch[i].x = tmp;
-            }
-            if (impatch[j].y < impatch[i].y) {
-                tmp = impatch[j].y;
-                impatch[j].y = impatch[i].y;
-                impatch[i].y = tmp;
-            }
             if (impatch[j].z < impatch[i].z) {
                 tmp = impatch[j].z;
                 impatch[j].z = impatch[i].z;
@@ -75,8 +78,14 @@ vec3 processPatch(ivec2 xyPos) {
         }
     }
 
-    // Take median
-    vec2 xy = impatch[4].xy;
+    vec2 minxy = impatch[0].xy, maxxy = minxy;
+    for (int i = 1; i < 9; i++) {
+        minxy = min(minxy, impatch[i].xy);
+        maxxy = max(maxxy, impatch[i].xy);
+    }
+
+    // Take mean for xy, median for z
+    vec2 xy = mean.xy;
     float z = impatch[4].z;
 
     /**
@@ -84,8 +93,8 @@ vec3 processPatch(ivec2 xyPos) {
     **/
 
     // Set thresholds as an average of local and global variance
-    float thXY = chromaSigma + distance(impatch[0].xy, impatch[8].xy);
-    float thZ = lumaSigma + distance(impatch[0].z, impatch[8].z);
+    float thXY = chromaSigma * 8.f + chromaSigmaLocal * 1.f;
+    float thZ = lumaSigma * 3.f + lumaSigmaLocal * 1.5f;
 
     // Expand in a plus
     vec3 neighbour;
@@ -149,6 +158,9 @@ vec3 processPatch(ivec2 xyPos) {
     totalCount += count;
 
     xy = sum / float(totalCount);
+    if (radiusDenoise > 0) {
+        z *= max(1.f - 7.5f * chromaSigma * distance(minxy, maxxy), 0.f);
+    }
 
     /**
     SHARPEN
