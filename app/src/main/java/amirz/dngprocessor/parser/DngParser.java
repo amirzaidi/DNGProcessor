@@ -132,7 +132,7 @@ public class DngParser {
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
 
         ProcessParams process = new ProcessParams();
-        process.denoiseFactor = Settings.noiseReduce(mContext) ? 1500 : 0;
+        process.denoiseFactor = Settings.noiseReduce(mContext) ? 3000 : 0;
         switch (Settings.postProcess(mContext)) {
             case Disabled:
                 process.sharpenFactor = 0f;
