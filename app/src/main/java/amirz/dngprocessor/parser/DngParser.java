@@ -149,7 +149,7 @@ public class DngParser {
                 process.histEqualization = true;
                 break;
             case Boosted:
-                process.sharpenFactor = 1f;
+                process.sharpenFactor = 0.8f;
                 process.saturationCurve = new float[] { 2.25f, 0.5f, 1f };
                 process.stretchPerc = new float[] { 0.1f, 0.95f };
                 process.histEqualization = true;
