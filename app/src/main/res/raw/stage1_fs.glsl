@@ -76,6 +76,8 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
     uint index = uint((x & 1) | ((y & 1) << 1));
     index |= (cfaPattern << 2);
     vec3 pRGB;
+    float g1, g2;
+    float gBias = 0.75;
     switch (index) {
         case 0:
         case 5:
@@ -85,7 +87,9 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
                   // G R G
                   // B G B
             pRGB.r = inputArray[4];
-            pRGB.g = (inputArray[1] + inputArray[3] + inputArray[5] + inputArray[7]) / 4.f;
+            g1 = (inputArray[1] + inputArray[7]) * 0.5f;
+            g2 = (inputArray[3] + inputArray[5]) * 0.5f;
+            pRGB.g = gBias * min(g1, g2) + (1.f - gBias) * max(g1, g2);
             pRGB.b = (inputArray[0] + inputArray[2] + inputArray[6] + inputArray[8]) / 4.f;
             break;
         case 1:
@@ -96,7 +100,9 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
                  // R G R
                  // G B G
             pRGB.r = (inputArray[3] + inputArray[5]) / 2.f;
-            pRGB.g = inputArray[4];
+            g1 = (inputArray[0] + inputArray[8]) * 0.5f;
+            g2 = (inputArray[2] + inputArray[8]) * 0.5f;
+            pRGB.g = gBias * min(g1, g2) + (1.f - gBias) * max(g1, g2);
             pRGB.b = (inputArray[1] + inputArray[7]) / 2.f;
             break;
         case 2:
@@ -107,7 +113,9 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
                  // B G B
                  // G R G
             pRGB.r = (inputArray[1] + inputArray[7]) / 2.f;
-            pRGB.g = inputArray[4];
+            g1 = (inputArray[0] + inputArray[8]) * 0.5f;
+            g2 = (inputArray[2] + inputArray[8]) * 0.5f;
+            pRGB.g = gBias * min(g1, g2) + (1.f - gBias) * max(g1, g2);
             pRGB.b = (inputArray[3] + inputArray[5]) / 2.f;
             break;
         case 3:
@@ -118,7 +126,9 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
                  // G B G
                  // R G R
             pRGB.r = (inputArray[0] + inputArray[2] + inputArray[6] + inputArray[8]) / 4.f;
-            pRGB.g = (inputArray[1] + inputArray[3] + inputArray[5] + inputArray[7]) / 4.f;
+            g1 = (inputArray[1] + inputArray[7]) * 0.5f;
+            g2 = (inputArray[3] + inputArray[5]) * 0.5f;
+            pRGB.g = gBias * min(g1, g2) + (1.f - gBias) * max(g1, g2);
             pRGB.b = inputArray[4];
             break;
     }
