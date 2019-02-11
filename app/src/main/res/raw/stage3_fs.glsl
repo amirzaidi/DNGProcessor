@@ -95,8 +95,8 @@ vec3 processPatch(ivec2 xyPos) {
     **/
 
     // Set thresholds as an average of local and global variance
-    float thXY = chromaSigma * 8.f + chromaSigmaLocal * 1.f;
-    float thZ = lumaSigma * 3.f + lumaSigmaLocal * 1.5f;
+    float thXY = max(chromaSigma * 8.f + chromaSigmaLocal * 1.f, 0.01f);
+    float thZ = max(lumaSigma * 3.f + lumaSigmaLocal * 1.5f, 0.01f);
 
     // Expand in a plus
     vec3 neighbour;
