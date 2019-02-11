@@ -95,7 +95,6 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
                  // G B G
                  // R G R
                  // G B G
-            // Blue channel > red channel here
             pRGB.r = (inputArray[3] + inputArray[5]) / 2.f;
             pRGB.g = inputArray[4];
             pRGB.b = (inputArray[1] + inputArray[7]) / 2.f;
@@ -107,7 +106,6 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
                  // G R G
                  // B G B
                  // G R G
-            // Red channel > blue channel here
             pRGB.r = (inputArray[1] + inputArray[7]) / 2.f;
             pRGB.g = inputArray[4];
             pRGB.b = (inputArray[3] + inputArray[5]) / 2.f;
