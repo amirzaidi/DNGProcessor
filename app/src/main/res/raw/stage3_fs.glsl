@@ -177,7 +177,7 @@ vec3 processPatch(ivec2 xyPos) {
     float effectiveSharpen = sharpenFactor;
     if (radiusDenoise > 0) {
         // Bias in favour of edges and against noise
-        effectiveSharpen *= clamp(0.75f + distz - 2.f * distxy, 0.f, 1.f);
+        effectiveSharpen *= clamp(0.9f + distz - 3.f * distxy, 0.f, 1.f);
         //return vec3(0.35f, 0.35f, effectiveSharpen / sharpenFactor);
     }
 
