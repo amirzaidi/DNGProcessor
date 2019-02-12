@@ -43,7 +43,6 @@ vec3[9] load3x3(ivec2 xy) {
 
 vec3 processPatch(ivec2 xyPos) {
     vec3[9] impatch = load3x3(xyPos);
-    float midz = impatch[4].z;
 
     vec3 mean;
     for (int i = 0; i < 9; i++) {
@@ -59,17 +58,6 @@ vec3 processPatch(ivec2 xyPos) {
     chromaSigmaLocal /= 9.f;
     lumaSigmaLocal /= 9.f;
 
-    float tmp;
-    for (int i = 0; i < 8; i++) {
-        for (int j = i + 1; j < 9; j++) {
-            if (impatch[j].z < impatch[i].z) {
-                tmp = impatch[j].z;
-                impatch[j].z = impatch[i].z;
-                impatch[i].z = tmp;
-            }
-        }
-    }
-
     vec2 minxy = impatch[0].xy, maxxy = minxy;
     for (int i = 1; i < 9; i++) {
         minxy = min(minxy, impatch[i].xy);
@@ -78,8 +66,8 @@ vec3 processPatch(ivec2 xyPos) {
     float distxy = distance(minxy, maxxy);
     float distz = distance(impatch[0].z, impatch[8].z);
 
-    // Take mean for xy, median for z
-    vec2 xy = mean.xy;
+    // Take unfiltered xy and z as starting point.
+    vec2 xy = impatch[4].xy;
     float z = impatch[4].z;
 
     /**
@@ -175,7 +163,7 @@ vec3 processPatch(ivec2 xyPos) {
 
     if (effectiveSharpen > 0.f) {
         // Sum of difference with all pixels nearby
-        float dz = midz * 9.f;
+        float dz = impatch[4].z * 9.f;
         for (int i = 0; i < 9; i++) {
             dz -= impatch[i].z;
         }
@@ -190,7 +178,7 @@ vec3 processPatch(ivec2 xyPos) {
 
     // Reduce z based on noise levels
     if (radiusDenoise > 0) {
-        z *= max(1.f - 7.f * chromaSigma * distxy, 0.f);
+        z = max(z - 0.5f * chromaSigmaLocal, z * 0.25f);
     }
 
     return vec3(xy, z);

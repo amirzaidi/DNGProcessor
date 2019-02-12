@@ -210,13 +210,11 @@ public class GLProgram {
         if (histEqualization) {
             // What fraction of pixels are in the first 25% of luminance
             brightenFactor = cumulativeHist[histBins / 4]; // [0,1]
-
-            // Bring closer to 0.5 to reduce the effect strength
-            brightenFactor = (float) (Math.sqrt(brightenFactor) - Math.sqrt(chromaSigma));
+            brightenFactor -= chromaSigma;
             if (brightenFactor < 0f) {
                 brightenFactor = 0f;
             } else {
-                brightenFactor *= 0.6f;
+                brightenFactor *= 0.75f;
             }
         }
 
