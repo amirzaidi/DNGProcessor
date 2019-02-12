@@ -16,7 +16,6 @@ public class OnePlus3 extends Generic {
     public void neutralPointCorrection(SparseArray<TIFFTag> tags, Rational[] neutral) {
         if (lowLight(tags)) {
             // Set a more red neutral point, to blue shift the final image
-            //neutral[0] = new Rational(neutral[0].getNumerator() * 16, neutral[0].getDenominator() * 15);
             neutral[2] = new Rational(neutral[2].getNumerator() * 14, neutral[2].getDenominator() * 15);
         } else {
             super.neutralPointCorrection(tags, neutral);
@@ -31,7 +30,7 @@ public class OnePlus3 extends Generic {
     }
 
     private boolean lowLight(SparseArray<TIFFTag> tags) {
-        return exposureAtLeast(tags, 0.04f);
+        return exposureAtLeast(tags, 0.05f);
     }
 
     private boolean noLight(SparseArray<TIFFTag> tags) {
