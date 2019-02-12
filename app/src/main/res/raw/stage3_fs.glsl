@@ -35,17 +35,9 @@ out vec4 color;
 
 vec3[9] load3x3(ivec2 xy) {
     vec3 outputArray[9];
-
-    outputArray[0] = texelFetch(intermediateBuffer, xy + ivec2(-1, -1), 0).xyz;
-    outputArray[1] = texelFetch(intermediateBuffer, xy + ivec2(0, -1), 0).xyz;
-    outputArray[2] = texelFetch(intermediateBuffer, xy + ivec2(1, -1), 0).xyz;
-    outputArray[3] = texelFetch(intermediateBuffer, xy + ivec2(-1, 0), 0).xyz;
-    outputArray[4] = texelFetch(intermediateBuffer, xy, 0).xyz;
-    outputArray[5] = texelFetch(intermediateBuffer, xy + ivec2(1, 0), 0).xyz;
-    outputArray[6] = texelFetch(intermediateBuffer, xy + ivec2(-1, 1), 0).xyz;
-    outputArray[7] = texelFetch(intermediateBuffer, xy + ivec2(0, 1), 0).xyz;
-    outputArray[8] = texelFetch(intermediateBuffer, xy + ivec2(1, 1), 0).xyz;
-
+    for (int i = 0; i < 9; i++) {
+        outputArray[i] = texelFetch(intermediateBuffer, xy + ivec2((i % 3) - 1, (i / 3) - 1), 0).xyz;
+    }
     return outputArray;
 }
 
@@ -112,7 +104,7 @@ vec3 processPatch(ivec2 xyPos) {
     localdistz = 0.f;
     while (coord > bound && localdistz < thZStop) {
         neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y), 0).xyz;
-        coord -= 1 << (count / shiftFactor);
+        coord -= 2 << (count / shiftFactor);
         localdistz = distance(z, neighbour.z);
         if (distance(xy, neighbour.xy) <= thXY && localdistz <= thZ) {
             sum += neighbour.xy;
@@ -128,7 +120,7 @@ vec3 processPatch(ivec2 xyPos) {
     localdistz = 0.f;
     while (coord < bound && localdistz < thZStop) {
         neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y), 0).xyz;
-        coord += 1 << (count / shiftFactor);
+        coord += 2 << (count / shiftFactor);
         localdistz = distance(z, neighbour.z);
         if (distance(xy, neighbour.xy) <= thXY && localdistz <= thZ) {
             sum += neighbour.xy;
@@ -144,7 +136,7 @@ vec3 processPatch(ivec2 xyPos) {
     localdistz = 0.f;
     while (coord > bound && localdistz < thZStop) {
         neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord), 0).xyz;
-        coord -= 1 << (count / shiftFactor);
+        coord -= 2 << (count / shiftFactor);
         localdistz = distance(z, neighbour.z);
         if (distance(xy, neighbour.xy) <= thXY && localdistz <= thZ) {
             sum += neighbour.xy;
@@ -160,7 +152,7 @@ vec3 processPatch(ivec2 xyPos) {
     localdistz = 0.f;
     while (coord < bound && localdistz < thZStop) {
         neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord), 0).xyz;
-        coord += 1 << (count / shiftFactor);
+        coord += 2 << (count / shiftFactor);
         localdistz = distance(z, neighbour.z);
         if (distance(xy, neighbour.xy) <= thXY && localdistz <= thZ) {
             sum += neighbour.xy;
