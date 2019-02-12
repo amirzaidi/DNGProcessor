@@ -13,24 +13,16 @@ uniform float whiteLevel; // Whitelevel of sensor
 uniform vec3 neutralPoint; // The camera neutral
 
 // Transform
-uniform mat3 sensorToIntermediate; // Color transform from sensor to XYZ.
+uniform mat3 sensorToXYZ; // Color transform from sensor to XYZ.
 
 // Out
 out vec3 intermediate;
 
-float[9] load3x3(ivec2 xy) {
+float[9] load3x3(int x, int y) {
     float outputArray[9];
-
-    outputArray[0] = float(texelFetch(rawBuffer, xy + ivec2(-1, -1), 0).r);
-    outputArray[1] = float(texelFetch(rawBuffer, xy + ivec2(0, -1), 0).r);
-    outputArray[2] = float(texelFetch(rawBuffer, xy + ivec2(1, -1), 0).r);
-    outputArray[3] = float(texelFetch(rawBuffer, xy + ivec2(-1, 0), 0).r);
-    outputArray[4] = float(texelFetch(rawBuffer, xy, 0).r);
-    outputArray[5] = float(texelFetch(rawBuffer, xy + ivec2(1, 0), 0).r);
-    outputArray[6] = float(texelFetch(rawBuffer, xy + ivec2(-1, 1), 0).r);
-    outputArray[7] = float(texelFetch(rawBuffer, xy + ivec2(0, 1), 0).r);
-    outputArray[8] = float(texelFetch(rawBuffer, xy + ivec2(1, 1), 0).r);
-
+    for (int i = 0; i < 9; i++) {
+        outputArray[i] = float(texelFetch(rawBuffer, ivec2(x + (i % 3) - 1, y + (i / 3) - 1), 0).x);
+    }
     return outputArray;
 }
 
@@ -76,8 +68,7 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
     uint index = uint((x & 1) | ((y & 1) << 1));
     index |= (cfaPattern << 2);
     vec3 pRGB;
-    float g1, g2;
-    float gBias = 0.75;
+    float gMin, gMax;
     switch (index) {
         case 0:
         case 5:
@@ -87,9 +78,7 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
                   // G R G
                   // B G B
             pRGB.r = inputArray[4];
-            g1 = (inputArray[1] + inputArray[7]) * 0.5f;
-            g2 = (inputArray[3] + inputArray[5]) * 0.5f;
-            pRGB.g = gBias * min(g1, g2) + (1.f - gBias) * max(g1, g2);
+            pRGB.g = (inputArray[1] + inputArray[3] + inputArray[5] + inputArray[7]) / 4.f;
             pRGB.b = (inputArray[0] + inputArray[2] + inputArray[6] + inputArray[8]) / 4.f;
             break;
         case 1:
@@ -100,9 +89,9 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
                  // R G R
                  // G B G
             pRGB.r = (inputArray[3] + inputArray[5]) / 2.f;
-            g1 = (inputArray[0] + inputArray[8]) * 0.5f;
-            g2 = (inputArray[2] + inputArray[8]) * 0.5f;
-            pRGB.g = gBias * min(g1, g2) + (1.f - gBias) * max(g1, g2);
+            gMin = min(min(inputArray[0], inputArray[8]), min(inputArray[2], inputArray[8]));
+            gMax = max(max(inputArray[0], inputArray[8]), max(inputArray[2], inputArray[8]));
+            pRGB.g = clamp(inputArray[4], gMin, gMax);
             pRGB.b = (inputArray[1] + inputArray[7]) / 2.f;
             break;
         case 2:
@@ -113,9 +102,9 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
                  // B G B
                  // G R G
             pRGB.r = (inputArray[1] + inputArray[7]) / 2.f;
-            g1 = (inputArray[0] + inputArray[8]) * 0.5f;
-            g2 = (inputArray[2] + inputArray[8]) * 0.5f;
-            pRGB.g = gBias * min(g1, g2) + (1.f - gBias) * max(g1, g2);
+            gMin = min(min(inputArray[0], inputArray[8]), min(inputArray[2], inputArray[8]));
+            gMax = max(max(inputArray[0], inputArray[8]), max(inputArray[2], inputArray[8]));
+            pRGB.g = clamp(inputArray[4], gMin, gMax);
             pRGB.b = (inputArray[3] + inputArray[5]) / 2.f;
             break;
         case 3:
@@ -126,9 +115,7 @@ vec3 demosaic(int x, int y, float[9] inputArray) {
                  // G B G
                  // R G R
             pRGB.r = (inputArray[0] + inputArray[2] + inputArray[6] + inputArray[8]) / 4.f;
-            g1 = (inputArray[1] + inputArray[7]) * 0.5f;
-            g2 = (inputArray[3] + inputArray[5]) * 0.5f;
-            pRGB.g = gBias * min(g1, g2) + (1.f - gBias) * max(g1, g2);
+            pRGB.g = (inputArray[1] + inputArray[3] + inputArray[5] + inputArray[7]) / 4.f;
             pRGB.b = inputArray[4];
             break;
     }
@@ -147,31 +134,19 @@ vec3 XYZtoxyY(vec3 XYZ) {
 }
 
 vec3 convertSensorToIntermediate(vec3 sensor) {
-    vec3 intermediate;
-
-    sensor.x = clamp(sensor.x, 0.f, neutralPoint.x);
-    sensor.y = clamp(sensor.y, 0.f, neutralPoint.y);
-    sensor.z = clamp(sensor.z, 0.f, neutralPoint.z);
-
-    intermediate = sensorToIntermediate * sensor;
-    intermediate = XYZtoxyY(intermediate);
-
+    sensor = min(max(sensor, 0.f), neutralPoint); // [0, neutralPoint]
+    vec3 XYZ = sensorToXYZ * sensor;
+    vec3 intermediate = XYZtoxyY(XYZ);
     return intermediate;
 }
 
 void main() {
     ivec2 xy = ivec2(gl_FragCoord.xy);
-    if (xy.x == 0) xy.x++;
-    if (xy.y == 0) xy.y++;
-    if (xy.x == rawWidth - 1) xy.x--;
-    if (xy.y == rawHeight - 1) xy.x--;
+    int x = clamp(xy.x, 1, rawWidth - 2);
+    int y = clamp(xy.y, 1, rawHeight - 2);
 
-    float[9] inoutPatch = load3x3(xy);
-
-    int x = xy.x;
-    int y = xy.y;
+    float[9] inoutPatch = load3x3(x, y);
     linearizeAndGainmap(x, y, inoutPatch);
-
     vec3 sensor = demosaic(x, y, inoutPatch);
     intermediate = convertSensorToIntermediate(sensor);
 }

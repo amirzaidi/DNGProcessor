@@ -111,9 +111,9 @@ public class GLProgram {
                 neutralPoint[0].floatValue(), neutralPoint[1].floatValue(), neutralPoint[2].floatValue());
     }
 
-    public void setTransforms1(float[] sensorToIntermediate) {
-        glUniformMatrix3fv(glGetUniformLocation(mProgramSensorToIntermediate, "sensorToIntermediate"),
-                1, true, sensorToIntermediate, 0);
+    public void setTransforms1(float[] sensorToXYZ) {
+        glUniformMatrix3fv(glGetUniformLocation(mProgramSensorToIntermediate, "sensorToXYZ"),
+                1, true, sensorToXYZ, 0);
     }
 
     public void sensorToIntermediate() {
