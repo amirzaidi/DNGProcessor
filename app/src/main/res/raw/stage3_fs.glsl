@@ -54,7 +54,8 @@ vec3 processPatch(ivec2 xyPos) {
         sigmaLocal += diff * diff;
     }
     sigmaLocal = max(sqrt(sigmaLocal / 9.f), sigma);
-    sigmaLocal.z /= 2.f;
+    sigmaLocal.z *= 0.33f;
+    sigmaLocal = max(sigmaLocal, 0.01f);
 
     vec3 minxyz = impatch[0].xyz, maxxyz = minxyz;
     for (int i = 1; i < 9; i++) {
@@ -73,8 +74,8 @@ vec3 processPatch(ivec2 xyPos) {
     **/
 
     // Thresholds
-    float thExclude = 10.0f;
-    float thStop = 15.0f;
+    float thExclude = 7.f;
+    float thStop = 8.f;
 
     // Expand in a plus
     vec3 midDivSigma = impatch[4] / sigmaLocal;
@@ -152,7 +153,7 @@ vec3 processPatch(ivec2 xyPos) {
 
     // Grayshift xy based on noise level
     if (radiusDenoise > 0) {
-        float shiftFactor = min(distxy, 0.4f) / max(distz, 0.4f);
+        float shiftFactor = clamp(length(sigmaLocal.xy) + distxy, 0.f, 1.f);
         xy = shiftFactor * vec2(0.33f, 0.33f) + (1.f - shiftFactor) * xy;
     }
 
