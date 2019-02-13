@@ -27,8 +27,7 @@ public class GLProgram {
     private final int[] mIntermediateTex = new int[1];
     private float a, b;
     private float[] zRange;
-    private float chromaSigma;
-    private float lumaSigma;
+    private float[] sigma;
 
     public GLProgram() {
         int vertexShader = loadShader(
@@ -173,21 +172,21 @@ public class GLProgram {
         int histBins = 512;
         int[] hist = new int[histBins];
 
-        float chromaSigmaTotal = 0f;
-        float lumaSigmaTotal = 0f;
-
         // Loop over all values
+        sigma = new float[3];
         for (int i = 0; i < f.length; i += 4) {
-            int bin = (int) (f[i] * histBins);
+            for (int j = 0; j < 3; j++) {
+                sigma[j] += f[i + j];
+            }
+
+            int bin = (int) (f[i + 3] * histBins);
             if (bin >= histBins) bin = histBins - 1;
             hist[bin]++;
-
-            chromaSigmaTotal += f[i + 1];
-            lumaSigmaTotal += f[i + 2];
         }
 
-        chromaSigma = chromaSigmaTotal / whPixels; // [0, 0.2]
-        lumaSigma = lumaSigmaTotal / whPixels;
+        for (int j = 0; j < 3; j++) {
+            sigma[j] /= whPixels;
+        }
 
         float[] cumulativeHist = new float[histBins + 1];
         for (int i = 1; i < cumulativeHist.length; i++) {
@@ -210,7 +209,7 @@ public class GLProgram {
         if (histEqualization) {
             // What fraction of pixels are in the first 25% of luminance
             brightenFactor = cumulativeHist[histBins / 4]; // [0,1]
-            brightenFactor -= chromaSigma;
+            brightenFactor -= sigma[0] + sigma[1];
             if (brightenFactor < 0f) {
                 brightenFactor = 0f;
             } else {
@@ -228,7 +227,7 @@ public class GLProgram {
                 0.5f * ((float) maxZ) / histBins + 0.5f
         };
 
-        Log.d(TAG, "ChromaSigma " + chromaSigma + ", LumaSigma " + lumaSigma);
+        Log.d(TAG, "Sigma " + Arrays.toString(sigma));
         Log.d(TAG, "Histogram EQ Curve: " + brightenFactor + ", " + a + ", " + b);
         Log.d(TAG, "Z Range: " + Arrays.toString(zRange));
     }
@@ -259,11 +258,8 @@ public class GLProgram {
         glUniform2f(glGetUniformLocation(mProgramIntermediateToSRGB, "histCurve"),
                 a, b);
 
-        glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "chromaSigma"),
-                chromaSigma);
-
-        glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "lumaSigma"),
-                lumaSigma);
+        glUniform3f(glGetUniformLocation(mProgramIntermediateToSRGB, "sigma"),
+                sigma[0], sigma[1], sigma[2]);
     }
 
     public void setToneMapCoeffs(float[] toneMapCoeffs) {
@@ -281,12 +277,12 @@ public class GLProgram {
 
     public void setDenoiseFactor(int denoiseFactor) {
         glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "radiusDenoise"),
-                (int)((float) denoiseFactor * chromaSigma));
+                (int)((float) denoiseFactor * (sigma[0] + sigma[1])));
     }
 
     public void setSharpenFactor(float sharpenFactor) {
         glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "sharpenFactor"),
-                Math.max(sharpenFactor - 9f * chromaSigma, 0));
+                Math.max(sharpenFactor - 9f * (sigma[0] + sigma[1]), 0));
     }
 
     public void setSaturationCurve(float[] saturationFactor) {

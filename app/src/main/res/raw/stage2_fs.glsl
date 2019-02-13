@@ -31,14 +31,11 @@ void main() {
         mean += impatch[i];
     }
     mean /= 9.f;
-    float chromaSigma, lumaSigma;
+    vec3 sigma;
     for (int i = 0; i < 9; i++) {
         vec3 diff = mean - impatch[i];
-        chromaSigma += diff.x * diff.x + diff.y * diff.y;
-        lumaSigma += diff.z * diff.z;
+        sigma += diff * diff;
     }
-    chromaSigma /= 9.f;
-    lumaSigma /= 9.f;
 
-    analysis = vec4(impatch[4].z, sqrt(chromaSigma), sqrt(lumaSigma), 1.f);
+    analysis = vec4(sqrt(sigma / 9.f), impatch[4].z);
 }

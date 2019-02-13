@@ -18,8 +18,7 @@ uniform vec4 toneMapCoeffs; // Coefficients for a polynomial tonemapping curve
 uniform mat3 intermediateToProPhoto; // Color transform from XYZ to a wide-gamut colorspace
 uniform mat3 proPhotoToSRGB; // Color transform from wide-gamut colorspace to sRGB
 
-uniform float chromaSigma;
-uniform float lumaSigma;
+uniform vec3 sigma;
 
 // Post processing
 uniform float sharpenFactor;
@@ -49,14 +48,13 @@ vec3 processPatch(ivec2 xyPos) {
         mean += impatch[i];
     }
     mean /= 9.f;
-    float chromaSigmaLocal, lumaSigmaLocal;
+    vec3 sigmaLocal;
     for (int i = 0; i < 9; i++) {
         vec3 diff = mean - impatch[i];
-        chromaSigmaLocal += diff.x * diff.x + diff.y * diff.y;
-        lumaSigmaLocal += diff.z * diff.z;
+        sigmaLocal += diff * diff;
     }
-    chromaSigmaLocal /= 9.f;
-    lumaSigmaLocal /= 9.f;
+    sigmaLocal = max(sqrt(sigmaLocal / 9.f), sigma);
+    sigmaLocal.z /= 2.f;
 
     vec3 minxyz = impatch[0].xyz, maxxyz = minxyz;
     for (int i = 1; i < 9; i++) {
@@ -74,28 +72,28 @@ vec3 processPatch(ivec2 xyPos) {
     CHROMA NOISE REDUCE
     **/
 
-    // Set thresholds as an average of local and global variance
-    float thXY = max(chromaSigma * 8.f + chromaSigmaLocal * 1.f, 0.01f);
-    float thZ = max(lumaSigma * 3.f + lumaSigmaLocal * 1.5f, 0.01f);
+    // Thresholds
+    float thExclude = 10.0f;
+    float thStop = 15.0f;
 
     // Expand in a plus
+    vec3 midDivSigma = impatch[4] / sigmaLocal;
     vec3 neighbour;
-    vec2 sum = xy;
-    int coord, bound, count, totalCount = 1, shiftFactor = 12;
-    float localdistz;
-    float thZStop = thZ * 5.f;
+    vec3 sum = impatch[4];
+    int coord, bound, count, totalCount = 1, shiftFactor = 16;
+    float dist;
 
     // Left
     coord = xyPos.x;
     bound = max(coord - radiusDenoise, 0);
     count = 0;
-    localdistz = 0.f;
-    while (coord > bound && localdistz < thZStop) {
+    dist = 0.f;
+    while (coord > bound && dist < thStop) {
         neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y), 0).xyz;
         coord -= 2 << (count / shiftFactor);
-        localdistz = distance(z, neighbour.z);
-        if (distance(xy, neighbour.xy) <= thXY && localdistz <= thZ) {
-            sum += neighbour.xy;
+        dist = distance(midDivSigma, neighbour / sigmaLocal);
+        if (dist < thExclude) {
+            sum += neighbour;
             count++;
         }
     }
@@ -105,13 +103,13 @@ vec3 processPatch(ivec2 xyPos) {
     coord = xyPos.x;
     bound = min(coord + radiusDenoise, intermediateWidth - 1);
     count = 0;
-    localdistz = 0.f;
-    while (coord < bound && localdistz < thZStop) {
+    dist = 0.f;
+    while (coord < bound && dist < thStop) {
         neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y), 0).xyz;
         coord += 2 << (count / shiftFactor);
-        localdistz = distance(z, neighbour.z);
-        if (distance(xy, neighbour.xy) <= thXY && localdistz <= thZ) {
-            sum += neighbour.xy;
+        dist = distance(midDivSigma, neighbour / sigmaLocal);
+        if (dist < thExclude) {
+            sum += neighbour;
             count++;
         }
     }
@@ -121,13 +119,13 @@ vec3 processPatch(ivec2 xyPos) {
     coord = xyPos.y;
     bound = max(coord - radiusDenoise, 0);
     count = 0;
-    localdistz = 0.f;
-    while (coord > bound && localdistz < thZStop) {
+    dist = 0.f;
+    while (coord > bound && dist < thStop) {
         neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord), 0).xyz;
         coord -= 2 << (count / shiftFactor);
-        localdistz = distance(z, neighbour.z);
-        if (distance(xy, neighbour.xy) <= thXY && localdistz <= thZ) {
-            sum += neighbour.xy;
+        dist = distance(midDivSigma, neighbour / sigmaLocal);
+        if (dist < thExclude) {
+            sum += neighbour;
             count++;
         }
     }
@@ -137,24 +135,25 @@ vec3 processPatch(ivec2 xyPos) {
     coord = xyPos.y;
     bound = min(coord + radiusDenoise, intermediateHeight - 1);
     count = 0;
-    localdistz = 0.f;
-    while (coord < bound && localdistz < thZStop) {
+    dist = 0.f;
+    while (coord < bound && dist < thStop) {
         neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord), 0).xyz;
         coord += 2 << (count / shiftFactor);
-        localdistz = distance(z, neighbour.z);
-        if (distance(xy, neighbour.xy) <= thXY && localdistz <= thZ) {
-            sum += neighbour.xy;
+        dist = distance(midDivSigma, neighbour / sigmaLocal);
+        if (dist < thExclude) {
+            sum += neighbour;
             count++;
         }
     }
     totalCount += count;
 
-    xy = sum / float(totalCount);
+    xy = sum.xy / float(totalCount);
+    //z = sum.z / float(totalCount);
 
     // Grayshift xy based on noise level
     if (radiusDenoise > 0) {
-        float shiftFactor = clamp(30.f * chromaSigmaLocal, 0.f, 1.f);
-        xy = shiftFactor * vec2(0.3127f, 0.3290f) + (1.f - shiftFactor) * xy;
+        float shiftFactor = min(distxy, 0.4f) / max(distz, 0.4f);
+        xy = shiftFactor * vec2(0.33f, 0.33f) + (1.f - shiftFactor) * xy;
     }
 
     /**
