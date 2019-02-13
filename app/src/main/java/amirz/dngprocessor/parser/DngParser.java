@@ -17,9 +17,9 @@ import java.nio.ByteOrder;
 import amirz.dngprocessor.NotifHandler;
 import amirz.dngprocessor.Path;
 import amirz.dngprocessor.Settings;
-import amirz.dngprocessor.device.DeviceMap;
 import amirz.dngprocessor.gl.RawConverter;
 import amirz.dngprocessor.gl.Shaders;
+import amirz.dngprocessor.params.Presets;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 
@@ -105,8 +105,6 @@ public class DngParser {
         }
 
         sensor.cfa = CFAPattern.get(tags.get(TIFF.TAG_CFAPattern).getIntArray());
-        String model = tags.get(TIFF.TAG_Model).toString();
-
         sensor.blackLevelPattern = tags.get(TIFF.TAG_BlackLevel).getIntArray();
         sensor.whiteLevel = tags.get(TIFF.TAG_WhiteLevel).getInt();
         sensor.referenceIlluminant1 = tags.get(TIFF.TAG_CalibrationIlluminant1).getInt();
@@ -115,11 +113,13 @@ public class DngParser {
         sensor.calibrationTransform2 = tags.get(TIFF.TAG_CameraCalibration2).getFloatArray();
         sensor.colorMatrix1 = tags.get(TIFF.TAG_ColorMatrix1).getFloatArray();
         sensor.colorMatrix2 = tags.get(TIFF.TAG_ColorMatrix2).getFloatArray();
-        TIFFTag fm1 = tags.get(TIFF.TAG_ForwardMatrix1);
-        TIFFTag fm2 = tags.get(TIFF.TAG_ForwardMatrix2);
-        if (fm1 != null && fm2 != null) {
-            sensor.forwardTransform1 = fm1.getFloatArray();
-            sensor.forwardTransform2 = fm2.getFloatArray();
+        if (Settings.forwardMatrix(mContext)) {
+            TIFFTag fm1 = tags.get(TIFF.TAG_ForwardMatrix1);
+            TIFFTag fm2 = tags.get(TIFF.TAG_ForwardMatrix2);
+            if (fm1 != null && fm2 != null) {
+                sensor.forwardTransform1 = fm1.getFloatArray();
+                sensor.forwardTransform2 = fm2.getFloatArray();
+            }
         }
         sensor.neutralColorPoint = tags.get(TIFF.TAG_AsShotNeutral).getRationalArray();
         //LensShadingMap shadingMap = dynamicMetadata.get(CaptureResult.STATISTICS_LENS_SHADING_CORRECTION_MAP);
@@ -133,28 +133,7 @@ public class DngParser {
 
         ProcessParams process = new ProcessParams();
         process.denoiseFactor = Settings.noiseReduce(mContext) ? 3000 : 0;
-        switch (Settings.postProcess(mContext)) {
-            case Disabled:
-                process.sharpenFactor = 0f;
-                process.saturationCurve = new float[] { 1f, 0f, 0f };
-                process.stretchPerc = new float[] { 0f, 1f };
-                process.histEqualization = false;
-                break;
-            case Natural:
-                DeviceMap.Device device = DeviceMap.get(model);
-                device.neutralPointCorrection(tags, sensor.neutralColorPoint);
-                process.sharpenFactor = device.sharpenFactor(tags);
-                process.saturationCurve = new float[] { 2f, 1.5f, 1.25f };
-                process.stretchPerc = device.stretchPerc(tags);
-                process.histEqualization = true;
-                break;
-            case Boosted:
-                process.sharpenFactor = 0.8f;
-                process.saturationCurve = new float[] { 2.25f, 0.5f, 1f };
-                process.stretchPerc = new float[] { 0.1f, 0.95f };
-                process.histEqualization = true;
-                break;
-        }
+        Presets.apply(Settings.postProcess(mContext), tags, sensor, process);
 
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS_INIT);
         Shaders.load(mContext);

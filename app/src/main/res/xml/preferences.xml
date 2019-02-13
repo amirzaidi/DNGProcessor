@@ -48,6 +48,12 @@
             android:entryValues="@array/post_processing_preset_values"
             android:defaultValue="Natural" />
 
+        <SwitchPreference
+            android:key="pref_forward_matrix"
+            android:title="@string/pref_forward_matrix_title"
+            android:summary="@string/pref_forward_matrix_desc"
+            android:defaultValue="true" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

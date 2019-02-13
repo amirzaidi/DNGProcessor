@@ -11,6 +11,7 @@ public class Settings {
     private static final String PREF_SAVE_PATH = "pref_save_path";
     private static final String PREF_NOISE_REDUCE = "pref_noise_reduce";
     private static final String PREF_POST_PROCESS = "pref_post_process_type";
+    private static final String PREF_FORWARD_MATRIX = "pref_forward_matrix";
 
     public enum PostProcessMode {
         Disabled,
@@ -52,5 +53,9 @@ public class Settings {
 
     public static PostProcessMode postProcess(Context context) {
         return PostProcessMode.valueOf(Utilities.prefs(context).getString(PREF_POST_PROCESS, "Natural"));
+    }
+
+    public static boolean forwardMatrix(Context context) {
+        return Utilities.prefs(context).getBoolean(PREF_FORWARD_MATRIX, true);
     }
 }
