@@ -58,13 +58,13 @@ vec3 processPatch(ivec2 xyPos) {
     chromaSigmaLocal /= 9.f;
     lumaSigmaLocal /= 9.f;
 
-    vec2 minxy = impatch[0].xy, maxxy = minxy;
+    vec3 minxyz = impatch[0].xyz, maxxyz = minxyz;
     for (int i = 1; i < 9; i++) {
-        minxy = min(minxy, impatch[i].xy);
-        maxxy = max(maxxy, impatch[i].xy);
+        minxyz = min(minxyz, impatch[i]);
+        maxxyz = max(maxxyz, impatch[i]);
     }
-    float distxy = distance(minxy, maxxy);
-    float distz = distance(impatch[0].z, impatch[8].z);
+    float distxy = distance(minxyz.xy, maxxyz.xy);
+    float distz = distance(minxyz.z, maxxyz.z);
 
     // Take unfiltered xy and z as starting point.
     vec2 xy = impatch[4].xy;
@@ -81,9 +81,9 @@ vec3 processPatch(ivec2 xyPos) {
     // Expand in a plus
     vec3 neighbour;
     vec2 sum = xy;
-    int coord, bound, count, totalCount = 1, shiftFactor = 16;
+    int coord, bound, count, totalCount = 1, shiftFactor = 12;
     float localdistz;
-    float thZStop = thZ * 10.f;
+    float thZStop = thZ * 5.f;
 
     // Left
     coord = xyPos.x;
@@ -151,17 +151,23 @@ vec3 processPatch(ivec2 xyPos) {
 
     xy = sum / float(totalCount);
 
+    // Grayshift xy based on noise level
+    if (radiusDenoise > 0) {
+        float shiftFactor = clamp(30.f * chromaSigmaLocal, 0.f, 1.f);
+        xy = shiftFactor * vec2(0.3127f, 0.3290f) + (1.f - shiftFactor) * xy;
+    }
+
     /**
     LUMA DENOISE AND SHARPEN
     **/
-    float effectiveSharpen = sharpenFactor;
-    if (radiusDenoise > 0) {
-        // Bias in favour of edges and against noise
-        effectiveSharpen *= clamp(0.9f + distz - 3.f * distxy, 0.f, 1.f);
-        //return vec3(0.35f, 0.35f, effectiveSharpen / sharpenFactor);
-    }
+    if (sharpenFactor > 0.f) {
+        float effectiveSharpen = sharpenFactor;
+        if (radiusDenoise > 0) {
+            // Bias in favour of edges and against noise
+            effectiveSharpen *= clamp(0.8f + distz - 2.f * distxy, 0.f, 1.f);
+            //return vec3(0.3127f, 0.3290f, effectiveSharpen / sharpenFactor);
+        }
 
-    if (effectiveSharpen > 0.f) {
         // Sum of difference with all pixels nearby
         float dz = impatch[4].z * 9.f;
         for (int i = 0; i < 9; i++) {
@@ -175,11 +181,6 @@ vec3 processPatch(ivec2 xyPos) {
     // Histogram equalization and contrast stretching
     z = clamp((z - zRange.x) / (zRange.y - zRange.x), 0.f, 1.f);
     z = histCurve.x * z*z + histCurve.y * z;
-
-    // Reduce z based on noise levels
-    if (radiusDenoise > 0) {
-        z = max(z - 0.5f * chromaSigmaLocal, z * 0.25f);
-    }
 
     return vec3(xy, z);
 }
