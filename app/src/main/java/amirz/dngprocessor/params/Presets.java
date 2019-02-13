@@ -21,7 +21,7 @@ public class Presets {
                 DeviceMap.Device device = DeviceMap.get(modelTag == null ? "" : modelTag.toString());
                 device.neutralPointCorrection(tags, sensor.neutralColorPoint);
                 process.sharpenFactor = device.sharpenFactor(tags);
-                process.saturationCurve = new float[] { 2f, 1.5f, 1.25f };
+                process.saturationCurve = new float[] { 2f, 1.75f, 1.25f };
                 process.stretchPerc = device.stretchPerc(tags);
                 process.histEqualization = true;
                 break;
