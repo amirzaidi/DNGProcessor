@@ -214,7 +214,7 @@ public class GLProgram {
             if (brightenFactor < 0f) {
                 brightenFactor = 0f;
             } else {
-                brightenFactor *= 0.75f;
+                brightenFactor *= 0.6f;
             }
         }
 
