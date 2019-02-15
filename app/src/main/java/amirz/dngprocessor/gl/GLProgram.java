@@ -57,7 +57,7 @@ public class GLProgram extends GLProgramBase {
         // Generate intermediate texture
         glGenTextures(1, mIntermediateTex, 0);
 
-        glActiveTexture(GL_TEXTURE1);
+        glActiveTexture(0);
         glBindTexture(GL_TEXTURE_2D, mIntermediateTex[0]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, inWidth, inHeight, 0, GL_RGB, GL_FLOAT, null);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -131,7 +131,7 @@ public class GLProgram extends GLProgramBase {
         int[] analyzeTex = new int[1];
         glGenTextures(1, analyzeTex, 0);
 
-        glActiveTexture(GL_TEXTURE1);
+        glActiveTexture(0);
         glBindTexture(GL_TEXTURE_2D, analyzeTex[0]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, null);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
