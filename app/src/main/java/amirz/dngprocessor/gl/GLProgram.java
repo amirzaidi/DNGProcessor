@@ -114,6 +114,7 @@ public class GLProgram extends GLProgramBase {
 
     public void sensorToIntermediate() {
         mSquare.draw(glGetAttribLocation(mProgramSensorToIntermediate, "vPosition"));
+        glFlush();
     }
 
     public void setOutOffset(int offsetX, int offsetY) {
@@ -153,6 +154,7 @@ public class GLProgram extends GLProgramBase {
         glViewport(0, 0, w, h);
         seti("samplingFactor", samplingFactor);
         mSquare.draw(glGetAttribLocation(mProgramIntermediateAnalysis, "vPosition"));
+        glFlush();
 
         int whPixels = w * h;
         float[] f = new float[whPixels * 4];
@@ -271,6 +273,7 @@ public class GLProgram extends GLProgramBase {
         glViewport(0, 0, outWidth, height);
         seti("yOffset", y);
         mSquare.draw(glGetAttribLocation(mProgramSensorToIntermediate, "vPosition"));
+        glFlush();
     }
 
     public void close() {
