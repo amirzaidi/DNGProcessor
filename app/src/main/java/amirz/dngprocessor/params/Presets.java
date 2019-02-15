@@ -14,7 +14,6 @@ public class Presets {
                 process.sharpenFactor = 0f;
                 process.saturationCurve = new float[] { 1f, 0f, 0f };
                 process.stretchPerc = new float[] { 0f, 1f };
-                process.histEqualization = false;
                 break;
             case Natural:
                 TIFFTag modelTag = tags.get(TIFF.TAG_Model);
@@ -23,13 +22,11 @@ public class Presets {
                 process.sharpenFactor = device.sharpenFactor(tags);
                 process.saturationCurve = new float[] { 2f, 1.75f, 1.25f };
                 process.stretchPerc = device.stretchPerc(tags);
-                process.histEqualization = true;
                 break;
             case Boosted:
                 process.sharpenFactor = 0.8f;
                 process.saturationCurve = new float[] { 2.25f, 0.5f, 1f };
                 process.stretchPerc = new float[] { 0.1f, 0.95f };
-                process.histEqualization = true;
                 break;
         }
     }

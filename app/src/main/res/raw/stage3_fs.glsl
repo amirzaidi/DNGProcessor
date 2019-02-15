@@ -24,7 +24,6 @@ uniform vec3 sigma;
 uniform float sharpenFactor;
 uniform vec3 saturationCurve;
 uniform float histFactor;
-uniform vec2 histCurve;
 
 // Size
 uniform ivec2 outOffset;
@@ -179,7 +178,6 @@ vec3 processPatch(ivec2 xyPos) {
 
     // Histogram equalization and contrast stretching
     z = clamp((z - zRange.x) / (zRange.y - zRange.x), 0.f, 1.f);
-    z = histCurve.x * z*z + histCurve.y * z;
 
     return vec3(xy, z);
 }

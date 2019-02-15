@@ -5,5 +5,4 @@ public class ProcessParams {
     public float sharpenFactor;
     public float[] saturationCurve; // x - y * s^z
     public float[] stretchPerc;
-    public boolean histEqualization;
 }

@@ -122,7 +122,7 @@ public class GLProgram extends GLProgramBase {
     }
 
     public void analyzeIntermediate(int w, int h, int samplingFactor,
-                                    boolean histEqualization, float[] stretchPerc) {
+                                    float[] stretchPerc) {
         // Analyze
         useProgram(mProgramIntermediateAnalysis);
 
@@ -201,30 +201,12 @@ public class GLProgram extends GLProgramBase {
             }
         }
 
-        float brightenFactor = 0.5f;
-        if (histEqualization) {
-            // What fraction of pixels are in the first 25% of luminance
-            brightenFactor = cumulativeHist[histBins / 4]; // [0,1]
-            brightenFactor -= sigma[0] + sigma[1];
-            if (brightenFactor < 0f) {
-                brightenFactor = 0f;
-            } else {
-                brightenFactor *= 0.6f;
-            }
-        }
-
-        // Set quadratic compensation curve based on brightenFactor
-        // ax² + bx
-        a = 1f - 2f * brightenFactor;
-        b = 2f * brightenFactor;
-
         zRange = new float[] {
                 0.5f * ((float) minZ) / histBins,
                 0.5f * ((float) maxZ) / histBins + 0.5f
         };
 
         Log.d(TAG, "Sigma " + Arrays.toString(sigma));
-        Log.d(TAG, "Histogram EQ Curve: " + brightenFactor + ", " + a + ", " + b);
         Log.d(TAG, "Z Range: " + Arrays.toString(zRange));
     }
 
@@ -244,7 +226,6 @@ public class GLProgram extends GLProgramBase {
         seti("intermediateWidth", inWidth);
         seti("intermediateHeight", inHeight);
         setf("zRange", zRange);
-        setf("histCurve", a, b);
         setf("sigma", sigma);
     }
 
@@ -266,7 +247,7 @@ public class GLProgram extends GLProgramBase {
     }
 
     public void setSaturationCurve(float[] saturationFactor) {
-        setf("saturationCurve", saturationFactor[0], saturationFactor[1], saturationFactor[2]);
+        setf("saturationCurve", saturationFactor);
     }
 
     public void intermediateToOutput(int outWidth, int y, int height) {
