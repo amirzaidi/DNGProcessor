@@ -54,8 +54,7 @@ vec3 processPatch(ivec2 xyPos) {
         sigmaLocal += diff * diff;
     }
     sigmaLocal = max(sqrt(sigmaLocal / 9.f), sigma);
-    sigmaLocal.z *= 0.33f;
-    sigmaLocal = max(sigmaLocal, 0.01f);
+    sigmaLocal.z *= 0.25f / mean.z;
 
     vec3 minxyz = impatch[0].xyz, maxxyz = minxyz;
     for (int i = 1; i < 9; i++) {
