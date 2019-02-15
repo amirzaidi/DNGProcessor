@@ -15,7 +15,7 @@ import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_2D;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MAG_FILTER;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MIN_FILTER;
 
-public class GLProgram {
+public class GLProgram extends GLProgramBase {
     private static final String TAG = "GLProgram";
 
     private final GLSquare mSquare = new GLSquare();
@@ -47,10 +47,8 @@ public class GLProgram {
         glAttachShader(mProgramIntermediateToSRGB, loadShader(GL_FRAGMENT_SHADER, Shaders.FS3));
 
         // Link first program
-        glLinkProgram(mProgramSensorToIntermediate);
-        glUseProgram(mProgramSensorToIntermediate);
+        useProgram(mProgramSensorToIntermediate);
     }
-
 
     public void setIn(byte[] in, int inWidth, int inHeight) {
         this.inWidth = inWidth;
@@ -80,9 +78,9 @@ public class GLProgram {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_R16UI, inWidth, inHeight, 0,
                 GL_RED_INTEGER, GL_UNSIGNED_SHORT, buffer);
 
-        glUniform1i(glGetUniformLocation(mProgramSensorToIntermediate, "rawBuffer"), 0);
-        glUniform1i(glGetUniformLocation(mProgramSensorToIntermediate, "rawWidth"), inWidth);
-        glUniform1i(glGetUniformLocation(mProgramSensorToIntermediate, "rawHeight"), inHeight);
+        seti("rawBuffer", 0);
+        seti("rawWidth", inWidth);
+        seti("rawHeight", inHeight);
 
         // Configure frame buffer
         int[] frameBuffer = new int[1];
@@ -94,41 +92,38 @@ public class GLProgram {
     }
 
     public void setCfaPattern(int cfaPattern) {
-        glUniform1ui(glGetUniformLocation(mProgramSensorToIntermediate, "cfaPattern"), cfaPattern);
+        setui("cfaPattern", cfaPattern);
     }
 
     public void setBlackWhiteLevel(int[] blackLevel, int whiteLevel) {
-        glUniform4f(glGetUniformLocation(mProgramSensorToIntermediate, "blackLevel"),
-                blackLevel[0], blackLevel[1], blackLevel[2], blackLevel[3]);
-
-        glUniform1f(glGetUniformLocation(mProgramSensorToIntermediate, "whiteLevel"),
-                whiteLevel);
+        setf("blackLevel", blackLevel[0], blackLevel[1], blackLevel[2], blackLevel[3]);
+        setf("whiteLevel", whiteLevel);
     }
 
     public void setNeutralPoint(Rational[] neutralPoint) {
-        glUniform3f(glGetUniformLocation(mProgramSensorToIntermediate, "neutralPoint"),
-                neutralPoint[0].floatValue(), neutralPoint[1].floatValue(), neutralPoint[2].floatValue());
+        setf("neutralPoint",
+                neutralPoint[0].floatValue(),
+                neutralPoint[1].floatValue(),
+                neutralPoint[2].floatValue());
     }
 
     public void setTransforms1(float[] sensorToXYZ) {
-        glUniformMatrix3fv(glGetUniformLocation(mProgramSensorToIntermediate, "sensorToXYZ"),
-                1, true, sensorToXYZ, 0);
+        setf("sensorToXYZ", sensorToXYZ);
     }
+
 
     public void sensorToIntermediate() {
         mSquare.draw(glGetAttribLocation(mProgramSensorToIntermediate, "vPosition"));
     }
 
     public void setOutOffset(int offsetX, int offsetY) {
-        glUniform2i(glGetUniformLocation(mProgramIntermediateToSRGB, "outOffset"),
-                offsetX, offsetY);
+        seti("outOffset", offsetX, offsetY);
     }
 
     public void analyzeIntermediate(int w, int h, int samplingFactor,
                                     boolean histEqualization, float[] stretchPerc) {
         // Analyze
-        glLinkProgram(mProgramIntermediateAnalysis);
-        glUseProgram(mProgramIntermediateAnalysis);
+        useProgram(mProgramIntermediateAnalysis);
 
         w /= samplingFactor;
         h /= samplingFactor;
@@ -156,8 +151,7 @@ public class GLProgram {
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, analyzeTex[0], 0);
 
         glViewport(0, 0, w, h);
-        glUniform1i(glGetUniformLocation(mProgramIntermediateAnalysis, "samplingFactor"),
-                samplingFactor);
+        seti("samplingFactor", samplingFactor);
         mSquare.draw(glGetAttribLocation(mProgramIntermediateAnalysis, "vPosition"));
 
         int whPixels = w * h;
@@ -233,9 +227,8 @@ public class GLProgram {
     }
 
     public void prepareForOutput() {
-        // Now switch to the second program
-        glLinkProgram(mProgramIntermediateToSRGB);
-        glUseProgram(mProgramIntermediateToSRGB);
+        // Now switch to the last program
+        useProgram(mProgramIntermediateToSRGB);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -246,53 +239,37 @@ public class GLProgram {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-        glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "intermediateWidth"),
-                inWidth);
-
-        glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "intermediateHeight"),
-                inHeight);
-
-        glUniform2f(glGetUniformLocation(mProgramIntermediateToSRGB, "zRange"),
-                zRange[0], zRange[1]);
-
-        glUniform2f(glGetUniformLocation(mProgramIntermediateToSRGB, "histCurve"),
-                a, b);
-
-        glUniform3f(glGetUniformLocation(mProgramIntermediateToSRGB, "sigma"),
-                sigma[0], sigma[1], sigma[2]);
+        seti("intermediateWidth", inWidth);
+        seti("intermediateHeight", inHeight);
+        setf("zRange", zRange);
+        setf("histCurve", a, b);
+        setf("sigma", sigma);
     }
 
     public void setToneMapCoeffs(float[] toneMapCoeffs) {
-        glUniform4f(glGetUniformLocation(mProgramIntermediateToSRGB, "toneMapCoeffs"),
-                toneMapCoeffs[0], toneMapCoeffs[1], toneMapCoeffs[2], toneMapCoeffs[3]);
+        setf("toneMapCoeffs", toneMapCoeffs);
     }
 
     public void setTransforms2(float[] intermediateToProPhoto, float[] proPhotoToSRGB) {
-        glUniformMatrix3fv(glGetUniformLocation(mProgramIntermediateToSRGB, "intermediateToProPhoto"),
-                1, true, intermediateToProPhoto, 0);
-
-        glUniformMatrix3fv(glGetUniformLocation(mProgramIntermediateToSRGB, "proPhotoToSRGB"),
-                1, true, proPhotoToSRGB, 0);
+        setf("intermediateToProPhoto", intermediateToProPhoto);
+        setf("proPhotoToSRGB", proPhotoToSRGB);
     }
 
     public void setDenoiseFactor(int denoiseFactor) {
-        glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "radiusDenoise"),
-                (int)((float) denoiseFactor * (sigma[0] + sigma[1])));
+        seti("radiusDenoise", (int)((float) denoiseFactor * (sigma[0] + sigma[1])));
     }
 
     public void setSharpenFactor(float sharpenFactor) {
-        glUniform1f(glGetUniformLocation(mProgramIntermediateToSRGB, "sharpenFactor"),
-                Math.max(sharpenFactor - 9f * (sigma[0] + sigma[1]), 0));
+        setf("sharpenFactor", Math.max(sharpenFactor - 9f * (sigma[0] + sigma[1]), 0));
     }
 
     public void setSaturationCurve(float[] saturationFactor) {
-        glUniform3f(glGetUniformLocation(mProgramIntermediateToSRGB, "saturationCurve"),
-                saturationFactor[0], saturationFactor[1], saturationFactor[2]);
+        setf("saturationCurve", saturationFactor[0], saturationFactor[1], saturationFactor[2]);
     }
 
     public void intermediateToOutput(int outWidth, int y, int height) {
         glViewport(0, 0, outWidth, height);
-        glUniform1i(glGetUniformLocation(mProgramIntermediateToSRGB, "yOffset"), y);
+        seti("yOffset", y);
         mSquare.draw(glGetAttribLocation(mProgramSensorToIntermediate, "vPosition"));
     }
 
