@@ -31,16 +31,17 @@ uniform ivec2 outOffset;
 // Out
 out vec4 color;
 
-vec3[9] load3x3(ivec2 xy) {
+vec3[9] load3x3(ivec2 xy, int n) {
     vec3 outputArray[9];
     for (int i = 0; i < 9; i++) {
-        outputArray[i] = texelFetch(intermediateBuffer, xy + ivec2((i % 3) - 1, (i / 3) - 1), 0).xyz;
+        outputArray[i] = texelFetch(intermediateBuffer, xy + n * ivec2((i % 3) - 1, (i / 3) - 1), 0).xyz;
     }
     return outputArray;
 }
 
 vec3 processPatch(ivec2 xyPos) {
-    vec3[9] impatch = load3x3(xyPos);
+    vec3[9] impatch = load3x3(xyPos, 2);
+    vec3 mid = impatch[4];
 
     vec3 mean;
     for (int i = 0; i < 9; i++) {
@@ -64,21 +65,21 @@ vec3 processPatch(ivec2 xyPos) {
     float distz = distance(minxyz.z, maxxyz.z);
 
     // Take unfiltered xy and z as starting point.
-    vec2 xy = impatch[4].xy;
-    float z = impatch[4].z;
+    vec2 xy = mid.xy;
+    float z = mid.z;
 
     /**
     CHROMA NOISE REDUCE
     **/
 
     // Thresholds
-    float thExclude = 7.f;
-    float thStop = 8.f;
+    float thExclude = 4.f;
+    float thStop = 5.f;
 
     // Expand in a plus
-    vec3 midDivSigma = impatch[4] / sigmaLocal;
+    vec3 midDivSigma = mid / sigmaLocal;
     vec3 neighbour;
-    vec3 sum = impatch[4];
+    vec3 sum = mid;
     int coord, bound, count, totalCount = 1, shiftFactor = 16;
     float dist;
 
@@ -151,14 +152,17 @@ vec3 processPatch(ivec2 xyPos) {
 
     // Grayshift xy based on noise level
     if (radiusDenoise > 0) {
-        float shiftFactor = clamp(length(sigmaLocal.xy) + distxy, 0.f, 1.f);
+        float shiftFactor = clamp(distxy, 0.f, 1.f);
         xy = shiftFactor * vec2(0.32f, 0.34f) + (1.f - shiftFactor) * xy;
+        z *= max(1.f - 1.5f * length(sigmaLocal.xy), 0.5f);
     }
 
     /**
     LUMA DENOISE AND SHARPEN
     **/
     if (sharpenFactor > 0.f) {
+        impatch = load3x3(xyPos, 1);
+
         float effectiveSharpen = sharpenFactor;
         if (radiusDenoise > 0) {
             // Bias in favour of edges and against noise
@@ -167,7 +171,7 @@ vec3 processPatch(ivec2 xyPos) {
         }
 
         // Sum of difference with all pixels nearby
-        float dz = impatch[4].z * 9.f;
+        float dz = mid.z * 9.f;
         for (int i = 0; i < 9; i++) {
             dz -= impatch[i].z;
         }
