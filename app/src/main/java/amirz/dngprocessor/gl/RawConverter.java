@@ -75,7 +75,7 @@ public class RawConverter implements AutoCloseable {
      * Adapted to transform from [0,1] to [0,1]
      */
     private static final float[] CUSTOM_ACR3_TONEMAP_CURVE_COEFFS = new float[] {
-            -0.7836f, 0.8469f, 0.9367f, 0f
+            -1.087f, 1.643f, 0.443f, 0f
     };
 
     /**
