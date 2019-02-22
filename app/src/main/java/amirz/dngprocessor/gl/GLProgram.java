@@ -25,7 +25,6 @@ public class GLProgram extends GLProgramBase {
 
     private int inWidth, inHeight;
     private final int[] mIntermediateTex = new int[1];
-    private float a, b;
     private float[] zRange;
     private float[] sigma;
 
