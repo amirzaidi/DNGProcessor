@@ -90,7 +90,7 @@ vec3 processPatch(ivec2 xyPos) {
     count = 0;
     dist = 0.f;
     while (coord > bound && dist < thStop) {
-        neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y), 0).xyz;
+        neighbour = texelFetch(intermediateDownscale, ivec2(coord, xyPos.y) / 2, 0).xyz;
         coord -= 2 << (count / shiftFactor);
         dist = distance(midDivSigma, neighbour / sigmaLocal);
         if (dist < thExclude) {
@@ -106,7 +106,7 @@ vec3 processPatch(ivec2 xyPos) {
     count = 0;
     dist = 0.f;
     while (coord < bound && dist < thStop) {
-        neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y), 0).xyz;
+        neighbour = texelFetch(intermediateDownscale, ivec2(coord, xyPos.y) / 2, 0).xyz;
         coord += 2 << (count / shiftFactor);
         dist = distance(midDivSigma, neighbour / sigmaLocal);
         if (dist < thExclude) {
@@ -122,7 +122,7 @@ vec3 processPatch(ivec2 xyPos) {
     count = 0;
     dist = 0.f;
     while (coord > bound && dist < thStop) {
-        neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord), 0).xyz;
+        neighbour = texelFetch(intermediateDownscale, ivec2(xyPos.x, coord) / 2, 0).xyz;
         coord -= 2 << (count / shiftFactor);
         dist = distance(midDivSigma, neighbour / sigmaLocal);
         if (dist < thExclude) {
@@ -138,7 +138,7 @@ vec3 processPatch(ivec2 xyPos) {
     count = 0;
     dist = 0.f;
     while (coord < bound && dist < thStop) {
-        neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord), 0).xyz;
+        neighbour = texelFetch(intermediateDownscale, ivec2(xyPos.x, coord) / 2, 0).xyz;
         coord += 2 << (count / shiftFactor);
         dist = distance(midDivSigma, neighbour / sigmaLocal);
         if (dist < thExclude) {
@@ -155,7 +155,7 @@ vec3 processPatch(ivec2 xyPos) {
     if (radiusDenoise > 0) {
         float shiftFactor = clamp(distxy, 0.f, 1.f);
         xy = shiftFactor * vec2(0.32f, 0.34f) + (1.f - shiftFactor) * xy;
-        z *= max(1.f - 1.5f * length(sigmaLocal.xy), 0.5f);
+        //z *= max(1.f - 1.5f * length(sigmaLocal.xy), 0.5f);
     }
 
     /**
@@ -313,7 +313,7 @@ vec3 saturate(vec3 rgb) {
     float minv = min(min(rgb.r, rgb.g), rgb.b);
     if (maxv > minv) {
         float s = maxv - minv; // [0,1]
-        float saturation = saturationCurve.x - saturationCurve.y * pow(s, saturationCurve.z);
+        float saturation = max(saturationCurve.x - saturationCurve.y * pow(s, saturationCurve.z), 1.f);
         rgb = rgb * saturation + dot(rgb, gMonoMult) * (1.f - saturation);
     }
     return rgb;

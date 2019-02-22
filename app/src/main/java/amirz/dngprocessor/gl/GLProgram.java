@@ -24,12 +24,15 @@ public class GLProgram extends GLProgramBase {
     private final int mProgramIntermediateDownscale;
     private final int mProgramIntermediateToSRGB;
 
+    private final int[] fbo = new int[1];
     private int inWidth, inHeight;
     private final int[] mIntermediateTex = new int[2];
     private float[] zRange;
     private float[] sigma;
 
     public GLProgram() {
+        glGetIntegerv(GL_FRAMEBUFFER_BINDING, fbo, 0);
+
         int vertexShader = loadShader(GL_VERTEX_SHADER, Shaders.VS);
 
         mProgramSensorToIntermediate = glCreateProgram();
@@ -63,13 +66,6 @@ public class GLProgram extends GLProgramBase {
         glActiveTexture(0);
         glBindTexture(GL_TEXTURE_2D, mIntermediateTex[0]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, inWidth, inHeight, 0, GL_RGB, GL_FLOAT, null);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-        // Texture 2 for downscaled data
-        // In height and width are always even because of the CFA layout
-        glBindTexture(GL_TEXTURE_2D, mIntermediateTex[1]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, inWidth / 2, inHeight / 2, 0, GL_RGB, GL_FLOAT, null);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -220,6 +216,18 @@ public class GLProgram extends GLProgramBase {
     public void downscaleIntermediate() {
         useProgram(mProgramIntermediateDownscale);
 
+        // Texture 2 for downscaled data
+        // In height and width are always even because of the CFA layout
+        glActiveTexture(0);
+        glBindTexture(GL_TEXTURE_2D, mIntermediateTex[1]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, inWidth / 2, inHeight / 2, 0, GL_RGB, GL_FLOAT, null);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+        // Load intermediate buffer as texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, mIntermediateTex[0]);
+
         // Configure frame buffer
         int[] frameBuffer = new int[1];
         glGenFramebuffers(1, frameBuffer, 0);
@@ -235,13 +243,15 @@ public class GLProgram extends GLProgramBase {
         // Now switch to the last program
         useProgram(mProgramIntermediateToSRGB);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo[0]);
 
         // Load intermediate buffers as textures
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, mIntermediateTex[0]);
-        glActiveTexture(GL_TEXTURE1);
+        seti("intermediateBuffer", 0);
+        glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, mIntermediateTex[1]);
+        seti("intermediateDownscale", 2);
 
         seti("intermediateWidth", inWidth);
         seti("intermediateHeight", inHeight);
@@ -281,6 +291,7 @@ public class GLProgram extends GLProgramBase {
         // Clean everything up
         glDeleteProgram(mProgramSensorToIntermediate);
         glDeleteProgram(mProgramIntermediateAnalysis);
+        glDeleteProgram(mProgramIntermediateDownscale);
         glDeleteProgram(mProgramIntermediateToSRGB);
     }
 
