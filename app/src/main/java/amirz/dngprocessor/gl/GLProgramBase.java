@@ -14,6 +14,10 @@ public class GLProgramBase {
         mProgramActive = program;
     }
 
+    protected int vPosition() {
+        return glGetAttribLocation(mProgramActive, "vPosition");
+    }
+
     public void seti(String var, int... vals) {
         int loc = loc(var);
         switch (vals.length) {

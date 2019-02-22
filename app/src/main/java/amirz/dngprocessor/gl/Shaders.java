@@ -15,6 +15,7 @@ public class Shaders {
     public static String FS1;
     public static String FS2;
     public static String FS3;
+    public static String FS4;
 
     public static void load(Context context) {
         Resources res = context.getResources();
@@ -24,6 +25,7 @@ public class Shaders {
         FS1 = readRaw(res, R.raw.stage1_fs);
         FS2 = readRaw(res, R.raw.stage2_fs);
         FS3 = readRaw(res, R.raw.stage3_fs);
+        FS4 = readRaw(res, R.raw.stage4_fs);
     }
 
     private static String readRaw(Resources res, int resId) {

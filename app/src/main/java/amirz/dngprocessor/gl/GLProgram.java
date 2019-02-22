@@ -21,6 +21,7 @@ public class GLProgram extends GLProgramBase {
     private final GLSquare mSquare = new GLSquare();
     private final int mProgramSensorToIntermediate;
     private final int mProgramIntermediateAnalysis;
+    private final int mProgramIntermediateDownscale;
     private final int mProgramIntermediateToSRGB;
 
     private int inWidth, inHeight;
@@ -29,9 +30,7 @@ public class GLProgram extends GLProgramBase {
     private float[] sigma;
 
     public GLProgram() {
-        int vertexShader = loadShader(
-                GL_VERTEX_SHADER,
-                Shaders.VS);
+        int vertexShader = loadShader(GL_VERTEX_SHADER, Shaders.VS);
 
         mProgramSensorToIntermediate = glCreateProgram();
         glAttachShader(mProgramSensorToIntermediate, vertexShader);
@@ -41,9 +40,13 @@ public class GLProgram extends GLProgramBase {
         glAttachShader(mProgramIntermediateAnalysis, vertexShader);
         glAttachShader(mProgramIntermediateAnalysis, loadShader(GL_FRAGMENT_SHADER, Shaders.FS2));
 
+        mProgramIntermediateDownscale = glCreateProgram();
+        glAttachShader(mProgramIntermediateDownscale, vertexShader);
+        glAttachShader(mProgramIntermediateDownscale, loadShader(GL_FRAGMENT_SHADER, Shaders.FS3));
+
         mProgramIntermediateToSRGB = glCreateProgram();
         glAttachShader(mProgramIntermediateToSRGB, vertexShader);
-        glAttachShader(mProgramIntermediateToSRGB, loadShader(GL_FRAGMENT_SHADER, Shaders.FS3));
+        glAttachShader(mProgramIntermediateToSRGB, loadShader(GL_FRAGMENT_SHADER, Shaders.FS4));
 
         // Link first program
         useProgram(mProgramSensorToIntermediate);
@@ -120,7 +123,7 @@ public class GLProgram extends GLProgramBase {
 
 
     public void sensorToIntermediate() {
-        mSquare.draw(glGetAttribLocation(mProgramSensorToIntermediate, "vPosition"));
+        mSquare.draw(vPosition());
         glFlush();
     }
 
@@ -157,7 +160,7 @@ public class GLProgram extends GLProgramBase {
 
         glViewport(0, 0, w, h);
         seti("samplingFactor", samplingFactor);
-        mSquare.draw(glGetAttribLocation(mProgramIntermediateAnalysis, "vPosition"));
+        mSquare.draw(vPosition());
         glFlush();
 
         int whPixels = w * h;
@@ -214,6 +217,20 @@ public class GLProgram extends GLProgramBase {
         Log.d(TAG, "Z Range: " + Arrays.toString(zRange));
     }
 
+    public void downscaleIntermediate() {
+        useProgram(mProgramIntermediateDownscale);
+
+        // Configure frame buffer
+        int[] frameBuffer = new int[1];
+        glGenFramebuffers(1, frameBuffer, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer[0]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mIntermediateTex[1], 0);
+
+        glViewport(0, 0, inWidth / 2, inHeight / 2);
+        mSquare.draw(vPosition());
+        glFlush();
+    }
+
     public void prepareForOutput() {
         // Now switch to the last program
         useProgram(mProgramIntermediateToSRGB);
@@ -256,7 +273,7 @@ public class GLProgram extends GLProgramBase {
     public void intermediateToOutput(int outWidth, int y, int height) {
         glViewport(0, 0, outWidth, height);
         seti("yOffset", y);
-        mSquare.draw(glGetAttribLocation(mProgramSensorToIntermediate, "vPosition"));
+        mSquare.draw(vPosition());
         glFlush();
     }
 
