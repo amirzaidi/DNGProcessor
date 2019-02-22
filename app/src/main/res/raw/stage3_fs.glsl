@@ -3,6 +3,7 @@
 precision mediump float;
 
 uniform sampler2D intermediateBuffer;
+uniform sampler2D intermediateBufferMipmap;
 uniform int intermediateWidth;
 uniform int intermediateHeight;
 

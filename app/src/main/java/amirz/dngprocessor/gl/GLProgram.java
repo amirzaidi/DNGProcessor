@@ -24,7 +24,7 @@ public class GLProgram extends GLProgramBase {
     private final int mProgramIntermediateToSRGB;
 
     private int inWidth, inHeight;
-    private final int[] mIntermediateTex = new int[1];
+    private final int[] mIntermediateTex = new int[2];
     private float[] zRange;
     private float[] sigma;
 
@@ -53,12 +53,20 @@ public class GLProgram extends GLProgramBase {
         this.inWidth = inWidth;
         this.inHeight = inHeight;
 
-        // Generate intermediate texture
-        glGenTextures(1, mIntermediateTex, 0);
+        // Generate intermediate textures
+        glGenTextures(2, mIntermediateTex, 0);
 
+        // Texture 1 for per-CFA pixel data
         glActiveTexture(0);
         glBindTexture(GL_TEXTURE_2D, mIntermediateTex[0]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, inWidth, inHeight, 0, GL_RGB, GL_FLOAT, null);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+        // Texture 2 for downscaled data
+        // In height and width are always even because of the CFA layout
+        glBindTexture(GL_TEXTURE_2D, mIntermediateTex[1]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, inWidth / 2, inHeight / 2, 0, GL_RGB, GL_FLOAT, null);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -140,9 +148,6 @@ public class GLProgram extends GLProgramBase {
         // Load intermediate buffer as texture
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, mIntermediateTex[0]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, inWidth, inHeight, 0, GL_RGB, GL_FLOAT, null);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
         // Configure frame buffer
         int[] frameBuffer = new int[1];
@@ -215,12 +220,11 @@ public class GLProgram extends GLProgramBase {
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        // Load intermediate buffer as texture
+        // Load intermediate buffers as textures
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, mIntermediateTex[0]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, inWidth, inHeight, 0, GL_RGB, GL_FLOAT, null);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, mIntermediateTex[1]);
 
         seti("intermediateWidth", inWidth);
         seti("intermediateHeight", inHeight);
