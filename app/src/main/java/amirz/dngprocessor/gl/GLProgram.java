@@ -204,9 +204,10 @@ public class GLProgram extends GLProgramBase {
             }
         }
 
+        float zRangeStrength = 0.67f;
         zRange = new float[] {
-                0.5f * ((float) minZ) / histBins,
-                0.5f * ((float) maxZ) / histBins + 0.5f
+                zRangeStrength * ((float) minZ) / histBins,
+                zRangeStrength * ((float) maxZ) / histBins + (1f - zRangeStrength)
         };
 
         Log.d(TAG, "Sigma " + Arrays.toString(sigma));
@@ -255,7 +256,7 @@ public class GLProgram extends GLProgramBase {
 
         seti("intermediateWidth", inWidth);
         seti("intermediateHeight", inHeight);
-        setf("zRange", zRange);
+        setf("zRange", zRange[0], zRange[1] - zRange[0]);
         setf("sigma", sigma);
     }
 
@@ -263,8 +264,8 @@ public class GLProgram extends GLProgramBase {
         setf("toneMapCoeffs", toneMapCoeffs);
     }
 
-    public void setTransforms2(float[] intermediateToProPhoto, float[] proPhotoToSRGB) {
-        setf("intermediateToProPhoto", intermediateToProPhoto);
+    public void setTransforms2(float[] XYZtoProPhoto, float[] proPhotoToSRGB) {
+        setf("XYZtoProPhoto", XYZtoProPhoto);
         setf("proPhotoToSRGB", proPhotoToSRGB);
     }
 

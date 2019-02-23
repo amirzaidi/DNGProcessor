@@ -122,6 +122,7 @@ public class DngParser {
             }
         }
         sensor.neutralColorPoint = tags.get(TIFF.TAG_AsShotNeutral).getRationalArray();
+        sensor.noiseProfile = tags.get(TIFF.TAG_NoiseProfile).getFloatArray();
         //LensShadingMap shadingMap = dynamicMetadata.get(CaptureResult.STATISTICS_LENS_SHADING_CORRECTION_MAP);
 
         int[] defaultCropOrigin = tags.get(TIFF.TAG_DefaultCropOrigin).getIntArray();

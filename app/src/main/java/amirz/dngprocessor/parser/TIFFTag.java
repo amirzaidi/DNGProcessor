@@ -40,6 +40,8 @@ public class TIFFTag {
         for (int i = 0; i < floats.length; i++) {
             if (type == TIFF.TYPE_Frac || type == TIFF.TYPE_UFrac) {
                 floats[i] = ((Rational) value[i]).floatValue();
+            } else if (type == TIFF.TYPE_Double) {
+                floats[i] = ((Double) value[i]).floatValue();
             }
         }
         return floats;

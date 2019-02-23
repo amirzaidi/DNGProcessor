@@ -11,12 +11,13 @@ uniform int yOffset;
 
 uniform vec2 zRange;
 uniform int radiusDenoise;
+uniform vec2 noiseProfile;
 
 // Sensor and picture variables
 uniform vec4 toneMapCoeffs; // Coefficients for a polynomial tonemapping curve
 
 // Transform
-uniform mat3 intermediateToProPhoto; // Color transform from XYZ to a wide-gamut colorspace
+uniform mat3 XYZtoProPhoto; // Color transform from XYZ to a wide-gamut colorspace
 uniform mat3 proPhotoToSRGB; // Color transform from wide-gamut colorspace to sRGB
 
 uniform vec3 sigma;
@@ -44,6 +45,10 @@ vec3 processPatch(ivec2 xyPos) {
     vec3[9] impatch = load3x3(xyPos, 2);
     vec3 mid = impatch[4];
 
+    // Take unfiltered xy and z as starting point.
+    vec2 xy = mid.xy;
+    float z = mid.z;
+
     vec3 mean;
     for (int i = 0; i < 9; i++) {
         mean += impatch[i];
@@ -55,7 +60,7 @@ vec3 processPatch(ivec2 xyPos) {
         sigmaLocal += diff * diff;
     }
     sigmaLocal = max(sqrt(sigmaLocal / 9.f), sigma);
-    sigmaLocal.z *= 0.25f / mean.z;
+    sigmaLocal.z *= clamp(0.25f / mean.z, 1.f, 10.f);
 
     vec3 minxyz = impatch[0].xyz, maxxyz = minxyz;
     for (int i = 1; i < 9; i++) {
@@ -65,13 +70,11 @@ vec3 processPatch(ivec2 xyPos) {
     float distxy = distance(minxyz.xy, maxxyz.xy);
     float distz = distance(minxyz.z, maxxyz.z);
 
-    // Take unfiltered xy and z as starting point.
-    vec2 xy = mid.xy;
-    float z = mid.z;
-
     /**
     CHROMA NOISE REDUCE
     **/
+
+    //float Npx = pow(noiseProfile.x * z + noiseProfile.y, 2.f);
 
     // Thresholds
     float thExclude = 4.f;
@@ -153,9 +156,13 @@ vec3 processPatch(ivec2 xyPos) {
 
     // Grayshift xy based on noise level
     if (radiusDenoise > 0) {
-        float shiftFactor = clamp(distxy, 0.f, 1.f);
-        xy = shiftFactor * vec2(0.32f, 0.34f) + (1.f - shiftFactor) * xy;
-        //z *= max(1.f - 1.5f * length(sigmaLocal.xy), 0.5f);
+        float shiftFactor = clamp((distxy - 0.1f) * 2.f, 0.f, 1.f);
+
+        // Shift towards D50 white
+        xy = shiftFactor * vec2(0.345703f, 0.358539f) + (1.f - shiftFactor) * xy;
+
+        // Reduce z by at most a third
+        z *= clamp(1.1f - shiftFactor, 0.67f, 1.f);
     }
 
     /**
@@ -182,7 +189,7 @@ vec3 processPatch(ivec2 xyPos) {
     }
 
     // Histogram equalization and contrast stretching
-    z = clamp((z - zRange.x) / (zRange.y - zRange.x), 0.f, 1.f);
+    z = clamp((z - zRange.x) / zRange.y, 0.f, 1.f);
 
     return vec3(xy, z);
 }
@@ -294,14 +301,12 @@ vec3 gammaCorrectPixel(vec3 rgb) {
 }
 
 vec3 applyColorspace(vec3 intermediate) {
-    vec3 proPhoto, sRGB;
+    vec3 XYZ = xyYtoXYZ(intermediate);
 
-    intermediate = xyYtoXYZ(intermediate);
-
-    proPhoto = clamp(intermediateToProPhoto * intermediate, 0.f, 1.f);
+    vec3 proPhoto = clamp(XYZtoProPhoto * XYZ, 0.f, 1.f);
     proPhoto = tonemap(proPhoto);
 
-    sRGB = clamp(proPhotoToSRGB * proPhoto, 0.f, 1.f);
+    vec3 sRGB = clamp(proPhotoToSRGB * proPhoto, 0.f, 1.f);
     sRGB = gammaCorrectPixel(sRGB);
 
     return sRGB;

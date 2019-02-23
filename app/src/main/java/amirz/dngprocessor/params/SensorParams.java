@@ -18,6 +18,7 @@ public class SensorParams {
     public float[] forwardTransform1;
     public float[] forwardTransform2;
     public Rational[] neutralColorPoint;
+    public float[] noiseProfile;
     public int outputOffsetX;
     public int outputOffsetY;
 }
