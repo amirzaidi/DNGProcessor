@@ -169,9 +169,11 @@ vec3 XYZtoxyY(vec3 XYZ) {
 }
 
 vec3 convertSensorToIntermediate(vec3 sensor) {
-    sensor = min(max(sensor, 0.f), neutralPoint); // [0, neutralPoint]
+    sensor = max(sensor, 0.f);
     vec3 XYZ = sensorToXYZ * sensor;
     vec3 intermediate = XYZtoxyY(XYZ);
+    // Sigmoid mapped so 0.5 -> 0.5
+    intermediate.z = 2.f / (1.f + exp(-2.217f * intermediate.z)) - 1.f;
     return intermediate;
 }
 
