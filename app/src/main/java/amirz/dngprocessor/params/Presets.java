@@ -24,7 +24,7 @@ public class Presets {
                 process.stretchPerc = device.stretchPerc(tags);
                 break;
             case Boosted:
-                process.sharpenFactor = 0.8f;
+                process.sharpenFactor = 0.65f;
                 process.saturationCurve = new float[] { 2.25f, 0.5f, 1f };
                 process.stretchPerc = new float[] { 0.1f, 0.95f };
                 break;

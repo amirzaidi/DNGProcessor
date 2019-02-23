@@ -60,7 +60,7 @@ vec3 processPatch(ivec2 xyPos) {
         sigmaLocal += diff * diff;
     }
     sigmaLocal = max(sqrt(sigmaLocal / 9.f), sigma);
-    sigmaLocal.z *= clamp(0.25f / mean.z, 1.f, 10.f);
+    sigmaLocal.z *= clamp(0.25f / mean.z, 0.5f, 10.f);
 
     vec3 minxyz = impatch[0].xyz, maxxyz = minxyz;
     for (int i = 1; i < 9; i++) {
@@ -154,8 +154,33 @@ vec3 processPatch(ivec2 xyPos) {
     xy = sum.xy / float(totalCount);
     //z = sum.z / float(totalCount);
 
-    // Grayshift xy based on noise level
+    /**
+    LUMA DENOISE AND SHARPEN
+    **/
+    if (sharpenFactor > 0.f) {
+        impatch = load3x3(xyPos, 1);
+
+        // Sum of difference with all pixels nearby
+        float dz = mid.z * 12.f;
+        for (int i = 0; i < 9; i++) {
+            if (i % 2 == 0) {
+                if (i != 4) {
+                    dz -= impatch[i].z;
+                }
+            } else {
+                dz -= 2.f * impatch[i].z;
+            }
+        }
+
+        // Use this difference to boost sharpness
+        z += sharpenFactor * dz;
+    }
+
+    // Histogram equalization and contrast stretching
+    z = clamp((z - zRange.x) / zRange.y, 0.f, 1.f);
+
     if (radiusDenoise > 0) {
+        // Grayshift xy based on noise level
         float shiftFactor = clamp((distxy - 0.1f) * 2.f, 0.f, 1.f);
 
         // Shift towards D50 white
@@ -164,32 +189,6 @@ vec3 processPatch(ivec2 xyPos) {
         // Reduce z by at most a third
         z *= clamp(1.1f - shiftFactor, 0.67f, 1.f);
     }
-
-    /**
-    LUMA DENOISE AND SHARPEN
-    **/
-    if (sharpenFactor > 0.f) {
-        impatch = load3x3(xyPos, 1);
-
-        float effectiveSharpen = sharpenFactor;
-        if (radiusDenoise > 0) {
-            // Bias in favour of edges and against noise
-            effectiveSharpen *= clamp(0.8f + distz - 2.f * distxy, 0.f, 1.f);
-            //return vec3(0.3127f, 0.3290f, effectiveSharpen / sharpenFactor);
-        }
-
-        // Sum of difference with all pixels nearby
-        float dz = mid.z * 9.f;
-        for (int i = 0; i < 9; i++) {
-            dz -= impatch[i].z;
-        }
-
-        // Use this difference to boost sharpness
-        z += effectiveSharpen * dz;
-    }
-
-    // Histogram equalization and contrast stretching
-    z = clamp((z - zRange.x) / zRange.y, 0.f, 1.f);
 
     return vec3(xy, z);
 }
