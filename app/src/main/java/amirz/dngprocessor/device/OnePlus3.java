@@ -22,12 +22,14 @@ public class OnePlus3 extends Generic {
         }
     }
 
+    /*
     @Override
     public float[] stretchPerc(SparseArray<TIFFTag> tags) {
         return noLight(tags)
                 ? new float[] { 0f, 1f }
                 : super.stretchPerc(tags);
     }
+    */
 
     private boolean lowLight(SparseArray<TIFFTag> tags) {
         return exposureAtLeast(tags, 0.05f);
