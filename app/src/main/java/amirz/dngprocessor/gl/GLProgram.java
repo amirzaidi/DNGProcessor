@@ -99,10 +99,10 @@ public class GLProgram extends GLProgramBase {
 
     public void setGainMap(float[] gainMap, int[] gainMapSize) {
         seti("hasGainMap", gainMap == null ? 0 : 1);
+        seti("gainMap", 2);
         if (gainMap != null) {
             int[] gainMapTex = new int[1];
             glGenTextures(1, gainMapTex, 0);
-            seti("gainMap", 2);
 
             glActiveTexture(GL_TEXTURE2);
             glBindTexture(GL_TEXTURE_2D, gainMapTex[0]);
