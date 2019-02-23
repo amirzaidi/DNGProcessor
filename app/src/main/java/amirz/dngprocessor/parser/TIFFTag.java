@@ -23,10 +23,22 @@ public class TIFFTag {
         return (Rational) value[0];
     }
 
+    public byte[] getByteArray() {
+        byte[] ints = new byte[value.length];
+        for (int i = 0; i < ints.length; i++) {
+            if (type == TIFF.TYPE_Byte || type == TIFF.TYPE_Undef) {
+                ints[i] = (byte) value[i];
+            }
+        }
+        return ints;
+    }
+
     public int[] getIntArray() {
         int[] ints = new int[value.length];
         for (int i = 0; i < ints.length; i++) {
-            if (type == TIFF.TYPE_Byte || type == TIFF.TYPE_UInt_16 || type == TIFF.TYPE_UInt_32) {
+            if (type == TIFF.TYPE_Byte || type == TIFF.TYPE_Undef) {
+                ints[i] = (byte) value[i] & 0xFF;
+            } else if (type == TIFF.TYPE_UInt_16 || type == TIFF.TYPE_UInt_32) {
                 ints[i] = (int) value[i];
             } else if (type == TIFF.TYPE_Frac || type == TIFF.TYPE_UFrac) {
                 ints[i] = (int)((Rational) value[i]).floatValue();

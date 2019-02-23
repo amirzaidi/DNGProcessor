@@ -21,4 +21,6 @@ public class SensorParams {
     public float[] noiseProfile;
     public int outputOffsetX;
     public int outputOffsetY;
+    public float[] gainMap;
+    public int[] gainMapSize;
 }

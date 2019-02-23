@@ -104,7 +104,7 @@ public class DngParser {
             rawImageOffset += stripByteCounts[i];
         }
 
-        sensor.cfa = CFAPattern.get(tags.get(TIFF.TAG_CFAPattern).getIntArray());
+        sensor.cfa = CFAPattern.get(tags.get(TIFF.TAG_CFAPattern).getByteArray());
         sensor.blackLevelPattern = tags.get(TIFF.TAG_BlackLevel).getIntArray();
         sensor.whiteLevel = tags.get(TIFF.TAG_WhiteLevel).getInt();
         sensor.referenceIlluminant1 = tags.get(TIFF.TAG_CalibrationIlluminant1).getInt();
@@ -131,6 +131,29 @@ public class DngParser {
 
         int[] defaultCropSize = tags.get(TIFF.TAG_DefaultCropSize).getIntArray();
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
+
+        TIFFTag Op2 = tags.get(TIFF.TAG_OpcodeList2);
+        if (Op2 != null) {
+            Object[] opParsed = OpParser.parseAll(Op2.getByteArray());
+            OpParser.GainMap[] mapPlanes = new OpParser.GainMap[4];
+
+            for (Object o : opParsed) {
+                Log.e(TAG, "Parsed opcode: " + o.toString());
+                if (o instanceof OpParser.GainMap) {
+                    OpParser.GainMap mapPlane = (OpParser.GainMap) o;
+                    mapPlanes[(mapPlane.top << 1) | mapPlane.left] = mapPlane;
+                }
+            }
+
+            if (mapPlanes[0] != null && mapPlanes[1] != null
+                    && mapPlanes[2] != null && mapPlanes[3] != null) {
+                sensor.gainMapSize = new int[] { mapPlanes[0].mapPointsH, mapPlanes[0].mapPointsV };
+                sensor.gainMap = new float[sensor.gainMapSize[0] * sensor.gainMapSize[1] * 4];
+                for (int i = 0; i < sensor.gainMap.length; i++) {
+                    sensor.gainMap[i] = mapPlanes[i % 4].px[i / 4];
+                }
+            }
+        }
 
         ProcessParams process = new ProcessParams();
         process.denoiseFactor = Settings.noiseReduce(mContext) ? 3000 : 0;
@@ -223,8 +246,8 @@ public class DngParser {
         SparseArray<TIFFTag> tags = new SparseArray<>(tagCount);
 
         for (int tagNum = 0; tagNum < tagCount; tagNum++) {
-            short tag = wrap.getShort();
-            short type = wrap.getShort();
+            int tag = wrap.getShort() & 0xFFFF;
+            int type = wrap.getShort() & 0xFFFF;
             int elementCount = wrap.getInt();
             int elementSize = TIFF.TYPE_SIZES.get(type);
 
@@ -239,8 +262,8 @@ public class DngParser {
             ByteBuffer valueWrap = ByteReader.wrap(buffer);
             Object[] values = new Object[elementCount];
             for (int elementNum = 0; elementNum < elementCount; elementNum++) {
-                if (type == TIFF.TYPE_Byte) {
-                    values[elementNum] = valueWrap.get() & 0xFF;
+                if (type == TIFF.TYPE_Byte || type == TIFF.TYPE_Undef) {
+                    values[elementNum] = valueWrap.get();
                 } else if (type == TIFF.TYPE_String) {
                     values[elementNum] = (char) valueWrap.get();
                 } else if (type == TIFF.TYPE_UInt_16) {
@@ -256,7 +279,7 @@ public class DngParser {
                 }
             }
 
-            tags.append(tag & 0xFFFF, new TIFFTag(type, values));
+            tags.append(tag, new TIFFTag(type, values));
         }
 
         return tags;

@@ -64,4 +64,8 @@ public class ByteReader {
     public static ByteBuffer wrap(byte[] b) {
         return ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN);
     }
+
+    public static ByteBuffer wrapBigEndian(byte[] b) {
+        return ByteBuffer.wrap(b).order(ByteOrder.BIG_ENDIAN);
+    }
 }

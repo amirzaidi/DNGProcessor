@@ -6,6 +6,9 @@ uniform usampler2D rawBuffer;
 uniform int rawWidth;
 uniform int rawHeight;
 
+uniform sampler2D gainMap;
+uniform bool hasGainMap;
+
 // Sensor and picture variables
 uniform uint cfaPattern; // The Color Filter Arrangement pattern used
 uniform vec4 blackLevel; // Blacklevel to subtract for each channel, given in CFA order
@@ -26,37 +29,33 @@ float[25] load5x5(int x, int y) {
     return outputArray;
 }
 
+vec4 getGainMap(int x, int y) {
+    if (hasGainMap) {
+        float interpX = float(x) / float(rawWidth);
+        float interpY = float(y) / float(rawHeight);
+        return texelFetch(gainMap, ivec2(interpX, interpY), 0);
+    }
+    return vec4(1.f, 1.f, 1.f, 1.f);
+}
+
 void linearizeAndGainmap(int x, int y, inout float[25] outputArray) {
     uint kk = uint(0);
     for (int j = y - 2; j <= y + 2; j++) {
         for (int i = x - 2; i <= x + 2; i++) {
-            uint index = uint((i & 1) | ((j & 1) << 1));  // bits [0,1] are blacklevel offset
-            index |= (cfaPattern << 2);  // bits [2,3] are cfa
+            vec4 gains = getGainMap(i, j);
+
+            int index = (i & 1) | ((j & 1) << 1);  // bits [0,1] are blacklevel offset
             float bl = 0.f;
+            float g = 1.f;
             switch (index) {
                 // RGGB
-                case 0: bl = blackLevel.x; break;
-                case 1: bl = blackLevel.y; break;
-                case 2: bl = blackLevel.z; break;
-                case 3: bl = blackLevel.w; break;
-                // GRBG
-                case 4: bl = blackLevel.x; break;
-                case 5: bl = blackLevel.y; break;
-                case 6: bl = blackLevel.z; break;
-                case 7: bl = blackLevel.w; break;
-                // GBRG
-                case 8: bl = blackLevel.x; break;
-                case 9: bl = blackLevel.y; break;
-                case 10: bl = blackLevel.z; break;
-                case 11: bl = blackLevel.w; break;
-                // BGGR
-                case 12: bl = blackLevel.x; break;
-                case 13: bl = blackLevel.y; break;
-                case 14: bl = blackLevel.z; break;
-                case 15: bl = blackLevel.w; break;
+                case 0: bl = blackLevel.x; g = gains.x; break;
+                case 1: bl = blackLevel.y; g = gains.y; break;
+                case 2: bl = blackLevel.z; g = gains.z; break;
+                case 3: bl = blackLevel.w; g = gains.w; break;
             }
 
-            outputArray[kk] = (outputArray[kk] - bl) / (whiteLevel - bl);
+            outputArray[kk] = g * (outputArray[kk] - bl) / (whiteLevel - bl);
             kk++;
         }
     }

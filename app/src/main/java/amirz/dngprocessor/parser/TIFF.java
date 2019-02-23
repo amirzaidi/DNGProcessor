@@ -75,7 +75,7 @@ public class TIFF {
         TYPE_SIZES.append(TYPE_UInt_16, 2);
         TYPE_SIZES.append(TYPE_UInt_32, 4);
         TYPE_SIZES.append(TYPE_UFrac, 8);
-        TYPE_SIZES.append(TYPE_Undef, 0);
+        TYPE_SIZES.append(TYPE_Undef, 1);
         TYPE_SIZES.append(TYPE_Frac, 8);
         TYPE_SIZES.append(TYPE_Double, 8);
     }
