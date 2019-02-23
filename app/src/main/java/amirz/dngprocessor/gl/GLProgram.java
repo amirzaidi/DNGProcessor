@@ -101,6 +101,7 @@ public class GLProgram extends GLProgramBase {
         seti("hasGainMap", gainMap == null ? 0 : 1);
         seti("gainMap", 2);
         if (gainMap != null) {
+            Log.d(TAG, "Using gainmap");
             int[] gainMapTex = new int[1];
             glGenTextures(1, gainMapTex, 0);
 
@@ -193,7 +194,7 @@ public class GLProgram extends GLProgramBase {
             for (int j = 0; j < 3; j++) {
                 sigma[j] += f[i + j];
             }
-
+            
             int bin = (int) (f[i + 3] * histBins);
             if (bin >= histBins) bin = histBins - 1;
             hist[bin]++;
