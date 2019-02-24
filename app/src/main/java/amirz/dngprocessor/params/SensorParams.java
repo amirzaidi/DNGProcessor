@@ -7,6 +7,7 @@ public class SensorParams {
     public int inputHeight;
     public int inputStride;
     public int cfa;
+    public byte[] cfaVal;
     public int[] blackLevelPattern;
     public int whiteLevel;
     public int referenceIlluminant1;

@@ -13,7 +13,7 @@ uniform bool hasGainMap;
 uniform uint cfaPattern; // The Color Filter Arrangement pattern used
 uniform vec4 blackLevel; // Blacklevel to subtract for each channel, given in CFA order
 uniform float whiteLevel; // Whitelevel of sensor
-uniform vec3 neutralPoint; // The camera neutral
+uniform vec4 neutralLevel; // Neutrallevel of sensor
 
 // Transform
 uniform mat3 sensorToXYZ; // Color transform from sensor to XYZ.
@@ -46,16 +46,16 @@ void linearizeAndGainmap(int x, int y, inout float[25] outputArray) {
 
             int index = (i & 1) | ((j & 1) << 1);  // bits [0,1] are blacklevel offset
             float bl = 0.f;
+            float n = 1.f;
             float g = 1.f;
             switch (index) {
-                // RGGB
-                case 0: bl = blackLevel.x; g = gains.x; break;
-                case 1: bl = blackLevel.y; g = gains.y; break;
-                case 2: bl = blackLevel.z; g = gains.z; break;
-                case 3: bl = blackLevel.w; g = gains.w; break;
+                case 0: bl = blackLevel.x; n = neutralLevel.x; g = gains.x; break;
+                case 1: bl = blackLevel.y; n = neutralLevel.y; g = gains.y; break;
+                case 2: bl = blackLevel.z; n = neutralLevel.z; g = gains.z; break;
+                case 3: bl = blackLevel.w; n = neutralLevel.w; g = gains.w; break;
             }
 
-            outputArray[kk] = g * (outputArray[kk] - bl) / (whiteLevel - bl);
+            outputArray[kk] = g * clamp((outputArray[kk] - bl) / (whiteLevel - bl), 0.f, n);
             kk++;
         }
     }
@@ -169,11 +169,12 @@ vec3 XYZtoxyY(vec3 XYZ) {
 }
 
 vec3 convertSensorToIntermediate(vec3 sensor) {
-    sensor = max(sensor, 0.f);
     vec3 XYZ = sensorToXYZ * sensor;
     vec3 intermediate = XYZtoxyY(XYZ);
-    // Sigmoid mapped so 0.5 -> 0.5
-    intermediate.z = 2.f / (1.f + exp(-2.217f * intermediate.z)) - 1.f;
+    if (hasGainMap && intermediate.z > 0.5f) {
+        // Sigmoid mapped so 0 -> 0; 0.5 -> 0.5; inf -> 1
+        intermediate.z = 2.f / (1.f + exp(-2.197f * intermediate.z)) - 1.f;
+    }
     return intermediate;
 }
 

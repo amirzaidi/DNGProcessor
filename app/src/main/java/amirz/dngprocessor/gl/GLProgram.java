@@ -123,11 +123,12 @@ public class GLProgram extends GLProgramBase {
         setf("whiteLevel", whiteLevel);
     }
 
-    public void setNeutralPoint(Rational[] neutralPoint) {
-        setf("neutralPoint",
-                neutralPoint[0].floatValue(),
-                neutralPoint[1].floatValue(),
-                neutralPoint[2].floatValue());
+    public void setNeutralPoint(Rational[] neutralPoint, byte[] cfaVal) {
+        setf("neutralLevel",
+                neutralPoint[cfaVal[0]].floatValue(),
+                neutralPoint[cfaVal[1]].floatValue(),
+                neutralPoint[cfaVal[2]].floatValue(),
+                neutralPoint[cfaVal[3]].floatValue());
     }
 
     public void setTransforms1(float[] sensorToXYZ) {

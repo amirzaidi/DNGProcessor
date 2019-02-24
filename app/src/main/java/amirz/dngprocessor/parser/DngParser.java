@@ -104,7 +104,8 @@ public class DngParser {
             rawImageOffset += stripByteCounts[i];
         }
 
-        sensor.cfa = CFAPattern.get(tags.get(TIFF.TAG_CFAPattern).getByteArray());
+        sensor.cfaVal = tags.get(TIFF.TAG_CFAPattern).getByteArray();
+        sensor.cfa = CFAPattern.get(sensor.cfaVal);
         sensor.blackLevelPattern = tags.get(TIFF.TAG_BlackLevel).getIntArray();
         sensor.whiteLevel = tags.get(TIFF.TAG_WhiteLevel).getInt();
         sensor.referenceIlluminant1 = tags.get(TIFF.TAG_CalibrationIlluminant1).getInt();
