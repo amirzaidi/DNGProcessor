@@ -129,6 +129,11 @@ public class GLProgram extends GLProgramBase {
                 neutralPoint[cfaVal[1]].floatValue(),
                 neutralPoint[cfaVal[2]].floatValue(),
                 neutralPoint[cfaVal[3]].floatValue());
+
+        setf("neutralPoint",
+                neutralPoint[0].floatValue(),
+                neutralPoint[1].floatValue(),
+                neutralPoint[2].floatValue());
     }
 
     public void setTransforms1(float[] sensorToXYZ) {
