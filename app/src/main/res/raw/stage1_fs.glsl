@@ -170,12 +170,16 @@ vec3 XYZtoxyY(vec3 XYZ) {
 }
 
 vec3 convertSensorToIntermediate(vec3 sensor) {
-    // When both red and blue channels are above white point, assume green is too
+    sensor = max(sensor, 0.f);
     vec3 npf = sensor / neutralPoint;
-    if (npf.r + npf.b >= 2.f && npf.g >= 0.99f) {
-        // Extend dynamic range by scaling g
-        sensor.g = neutralPoint.g * (npf.r + npf.b) * 0.5f;
-    }
+    sensor = min(sensor, neutralPoint);
+
+    // When both red and blue channels are above white point, assume green is too
+    // So extend dynamic range by scaling white point
+    // Use a bias so only high green values become higher
+    // In highlights, bias should be one
+    float bias = pow(sensor.g, 3.f);
+    sensor *= (1.f - bias) + max(npf.r + npf.b, 2.f) * 0.5f * bias;
 
     vec3 XYZ = sensorToXYZ * sensor;
     vec3 intermediate = XYZtoxyY(XYZ);
