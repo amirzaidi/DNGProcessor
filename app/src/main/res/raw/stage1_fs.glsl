@@ -170,20 +170,19 @@ vec3 XYZtoxyY(vec3 XYZ) {
 }
 
 vec3 convertSensorToIntermediate(vec3 sensor) {
-    vec3 npf = sensor / neutralPoint;
-
     // When both red and blue channels are above white point, assume green is too
-    if (npf.r + npf.b >= 2.f && npf.g >= 0.9f) {
+    vec3 npf = sensor / neutralPoint;
+    if (npf.r + npf.b >= 2.f && npf.g >= 0.99f) {
         // Extend dynamic range by scaling g
         sensor.g = neutralPoint.g * (npf.r + npf.b) * 0.5f;
     }
 
     vec3 XYZ = sensorToXYZ * sensor;
     vec3 intermediate = XYZtoxyY(XYZ);
-    if (intermediate.z > 0.5f) {
-        // Sigmoid mapped so 0 -> 0; 0.5 -> 0.5; inf -> 1
-        intermediate.z = 2.f / (1.f + exp(-2.197f * intermediate.z)) - 1.f;
-    }
+
+    // Sigmoid mapped so 0 -> 0; 0.5 -> 0.5; inf -> 1
+    intermediate.z = 2.f / (1.f + exp(-2.197f * intermediate.z)) - 1.f;
+
     return intermediate;
 }
 
