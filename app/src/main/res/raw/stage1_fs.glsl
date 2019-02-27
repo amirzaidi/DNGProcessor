@@ -92,7 +92,7 @@ vec3 demosaic(int x, int y, float[25] inputArray) {
             g = vec2((inputArray[7] + inputArray[17]), (inputArray[11] + inputArray[13])) * 0.5f;
             gDiff = abs(vec2(inputArray[13] - inputArray[11], inputArray[17] - inputArray[7]));
             if (length(gDiff) > gDiffThres) {
-                pRGB.g = length(g * gDiff / length(gDiff));
+                pRGB.g = length(g * normalize(gDiff));
             } else {
                 gMin = min(min(inputArray[7], inputArray[17]), min(inputArray[11], inputArray[13]));
                 gMax = max(max(inputArray[7], inputArray[17]), max(inputArray[11], inputArray[13]));
@@ -149,7 +149,7 @@ vec3 demosaic(int x, int y, float[25] inputArray) {
             g = vec2((inputArray[7] + inputArray[17]), (inputArray[11] + inputArray[13])) * 0.5f;
             gDiff = abs(vec2(inputArray[13] - inputArray[11], inputArray[17] - inputArray[7]));
             if (length(gDiff) > gDiffThres) {
-                pRGB.g = length(g * gDiff / length(gDiff));
+                pRGB.g = length(g * normalize(gDiff));
             } else {
                 gMin = min(min(inputArray[7], inputArray[17]), min(inputArray[11], inputArray[13]));
                 gMax = max(max(inputArray[7], inputArray[17]), max(inputArray[11], inputArray[13]));
