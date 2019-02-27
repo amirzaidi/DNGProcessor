@@ -77,8 +77,8 @@ vec3 processPatch(ivec2 xyPos) {
     //float Npx = pow(noiseProfile.x * z + noiseProfile.y, 2.f);
 
     // Thresholds
-    float thExclude = 4.f;
-    float thStop = 5.f;
+    float thExclude = 3.f;
+    float thStop = 4.f;
 
     // Expand in a plus
     vec3 midDivSigma = mid / sigmaLocal;
