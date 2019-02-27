@@ -68,8 +68,9 @@ vec3 demosaic(int x, int y, float[25] inputArray) {
     uint index = uint((x & 1) | ((y & 1) << 1));
     index |= (cfaPattern << 2);
     vec3 pRGB;
-    float rMin, rMax, bMin, bMax;
+    float rMin, rMax, gMin, gMax, bMin, bMax;
     float extremaFactor = 1.1f;
+    float gDiffThres = 0.025f; // Prevent FP rounding errors
     vec2 g, gDiff;
     // Denoise green subpixels, as the human eye is most sensitive to green luminance.
     switch (index) {
@@ -90,10 +91,12 @@ vec3 demosaic(int x, int y, float[25] inputArray) {
 
             g = vec2((inputArray[7] + inputArray[17]), (inputArray[11] + inputArray[13])) * 0.5f;
             gDiff = abs(vec2(inputArray[13] - inputArray[11], inputArray[17] - inputArray[7]));
-            if (length(gDiff) > 0.f) {
+            if (length(gDiff) > gDiffThres) {
                 pRGB.g = length(g * gDiff / length(gDiff));
             } else {
-                pRGB.g = (g.x + g.y) * 0.5f;
+                gMin = min(min(inputArray[7], inputArray[17]), min(inputArray[11], inputArray[13]));
+                gMax = max(max(inputArray[7], inputArray[17]), max(inputArray[11], inputArray[13]));
+                pRGB.g = (inputArray[7] + inputArray[11] + inputArray[13] + inputArray[17] - gMin - gMax) * 0.5f;
             }
 
             pRGB.b = (inputArray[6] + inputArray[8] + inputArray[16] + inputArray[18]) * 0.25f;
@@ -145,10 +148,12 @@ vec3 demosaic(int x, int y, float[25] inputArray) {
 
             g = vec2((inputArray[7] + inputArray[17]), (inputArray[11] + inputArray[13])) * 0.5f;
             gDiff = abs(vec2(inputArray[13] - inputArray[11], inputArray[17] - inputArray[7]));
-            if (length(gDiff) > 0.f) {
+            if (length(gDiff) > gDiffThres) {
                 pRGB.g = length(g * gDiff / length(gDiff));
             } else {
-                pRGB.g = (g.x + g.y) * 0.5f;
+                gMin = min(min(inputArray[7], inputArray[17]), min(inputArray[11], inputArray[13]));
+                gMax = max(max(inputArray[7], inputArray[17]), max(inputArray[11], inputArray[13]));
+                pRGB.g = (inputArray[7] + inputArray[11] + inputArray[13] + inputArray[17] - gMin - gMax) * 0.5f;
             }
 
             bMin = (min(inputArray[2], inputArray[22]) + min(inputArray[10], inputArray[14])) * 0.5f;
