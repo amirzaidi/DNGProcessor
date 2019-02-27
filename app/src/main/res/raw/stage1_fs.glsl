@@ -68,8 +68,9 @@ vec3 demosaic(int x, int y, float[25] inputArray) {
     uint index = uint((x & 1) | ((y & 1) << 1));
     index |= (cfaPattern << 2);
     vec3 pRGB;
-    float rMin, rMax, gMin, gMax, bMin, bMax;
+    float rMin, rMax, bMin, bMax;
     float extremaFactor = 1.1f;
+    vec2 g, gDiff;
     // Denoise green subpixels, as the human eye is most sensitive to green luminance.
     switch (index) {
         case 0:
@@ -87,13 +88,15 @@ vec3 demosaic(int x, int y, float[25] inputArray) {
             rMax = (max(inputArray[2], inputArray[22]) + max(inputArray[10], inputArray[14])) * 0.5f;
             pRGB.r = clamp(inputArray[12], rMin / extremaFactor, rMax * extremaFactor);
 
-            gMin = min(min(inputArray[7], inputArray[17]), min(inputArray[11], inputArray[13]));
-            gMax = max(max(inputArray[7], inputArray[17]), max(inputArray[11], inputArray[13]));
-            pRGB.g = (inputArray[7] + inputArray[11] + inputArray[13] + inputArray[17] - gMin - gMax) * 0.5f;
+            g = vec2((inputArray[7] + inputArray[17]), (inputArray[11] + inputArray[13])) * 0.5f;
+            gDiff = abs(vec2(inputArray[13] - inputArray[11], inputArray[17] - inputArray[7]));
+            if (length(gDiff) > 0.f) {
+                pRGB.g = length(g * gDiff / length(gDiff));
+            } else {
+                pRGB.g = (g.x + g.y) * 0.5f;
+            }
 
-            bMin = min(min(inputArray[6], inputArray[18]), min(inputArray[8], inputArray[16]));
-            bMax = max(max(inputArray[6], inputArray[18]), max(inputArray[8], inputArray[16]));
-            pRGB.b = (inputArray[6] + inputArray[8] + inputArray[16] + inputArray[18] - bMin - bMax) * 0.5f;
+            pRGB.b = (inputArray[6] + inputArray[8] + inputArray[16] + inputArray[18]) * 0.25f;
             break;
         case 1:
         case 4:
@@ -103,14 +106,12 @@ vec3 demosaic(int x, int y, float[25] inputArray) {
                  // Clamped G
                  // Mean B
                  // # # # # #
-                 // # G B G #
+                 // # # B # #
                  // # R G R #
-                 // # G B G #
+                 // # # B # #
                  // # # # # #
             pRGB.r = (inputArray[11] + inputArray[13]) * 0.5f;
-            gMin = (min(inputArray[6], inputArray[18]) + min(inputArray[8], inputArray[16])) * 0.5f;
-            gMax = (max(inputArray[6], inputArray[18]) + max(inputArray[8], inputArray[16])) * 0.5f;
-            pRGB.g = clamp(inputArray[12], gMin / extremaFactor, gMax * extremaFactor);
+            pRGB.g = inputArray[12];
             pRGB.b = (inputArray[7] + inputArray[17]) * 0.5f;
             break;
         case 2:
@@ -121,14 +122,12 @@ vec3 demosaic(int x, int y, float[25] inputArray) {
                  // Clamped G
                  // Mean B
                  // # # # # #
-                 // # G R G #
+                 // # # R # #
                  // # B G B #
-                 // # G R G #
+                 // # # R # #
                  // # # # # #
             pRGB.r = (inputArray[7] + inputArray[17]) * 0.5f;
-            gMin = (min(inputArray[6], inputArray[18]) + min(inputArray[8], inputArray[16])) * 0.5f;
-            gMax = (max(inputArray[6], inputArray[18]) + max(inputArray[8], inputArray[16])) * 0.5f;
-            pRGB.g = clamp(inputArray[12], gMin / extremaFactor, gMax * extremaFactor);
+            pRGB.g = inputArray[12];
             pRGB.b = (inputArray[11] + inputArray[13]) * 0.5f;
             break;
         case 3:
@@ -142,13 +141,15 @@ vec3 demosaic(int x, int y, float[25] inputArray) {
                  // B G B G B
                  // # R G R #
                  // # # B # #
-            rMin = min(min(inputArray[6], inputArray[18]), min(inputArray[8], inputArray[16]));
-            rMax = max(max(inputArray[6], inputArray[18]), max(inputArray[8], inputArray[16]));
-            pRGB.r = (inputArray[6] + inputArray[8] + inputArray[16] + inputArray[18] - rMin - rMax) * 0.5f;
+            pRGB.r = (inputArray[6] + inputArray[8] + inputArray[16] + inputArray[18]) * 0.25f;
 
-            gMin = min(min(inputArray[7], inputArray[17]), min(inputArray[11], inputArray[13]));
-            gMax = max(max(inputArray[7], inputArray[17]), max(inputArray[11], inputArray[13]));
-            pRGB.g = (inputArray[7] + inputArray[11] + inputArray[13] + inputArray[17] - gMin - gMax) * 0.5f;
+            g = vec2((inputArray[7] + inputArray[17]), (inputArray[11] + inputArray[13])) * 0.5f;
+            gDiff = abs(vec2(inputArray[13] - inputArray[11], inputArray[17] - inputArray[7]));
+            if (length(gDiff) > 0.f) {
+                pRGB.g = length(g * gDiff / length(gDiff));
+            } else {
+                pRGB.g = (g.x + g.y) * 0.5f;
+            }
 
             bMin = (min(inputArray[2], inputArray[22]) + min(inputArray[10], inputArray[14])) * 0.5f;
             bMax = (max(inputArray[2], inputArray[22]) + max(inputArray[10], inputArray[14])) * 0.5f;
