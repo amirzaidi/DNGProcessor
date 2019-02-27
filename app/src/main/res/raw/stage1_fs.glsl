@@ -34,7 +34,7 @@ vec4 getGainMap(int x, int y) {
     if (hasGainMap) {
         float interpX = float(x) / float(rawWidth);
         float interpY = float(y) / float(rawHeight);
-        return texelFetch(gainMap, ivec2(interpX, interpY), 0);
+        return texture(gainMap, vec2(interpX, interpY));
     }
     return vec4(1.f, 1.f, 1.f, 1.f);
 }
