@@ -157,9 +157,8 @@ vec3 processPatch(ivec2 xyPos) {
     /**
     LUMA DENOISE AND SHARPEN
     **/
+    impatch = load3x3(xyPos, 1);
     if (sharpenFactor > 0.f) {
-        impatch = load3x3(xyPos, 1);
-
         // Sum of difference with all pixels nearby
         float dz = mid.z * 12.f;
         for (int i = 0; i < 9; i++) {
@@ -174,6 +173,19 @@ vec3 processPatch(ivec2 xyPos) {
 
         // Use this difference to boost sharpness
         z += sharpenFactor * dz;
+    } else if (sharpenFactor < 0.f) {
+        // Use median as z
+        float tmp;
+        for (int i = 0; i < 5; i++) {
+            for (int j = i + 1; j < 9; j++) {
+                if (impatch[i].z > impatch[j].z) {
+                    tmp = impatch[j].z;
+                    impatch[j].z = impatch[i].z;
+                    impatch[i].z = tmp;
+                }
+            }
+        }
+        z = (1.f + sharpenFactor) * z - sharpenFactor * impatch[4].z;
     }
 
     // Histogram equalization and contrast stretching

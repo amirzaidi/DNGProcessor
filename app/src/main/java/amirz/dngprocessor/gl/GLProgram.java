@@ -297,7 +297,9 @@ public class GLProgram extends GLProgramBase {
     }
 
     public void setSharpenFactor(float sharpenFactor) {
-        setf("sharpenFactor", Math.max(sharpenFactor - 9f * (sigma[0] + sigma[1]), 0));
+        sharpenFactor -= 9f * (sigma[0] + sigma[1]);
+        Log.d(TAG, "Sharpen " + sharpenFactor);
+        setf("sharpenFactor", Math.max(sharpenFactor, -1.f));
     }
 
     public void setSaturationCurve(float[] saturationFactor) {
