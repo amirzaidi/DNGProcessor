@@ -261,8 +261,8 @@ public class GLProgram extends GLProgramBase {
         setf("sharpenFactor", Math.max(sharpenFactor, -1.f));
     }
 
-    public void setSaturationCurve(float[] saturationFactor) {
-        setf("saturationCurve", saturationFactor);
+    public void setSaturationCurve(float saturationFactor) {
+        setf("saturationFactor", saturationFactor);
     }
 
     public void intermediateToOutput(int outWidth, int y, int height) {

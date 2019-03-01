@@ -24,7 +24,7 @@ uniform vec3 sigma;
 
 // Post processing
 uniform float sharpenFactor;
-uniform vec3 saturationCurve;
+uniform float saturationFactor;
 uniform float histFactor;
 
 // Size
@@ -323,14 +323,32 @@ vec3 applyColorspace(vec3 intermediate) {
     return sRGB;
 }
 
-const vec3 gMonoMult = vec3(0.299f, 0.587f, 0.114f);
+// Source: https://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl
+// All components are in the range [0…1], including hue.
+vec3 rgb2hsv(vec3 c) {
+    vec4 K = vec4(0.f, -1.f / 3.f, 2.f / 3.f, -1.f);
+    vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+    vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+
+    float d = q.x - min(q.w, q.y);
+    float e = 1.0e-10;
+    return vec3(abs(q.z + (q.w - q.y) / (6.f * d + e)), d / (q.x + e), q.x);
+}
+
+// All components are in the range [0…1], including hue.
+vec3 hsv2rgb(vec3 c) {
+    vec4 K = vec4(1.f, 2.f / 3.f, 1.f / 3.f, 3.f);
+    vec3 p = abs(fract(c.xxx + K.xyz) * 6.f - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.f, 1.f), c.y);
+}
+
 vec3 saturate(vec3 rgb) {
     float maxv = max(max(rgb.r, rgb.g), rgb.b);
     float minv = min(min(rgb.r, rgb.g), rgb.b);
-    if (maxv > minv) {
-        float s = maxv - minv; // [0,1]
-        float saturation = max(saturationCurve.x - saturationCurve.y * pow(s, saturationCurve.z), 1.f);
-        rgb = rgb * saturation + dot(rgb, gMonoMult) * (1.f - saturation);
+    if (maxv > minv && saturationFactor > 0.f) {
+        vec3 hsv = rgb2hsv(rgb);
+        hsv.y = 2.f / (1.f + exp(-saturationFactor * hsv.y)) - 1.f;
+        rgb = hsv2rgb(hsv);
     }
     return rgb;
 }
