@@ -12,6 +12,7 @@ import amirz.dngprocessor.R;
 
 public class Shaders {
     public static String VS;
+    public static String FS0;
     public static String FS1;
     public static String FS2;
     public static String FS3;
@@ -22,6 +23,7 @@ public class Shaders {
 
         VS = readRaw(res, R.raw.passthrough_vs);
 
+        FS0 = readRaw(res, R.raw.stage0_fs);
         FS1 = readRaw(res, R.raw.stage1_fs);
         FS2 = readRaw(res, R.raw.stage2_fs);
         FS3 = readRaw(res, R.raw.stage3_fs);

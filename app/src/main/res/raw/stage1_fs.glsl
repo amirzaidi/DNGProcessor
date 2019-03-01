@@ -2,17 +2,12 @@
 
 precision mediump float;
 
-uniform usampler2D rawBuffer;
+uniform sampler2D rawBuffer;
 uniform int rawWidth;
 uniform int rawHeight;
 
-uniform sampler2D gainMap;
-uniform bool hasGainMap;
-
 // Sensor and picture variables
 uniform uint cfaPattern; // The Color Filter Arrangement pattern used
-uniform vec4 blackLevel; // Blacklevel to subtract for each channel, given in CFA order
-uniform float whiteLevel; // Whitelevel of sensor
 uniform vec4 neutralLevel; // Neutrallevel of sensor
 uniform vec3 neutralPoint; // The camera neutral
 
@@ -30,137 +25,116 @@ float[25] load5x5(int x, int y) {
     return outputArray;
 }
 
-vec4 getGainMap(int x, int y) {
-    if (hasGainMap) {
-        float interpX = float(x) / float(rawWidth);
-        float interpY = float(y) / float(rawHeight);
-        return texture(gainMap, vec2(interpX, interpY));
-    }
-    return vec4(1.f, 1.f, 1.f, 1.f);
-}
-
-void linearizeAndGainmap(int x, int y, inout float[25] outputArray) {
-    uint kk = uint(0);
-    for (int j = y - 2; j <= y + 2; j++) {
-        for (int i = x - 2; i <= x + 2; i++) {
-            vec4 gains = getGainMap(i, j);
-
-            int index = (i & 1) | ((j & 1) << 1);  // bits [0,1] are blacklevel offset
-            float bl = 0.f;
-            float n = 1.f;
-            float g = 1.f;
-            switch (index) {
-                case 0: bl = blackLevel.x; n = neutralLevel.x; g = gains.x; break;
-                case 1: bl = blackLevel.y; n = neutralLevel.y; g = gains.y; break;
-                case 2: bl = blackLevel.z; n = neutralLevel.z; g = gains.z; break;
-                case 3: bl = blackLevel.w; n = neutralLevel.w; g = gains.w; break;
-            }
-
-            outputArray[kk] = g * (outputArray[kk] - bl) / (whiteLevel - bl);
-            kk++;
-        }
-    }
-}
-
-
 // Apply bilinear-interpolation to demosaic
 vec3 demosaic(int x, int y, float[25] inputArray) {
     uint index = uint((x & 1) | ((y & 1) << 1));
     index |= (cfaPattern << 2);
     vec3 pRGB;
-    float rMin, rMax, gMin, gMax, bMin, bMax;
-    float extremaFactor = 1.1f;
-    float gDiffThres = 0.025f; // Prevent FP rounding errors
-    vec2 g, gDiff;
-    // Denoise green subpixels, as the human eye is most sensitive to green luminance.
+    int pxType = -1;
     switch (index) {
         case 0:
         case 5:
         case 10:
-        case 15:  // Red centered
-                  // Clamped R
-                  // Median G, B
-                  // # # R # #
-                  // # B G B #
-                  // R G R G R
-                  // # B G B #
-                  // # # R # #
-            rMin = (min(inputArray[2], inputArray[22]) + min(inputArray[10], inputArray[14])) * 0.5f;
-            rMax = (max(inputArray[2], inputArray[22]) + max(inputArray[10], inputArray[14])) * 0.5f;
-            pRGB.r = clamp(inputArray[12], rMin / extremaFactor, rMax * extremaFactor);
-
-            g = vec2((inputArray[7] + inputArray[17]), (inputArray[11] + inputArray[13])) * 0.5f;
-            gDiff = abs(vec2(inputArray[13] - inputArray[11], inputArray[17] - inputArray[7]));
-            if (length(gDiff) > gDiffThres) {
-                pRGB.g = length(g * normalize(gDiff));
-            } else {
-                gMin = min(min(inputArray[7], inputArray[17]), min(inputArray[11], inputArray[13]));
-                gMax = max(max(inputArray[7], inputArray[17]), max(inputArray[11], inputArray[13]));
-                pRGB.g = (inputArray[7] + inputArray[11] + inputArray[13] + inputArray[17] - gMin - gMax) * 0.5f;
-            }
-
-            pRGB.b = (inputArray[6] + inputArray[8] + inputArray[16] + inputArray[18]) * 0.25f;
+        case 15:
+            pxType = 0; // GRG
             break;
         case 1:
         case 4:
         case 11:
-        case 14: // Green centered w/ horizontally adjacent Red
-                 // Mean R
-                 // Clamped G
-                 // Mean B
-                 // # # # # #
-                 // # # B # #
-                 // # R G R #
-                 // # # B # #
-                 // # # # # #
-            pRGB.r = (inputArray[11] + inputArray[13]) * 0.5f;
-            pRGB.g = inputArray[12];
-            pRGB.b = (inputArray[7] + inputArray[17]) * 0.5f;
+        case 14:
+            pxType = 1; // RGR
             break;
         case 2:
         case 7:
         case 8:
-        case 13: // Green centered w/ horizontally adjacent Blue
-                 // Mean R
-                 // Clamped G
-                 // Mean B
-                 // # # # # #
-                 // # # R # #
-                 // # B G B #
-                 // # # R # #
-                 // # # # # #
-            pRGB.r = (inputArray[7] + inputArray[17]) * 0.5f;
-            pRGB.g = inputArray[12];
-            pRGB.b = (inputArray[11] + inputArray[13]) * 0.5f;
+        case 13:
+            pxType = 2; // BGB
             break;
         case 3:
         case 6:
         case 9:
-        case 12: // Blue centered
-                 // Median R, G
-                 // Clamped B
-                 // # # B # #
-                 // # R G R #
-                 // B G B G B
-                 // # R G R #
-                 // # # B # #
-            pRGB.r = (inputArray[6] + inputArray[8] + inputArray[16] + inputArray[18]) * 0.25f;
-
-            g = vec2((inputArray[7] + inputArray[17]), (inputArray[11] + inputArray[13])) * 0.5f;
-            gDiff = abs(vec2(inputArray[13] - inputArray[11], inputArray[17] - inputArray[7]));
-            if (length(gDiff) > gDiffThres) {
-                pRGB.g = length(g * normalize(gDiff));
-            } else {
-                gMin = min(min(inputArray[7], inputArray[17]), min(inputArray[11], inputArray[13]));
-                gMax = max(max(inputArray[7], inputArray[17]), max(inputArray[11], inputArray[13]));
-                pRGB.g = (inputArray[7] + inputArray[11] + inputArray[13] + inputArray[17] - gMin - gMax) * 0.5f;
-            }
-
-            bMin = (min(inputArray[2], inputArray[22]) + min(inputArray[10], inputArray[14])) * 0.5f;
-            bMax = (max(inputArray[2], inputArray[22]) + max(inputArray[10], inputArray[14])) * 0.5f;
-            pRGB.b = clamp(inputArray[12], bMin / extremaFactor, bMax * extremaFactor);
+        case 12:
+            pxType = 3; // GBG
             break;
     }
+
+    if (pxType == 0 || pxType == 3) {
+        float p = inputArray[12];
+        float cross = (inputArray[6] + inputArray[8] + inputArray[16] + inputArray[18]) * 0.25f;
+        if (pxType == 0) {
+            // Red centered
+            // Clamped R
+            // Median G, B
+            // # # R # #
+            // # B G B #
+            // R G R G R
+            // # B G B #
+            // # # R # #
+            pRGB.r = p;
+            pRGB.b = cross;
+        } else {
+            // Blue centered
+            // Median R, G
+            // Clamped B
+            // # # B # #
+            // # R G R #
+            // B G B G B
+            // # R G R #
+            // # # B # #
+            pRGB.r = cross;
+            pRGB.b = p;
+        }
+
+        float dxp = p * 2.f - inputArray[10] - inputArray[14];
+        float dx = abs(inputArray[11] - inputArray[13]) + abs(dxp);
+        float gx = (inputArray[11] + inputArray[13]) * 0.5f + dxp * 0.25f;
+
+        float dyp = p * 2.f - inputArray[2] - inputArray[22];
+        float dy = abs(inputArray[7] - inputArray[17]) + abs(dyp);
+        float gy = (inputArray[7] + inputArray[17]) * 0.5f + dyp * 0.25f;
+
+        if (dx < dy) {
+            // Interpolate mostly horizontally
+            pRGB.g = gx * 0.87f + gy * 0.13f;
+        } else if (dx > dy) {
+            // Interpolate mostly vertically
+            pRGB.g = gx * 0.13f + gy * 0.87f;
+        } else {
+            // Both were used, divide by two
+            pRGB.g = (gx + gy) * 0.5f;
+        }
+    } else if (pxType == 1 || pxType == 2) {
+        float horz = (inputArray[11] + inputArray[13]) * 0.5f;
+        float vert = (inputArray[7] + inputArray[17]) * 0.5f;
+        if (pxType == 1) {
+            // Green centered w/ horizontally adjacent Red
+            // Mean R
+            // Clamped G
+            // Mean B
+            // # # # # #
+            // # # B # #
+            // # R G R #
+            // # # B # #
+            // # # # # #
+            pRGB.r = horz;
+            pRGB.b = vert;
+        } else {
+            // Green centered w/ horizontally adjacent Blue
+            // Mean R
+            // Clamped G
+            // Mean B
+            // # # # # #
+            // # # R # #
+            // # B G B #
+            // # # R # #
+            // # # # # #
+            pRGB.r = vert;
+            pRGB.b = horz;
+        }
+
+        pRGB.g = inputArray[12];
+    }
+
     return pRGB;
 }
 
@@ -202,7 +176,6 @@ void main() {
     int y = clamp(xy.y, 1, rawHeight - 2);
 
     float[25] inoutPatch = load5x5(x, y);
-    linearizeAndGainmap(x, y, inoutPatch);
     vec3 sensor = demosaic(x, y, inoutPatch);
     intermediate = convertSensorToIntermediate(sensor);
 }

@@ -259,7 +259,10 @@ public class RawConverter implements AutoCloseable {
         square.setGainMap(sensor.gainMap, sensor.gainMapSize);
         square.setCfaPattern(sensor.cfa);
         square.setBlackWhiteLevel(sensor.blackLevelPattern, sensor.whiteLevel);
+        square.sensorPreProcess();
+
         square.setNeutralPoint(sensor.neutralColorPoint, sensor.cfaVal);
+        square.setCfaPattern(sensor.cfa);
         square.setTransforms1(sensorToXYZ_D50);
     }
 
