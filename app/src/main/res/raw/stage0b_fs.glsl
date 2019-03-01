@@ -59,7 +59,7 @@ float demosaicG(int x, int y, float[25] inputArray) {
         w = 1.f - w1;
     }
 
-    return gx * w + gy * (1.f - w);
+    return max(gx * w + gy * (1.f - w), 0.f);
 }
 
 void main() {
