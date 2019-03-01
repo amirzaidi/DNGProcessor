@@ -18,16 +18,21 @@ uniform mat3 sensorToXYZ; // Color transform from sensor to XYZ.
 // Out
 out vec3 intermediate;
 
-float[25] load5x5(int x, int y, sampler2D buf) {
-    float outputArray[25];
-    for (int i = 0; i < 25; i++) {
-        outputArray[i] = float(texelFetch(buf, ivec2(x + (i % 5) - 2, y + (i / 5) - 2), 0).x);
+float[9] load3x3(int x, int y, sampler2D buf) {
+    float outputArray[9];
+    for (int i = 0; i < 9; i++) {
+        outputArray[i] = texelFetch(buf, ivec2(x + (i % 3) - 1, y + (i / 3) - 1), 0).x;
     }
     return outputArray;
 }
 
+int ind(int x, int y) {
+    int dim = 3;
+    return x + dim / 2 + (y + dim / 2) * dim;
+}
+
 // Apply bilinear-interpolation to demosaic
-vec3 demosaic(int x, int y, float[25] inputArray, float[25] greenArray) {
+vec3 demosaic(int x, int y, float[9] inputArray, float[9] greenArray) {
     uint index = uint((x & 1) | ((y & 1) << 1));
     index |= (cfaPattern << 2);
     vec3 pRGB;
@@ -59,53 +64,58 @@ vec3 demosaic(int x, int y, float[25] inputArray, float[25] greenArray) {
             break;
     }
 
+    // We already computed green
+    pRGB.g = greenArray[ind(0, 0)];
+
     if (pxType == 0 || pxType == 3) {
-        float p = inputArray[12];
-        float cross = (inputArray[6] + inputArray[8] + inputArray[16] + inputArray[18]) * 0.25f;
+        float p = inputArray[ind(0, 0)];
+        float cross = 0.25f * pRGB.g *
+            (inputArray[ind(-1, -1)] / greenArray[ind(-1, -1)]
+            + inputArray[ind(1, -1)] / greenArray[ind(1, -1)]
+            + inputArray[ind(-1, 1)] / greenArray[ind(-1, 1)]
+            + inputArray[ind(1, 1)] / greenArray[ind(1, 1)]);
+
         if (pxType == 0) {
             // Red centered
-            // # # R # #
-            // # B G B #
-            // R G R G R
-            // # B G B #
-            // # # R # #
+            // B # B
+            // # R #
+            // B # B
             pRGB.r = p;
             pRGB.b = cross;
         } else {
             // Blue centered
-            // # # B # #
-            // # R G R #
-            // B G B G B
-            // # R G R #
-            // # # B # #
+            // R # R
+            // # B #
+            // R # R
             pRGB.r = cross;
             pRGB.b = p;
         }
     } else if (pxType == 1 || pxType == 2) {
-        float horz = (inputArray[11] + inputArray[13]) * 0.5f;
-        float vert = (inputArray[7] + inputArray[17]) * 0.5f;
+        float horz = 0.5f * pRGB.g *
+            (inputArray[ind(-1, 0)] / greenArray[ind(-1, 0)]
+            + inputArray[ind(1, 0)] / greenArray[ind(1, 0)]);
+
+        float vert = 0.5f * pRGB.g *
+            (inputArray[ind(0, -1)] / greenArray[ind(0, -1)]
+            + inputArray[ind(0, 1)] / greenArray[ind(0, 1)]);
+
         if (pxType == 1) {
             // Green centered w/ horizontally adjacent Red
-            // # # # # #
-            // # # B # #
-            // # R G R #
-            // # # B # #
-            // # # # # #
+            // # B #
+            // R # R
+            // # B #
             pRGB.r = horz;
             pRGB.b = vert;
         } else {
             // Green centered w/ horizontally adjacent Blue
-            // # # # # #
-            // # # R # #
-            // # B G B #
-            // # # R # #
-            // # # # # #
+            // # R #
+            // B # B
+            // # R #
             pRGB.r = vert;
             pRGB.b = horz;
         }
     }
 
-    pRGB.g = greenArray[12];
     return pRGB;
 }
 
@@ -143,11 +153,11 @@ vec3 convertSensorToIntermediate(vec3 sensor) {
 
 void main() {
     ivec2 xy = ivec2(gl_FragCoord.xy);
-    int x = clamp(xy.x, 2, rawWidth - 3);
-    int y = clamp(xy.y, 2, rawHeight - 3);
+    int x = clamp(xy.x, 1, rawWidth - 2);
+    int y = clamp(xy.y, 1, rawHeight - 2);
 
-    float[25] rawPatch = load5x5(x, y, rawBuffer);
-    float[25] greenPatch = load5x5(x, y, greenBuffer);
+    float[9] rawPatch = load3x3(x, y, rawBuffer);
+    float[9] greenPatch = load3x3(x, y, greenBuffer);
     vec3 sensor = demosaic(x, y, rawPatch, greenPatch);
     intermediate = convertSensorToIntermediate(sensor);
 }
