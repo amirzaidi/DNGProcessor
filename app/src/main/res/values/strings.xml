@@ -15,12 +15,12 @@
     <string name="pref_save_path_default">DCIM/Processed</string>
 
     <string name="category_pipeline">Pipeline</string>
-    <string name="pref_noise_reduce_title">Noise reduction</string>
-    <string name="pref_noise_reduce_desc">Removes chromatic irregularities</string>
     <string name="pref_post_process_title">Post processing mode</string>
     <string name="post_processing_disabled">Disabled</string>
     <string name="post_processing_natural">Natural</string>
     <string name="post_processing_boosted">Boosted</string>
+    <string name="pref_noise_reduce_title">Noise reduction</string>
+    <string name="pref_noise_reduce_desc">Removes chromatic irregularities</string>
     <string name="pref_forward_matrix_title">Forward matrix</string>
     <string name="pref_forward_matrix_desc">Device specific tuning</string>
     <string name="pref_gain_map_title">Gain map</string>
