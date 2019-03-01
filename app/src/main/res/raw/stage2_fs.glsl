@@ -26,12 +26,11 @@ void main() {
     /**
      * STANDARD DEVIATIONS
      */
-    vec3 mean;
+    vec3 mean, sigma;
     for (int i = 0; i < 9; i++) {
         mean += impatch[i];
     }
     mean /= 9.f;
-    vec3 sigma;
     for (int i = 0; i < 9; i++) {
         vec3 diff = mean - impatch[i];
         sigma += diff * diff;
