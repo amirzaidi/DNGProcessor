@@ -134,7 +134,7 @@ public class DngParser {
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
 
         TIFFTag Op2 = tags.get(TIFF.TAG_OpcodeList2);
-        if (Op2 != null) {
+        if (Op2 != null && Settings.gainMap(mContext)) {
             Object[] opParsed = OpParser.parseAll(Op2.getByteArray());
             OpParser.GainMap[] mapPlanes = new OpParser.GainMap[4];
 

@@ -12,6 +12,7 @@ public class Settings {
     private static final String PREF_NOISE_REDUCE = "pref_noise_reduce";
     private static final String PREF_POST_PROCESS = "pref_post_process_type";
     private static final String PREF_FORWARD_MATRIX = "pref_forward_matrix";
+    private static final String PREF_GAIN_MAP = "pref_gain_map";
 
     public enum PostProcessMode {
         Disabled,
@@ -57,5 +58,9 @@ public class Settings {
 
     public static boolean forwardMatrix(Context context) {
         return Utilities.prefs(context).getBoolean(PREF_FORWARD_MATRIX, true);
+    }
+
+    public static boolean gainMap(Context context) {
+        return Utilities.prefs(context).getBoolean(PREF_GAIN_MAP, true);
     }
 }
