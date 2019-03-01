@@ -20,6 +20,10 @@ public class GLTex {
     private final int mTexId;
 
     public GLTex(int w, int h, int channels, Format format, Buffer pixels) {
+        this(w, h, channels, format, pixels, GL_NEAREST);
+    }
+
+    public GLTex(int w, int h, int channels, Format format, Buffer pixels, int interp) {
         mWidth = w;
         mHeight = h;
         mChannels = channels;
@@ -29,11 +33,12 @@ public class GLTex {
         glGenTextures(texId.length, texId, 0);
         mTexId = texId[0];
 
-        glActiveTexture(0);
+        // Use a high ID to load
+        glActiveTexture(GL_TEXTURE16);
         glBindTexture(GL_TEXTURE_2D, mTexId);
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat(), w, h, 0, format(), type(), pixels);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, interp);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, interp);
     }
 
     public void bind(int slot) {

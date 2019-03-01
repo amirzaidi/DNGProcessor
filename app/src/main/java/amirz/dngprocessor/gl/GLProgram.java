@@ -77,15 +77,8 @@ public class GLProgram extends GLProgramBase {
         seti("gainMap", 2);
         if (gainMap != null) {
             Log.d(TAG, "Using gainmap");
-            int[] gainMapTex = new int[1];
-            glGenTextures(1, gainMapTex, 0);
-
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, gainMapTex[0]);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, gainMapSize[0], gainMapSize[1], 0,
-                    GL_RGBA, GL_FLOAT, FloatBuffer.wrap(gainMap));
+            new GLTex(gainMapSize[0], gainMapSize[1], 4, GLTex.Format.Float16,
+                    FloatBuffer.wrap(gainMap), GL_LINEAR).bind(GL_TEXTURE2);
         }
     }
 
