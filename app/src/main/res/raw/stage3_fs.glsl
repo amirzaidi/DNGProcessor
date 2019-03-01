@@ -10,7 +10,7 @@ out vec4 intermediate;
 vec3[4] load2x2(ivec2 xy) {
     vec3 outputArray[4];
     for (int i = 0; i < 4; i++) {
-        outputArray[i] = texelFetch(intermediateBuffer, xy + ivec2((i % 2) - 1, (i / 2) - 1), 0).xyz;
+        outputArray[i] = texelFetch(intermediateBuffer, xy + ivec2(i % 2, i / 2), 0).xyz;
     }
     return outputArray;
 }
