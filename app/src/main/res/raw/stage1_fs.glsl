@@ -66,15 +66,17 @@ vec3 demosaic(int x, int y, float[9] inputArray, float[9] greenArray) {
 
     // We already computed green
     pRGB.g = greenArray[ind(0, 0)];
+    float minG = 0.01f;
 
     if (pxType == 0 || pxType == 3) {
         float p = inputArray[ind(0, 0)];
-        float cross = 0.25f * pRGB.g *
-            (inputArray[ind(-1, -1)] / greenArray[ind(-1, -1)]
-            + inputArray[ind(1, -1)] / greenArray[ind(1, -1)]
-            + inputArray[ind(-1, 1)] / greenArray[ind(-1, 1)]
-            + inputArray[ind(1, 1)] / greenArray[ind(1, 1)]);
 
+        float crosstl = inputArray[ind(-1, -1)] / max(greenArray[ind(-1, -1)], minG),
+            crosstr = inputArray[ind(1, -1)] / max(greenArray[ind(1, -1)], minG),
+            crossbl = inputArray[ind(-1, 1)] / max(greenArray[ind(-1, 1)], minG),
+            crossbr = inputArray[ind(1, 1)] / max(greenArray[ind(1, 1)], minG);
+
+        float cross = 0.25f * max(pRGB.g, minG) * (crosstl + crosstr + crossbl + crossbr);
         if (pxType == 0) {
             // Red centered
             // B # B
@@ -91,13 +93,13 @@ vec3 demosaic(int x, int y, float[9] inputArray, float[9] greenArray) {
             pRGB.b = p;
         }
     } else if (pxType == 1 || pxType == 2) {
-        float horz = 0.5f * pRGB.g *
-            (inputArray[ind(-1, 0)] / greenArray[ind(-1, 0)]
-            + inputArray[ind(1, 0)] / greenArray[ind(1, 0)]);
+        float horzl = inputArray[ind(-1, 0)] / max(greenArray[ind(-1, 0)], minG),
+            horzr = inputArray[ind(1, 0)] / max(greenArray[ind(1, 0)], minG);
+        float horz = 0.5f * max(pRGB.g, minG) * (horzl + horzr);
 
-        float vert = 0.5f * pRGB.g *
-            (inputArray[ind(0, -1)] / greenArray[ind(0, -1)]
-            + inputArray[ind(0, 1)] / greenArray[ind(0, 1)]);
+        float vertt = inputArray[ind(0, -1)] / max(greenArray[ind(0, -1)], minG),
+            vertb = inputArray[ind(0, 1)] / max(greenArray[ind(0, 1)], minG);
+        float vert = 0.5f * max(pRGB.g, minG) * (vertt + vertb);
 
         if (pxType == 1) {
             // Green centered w/ horizontally adjacent Red
