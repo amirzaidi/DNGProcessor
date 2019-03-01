@@ -30,12 +30,12 @@ public class Shaders {
 
         VS = readRaw(res, R.raw.passthrough_vs);
 
-        FS_PREPROCESS = readRaw(res, R.raw.stage0_fs);
-        FS_GREENDEMOSAIC = readRaw(res, R.raw.stage0b_fs);
-        FS_INTERMEDIATE = readRaw(res, R.raw.stage1_fs);
-        FS_ANALYSIS = readRaw(res, R.raw.stage2_fs);
-        FS_DOWNSCALE = readRaw(res, R.raw.stage3_fs);
-        FS_OUTPUT = readRaw(res, R.raw.stage4_fs);
+        FS_PREPROCESS = readRaw(res, R.raw.stage1_1_fs);
+        FS_GREENDEMOSAIC = readRaw(res, R.raw.stage1_2_fs);
+        FS_INTERMEDIATE = readRaw(res, R.raw.stage1_3_fs);
+        FS_ANALYSIS = readRaw(res, R.raw.stage2_1_fs);
+        FS_DOWNSCALE = readRaw(res, R.raw.stage2_2_fs);
+        FS_OUTPUT = readRaw(res, R.raw.stage3_1_fs);
     }
 
     private static String readRaw(Resources res, int resId) {
