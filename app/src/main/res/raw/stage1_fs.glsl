@@ -3,6 +3,7 @@
 precision mediump float;
 
 uniform sampler2D rawBuffer;
+uniform sampler2D greenBuffer;
 uniform int rawWidth;
 uniform int rawHeight;
 
@@ -17,16 +18,16 @@ uniform mat3 sensorToXYZ; // Color transform from sensor to XYZ.
 // Out
 out vec3 intermediate;
 
-float[25] load5x5(int x, int y) {
+float[25] load5x5(int x, int y, sampler2D buf) {
     float outputArray[25];
     for (int i = 0; i < 25; i++) {
-        outputArray[i] = float(texelFetch(rawBuffer, ivec2(x + (i % 5) - 2, y + (i / 5) - 2), 0).x);
+        outputArray[i] = float(texelFetch(buf, ivec2(x + (i % 5) - 2, y + (i / 5) - 2), 0).x);
     }
     return outputArray;
 }
 
 // Apply bilinear-interpolation to demosaic
-vec3 demosaic(int x, int y, float[25] inputArray) {
+vec3 demosaic(int x, int y, float[25] inputArray, float[25] greenArray) {
     uint index = uint((x & 1) | ((y & 1) << 1));
     index |= (cfaPattern << 2);
     vec3 pRGB;
@@ -63,8 +64,6 @@ vec3 demosaic(int x, int y, float[25] inputArray) {
         float cross = (inputArray[6] + inputArray[8] + inputArray[16] + inputArray[18]) * 0.25f;
         if (pxType == 0) {
             // Red centered
-            // Clamped R
-            // Median G, B
             // # # R # #
             // # B G B #
             // R G R G R
@@ -74,8 +73,6 @@ vec3 demosaic(int x, int y, float[25] inputArray) {
             pRGB.b = cross;
         } else {
             // Blue centered
-            // Median R, G
-            // Clamped B
             // # # B # #
             // # R G R #
             // B G B G B
@@ -84,33 +81,11 @@ vec3 demosaic(int x, int y, float[25] inputArray) {
             pRGB.r = cross;
             pRGB.b = p;
         }
-
-        float dxp = p * 2.f - inputArray[10] - inputArray[14];
-        float dx = abs(inputArray[11] - inputArray[13]) + abs(dxp);
-        float gx = (inputArray[11] + inputArray[13]) * 0.5f + dxp * 0.25f;
-
-        float dyp = p * 2.f - inputArray[2] - inputArray[22];
-        float dy = abs(inputArray[7] - inputArray[17]) + abs(dyp);
-        float gy = (inputArray[7] + inputArray[17]) * 0.5f + dyp * 0.25f;
-
-        if (dx < dy) {
-            // Interpolate mostly horizontally
-            pRGB.g = gx * 0.87f + gy * 0.13f;
-        } else if (dx > dy) {
-            // Interpolate mostly vertically
-            pRGB.g = gx * 0.13f + gy * 0.87f;
-        } else {
-            // Both were used, divide by two
-            pRGB.g = (gx + gy) * 0.5f;
-        }
     } else if (pxType == 1 || pxType == 2) {
         float horz = (inputArray[11] + inputArray[13]) * 0.5f;
         float vert = (inputArray[7] + inputArray[17]) * 0.5f;
         if (pxType == 1) {
             // Green centered w/ horizontally adjacent Red
-            // Mean R
-            // Clamped G
-            // Mean B
             // # # # # #
             // # # B # #
             // # R G R #
@@ -120,9 +95,6 @@ vec3 demosaic(int x, int y, float[25] inputArray) {
             pRGB.b = vert;
         } else {
             // Green centered w/ horizontally adjacent Blue
-            // Mean R
-            // Clamped G
-            // Mean B
             // # # # # #
             // # # R # #
             // # B G B #
@@ -131,10 +103,9 @@ vec3 demosaic(int x, int y, float[25] inputArray) {
             pRGB.r = vert;
             pRGB.b = horz;
         }
-
-        pRGB.g = inputArray[12];
     }
 
+    pRGB.g = greenArray[12];
     return pRGB;
 }
 
@@ -172,10 +143,11 @@ vec3 convertSensorToIntermediate(vec3 sensor) {
 
 void main() {
     ivec2 xy = ivec2(gl_FragCoord.xy);
-    int x = clamp(xy.x, 1, rawWidth - 2);
-    int y = clamp(xy.y, 1, rawHeight - 2);
+    int x = clamp(xy.x, 2, rawWidth - 3);
+    int y = clamp(xy.y, 2, rawHeight - 3);
 
-    float[25] inoutPatch = load5x5(x, y);
-    vec3 sensor = demosaic(x, y, inoutPatch);
+    float[25] rawPatch = load5x5(x, y, rawBuffer);
+    float[25] greenPatch = load5x5(x, y, greenBuffer);
+    vec3 sensor = demosaic(x, y, rawPatch, greenPatch);
     intermediate = convertSensorToIntermediate(sensor);
 }

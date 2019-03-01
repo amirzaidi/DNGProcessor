@@ -14,6 +14,20 @@ public class GLProgramBase {
         mProgramActive = program;
     }
 
+    protected static int createProgram(int vertex, String fragment) {
+        int program = glCreateProgram();
+        glAttachShader(program, vertex);
+        glAttachShader(program, loadShader(GL_FRAGMENT_SHADER, fragment));
+        return program;
+    }
+
+    protected static int loadShader(int type, String shaderCode) {
+        int shader = glCreateShader(type);
+        glShaderSource(shader, shaderCode);
+        glCompileShader(shader);
+        return shader;
+    }
+
     protected int vPosition() {
         return glGetAttribLocation(mProgramActive, "vPosition");
     }

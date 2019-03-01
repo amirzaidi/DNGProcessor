@@ -255,14 +255,12 @@ public class RawConverter implements AutoCloseable {
         core = new GLCore(argbOutput);
         square = core.getSquare();
 
-        square.setIn(rawImageInput, sensor.inputWidth, sensor.inputHeight);
+        square.setIn(rawImageInput, sensor.inputWidth, sensor.inputHeight, sensor.cfa);
         square.setGainMap(sensor.gainMap, sensor.gainMapSize);
-        square.setCfaPattern(sensor.cfa);
         square.setBlackWhiteLevel(sensor.blackLevelPattern, sensor.whiteLevel);
         square.sensorPreProcess();
 
         square.setNeutralPoint(sensor.neutralColorPoint, sensor.cfaVal);
-        square.setCfaPattern(sensor.cfa);
         square.setTransforms1(sensorToXYZ_D50);
     }
 
