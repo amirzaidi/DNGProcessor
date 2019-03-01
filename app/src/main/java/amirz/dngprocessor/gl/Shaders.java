@@ -14,28 +14,28 @@ public class Shaders {
     public static String VS;
 
     // Mosaiced
-    public static String FS0;
-    public static String FS0b;
+    public static String FS_PREPROCESS;
+    public static String FS_GREENDEMOSAIC;
 
     // Demosaicing
-    public static String FS1;
+    public static String FS_INTERMEDIATE;
 
     // Demosaiced
-    public static String FS2;
-    public static String FS3;
-    public static String FS4;
+    public static String FS_ANALYSIS;
+    public static String FS_DOWNSCALE;
+    public static String FS_OUTPUT;
 
     public static void load(Context context) {
         Resources res = context.getResources();
 
         VS = readRaw(res, R.raw.passthrough_vs);
 
-        FS0 = readRaw(res, R.raw.stage0_fs);
-        FS0b = readRaw(res, R.raw.stage0b_fs);
-        FS1 = readRaw(res, R.raw.stage1_fs);
-        FS2 = readRaw(res, R.raw.stage2_fs);
-        FS3 = readRaw(res, R.raw.stage3_fs);
-        FS4 = readRaw(res, R.raw.stage4_fs);
+        FS_PREPROCESS = readRaw(res, R.raw.stage0_fs);
+        FS_GREENDEMOSAIC = readRaw(res, R.raw.stage0b_fs);
+        FS_INTERMEDIATE = readRaw(res, R.raw.stage1_fs);
+        FS_ANALYSIS = readRaw(res, R.raw.stage2_fs);
+        FS_DOWNSCALE = readRaw(res, R.raw.stage3_fs);
+        FS_OUTPUT = readRaw(res, R.raw.stage4_fs);
     }
 
     private static String readRaw(Resources res, int resId) {

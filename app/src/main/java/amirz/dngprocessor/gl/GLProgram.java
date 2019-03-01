@@ -38,12 +38,12 @@ public class GLProgram extends GLProgramBase {
 
         int vertexShader = loadShader(GL_VERTEX_SHADER, Shaders.VS);
 
-        mProgramSensorPreProcess = createProgram(vertexShader, Shaders.FS0);
-        mProgramSensorGreenDemosaic = createProgram(vertexShader, Shaders.FS0b);
-        mProgramSensorToIntermediate = createProgram(vertexShader, Shaders.FS1);
-        mProgramIntermediateAnalysis = createProgram(vertexShader, Shaders.FS2);
-        mProgramIntermediateDownscale = createProgram(vertexShader, Shaders.FS3);
-        mProgramIntermediateToSRGB = createProgram(vertexShader, Shaders.FS4);
+        mProgramSensorPreProcess = createProgram(vertexShader, Shaders.FS_PREPROCESS);
+        mProgramSensorGreenDemosaic = createProgram(vertexShader, Shaders.FS_GREENDEMOSAIC);
+        mProgramSensorToIntermediate = createProgram(vertexShader, Shaders.FS_INTERMEDIATE);
+        mProgramIntermediateAnalysis = createProgram(vertexShader, Shaders.FS_ANALYSIS);
+        mProgramIntermediateDownscale = createProgram(vertexShader, Shaders.FS_DOWNSCALE);
+        mProgramIntermediateToSRGB = createProgram(vertexShader, Shaders.FS_OUTPUT);
 
         // Link first program
         useProgram(mProgramSensorPreProcess);
@@ -91,9 +91,9 @@ public class GLProgram extends GLProgramBase {
         setui("cfaPattern", cfaPattern);
         mSquare.draw(vPosition());
         glFlush();
+    }
 
-        /* GREEN DEMOSAIC */
-
+    public void greenDemosaic() {
         useProgram(mProgramSensorGreenDemosaic);
 
         seti("rawBuffer", 0);
@@ -111,9 +111,9 @@ public class GLProgram extends GLProgramBase {
         setui("cfaPattern", cfaPattern);
         mSquare.draw(vPosition());
         glFlush();
+    }
 
-        /* GREEN DEMOSAIC */
-
+    public void prepareToIntermediate() {
         useProgram(mProgramSensorToIntermediate);
 
         seti("rawBuffer", 0);
