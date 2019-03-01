@@ -1,11 +1,14 @@
 package amirz.dngprocessor.gl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static android.opengl.GLES20.*;
 import static android.opengl.GLES30.*;
 
 public class GLProgramBase {
+    private final List<Integer> mPrograms = new ArrayList<>();
     private int mProgramActive;
 
     protected void useProgram(int program) {
@@ -14,11 +17,19 @@ public class GLProgramBase {
         mProgramActive = program;
     }
 
-    protected static int createProgram(int vertex, String fragment) {
+    protected int createProgram(int vertex, String fragment) {
         int program = glCreateProgram();
         glAttachShader(program, vertex);
         glAttachShader(program, loadShader(GL_FRAGMENT_SHADER, fragment));
+        mPrograms.add(program);
         return program;
+    }
+
+    public void close() {
+        // Clean everything up
+        for (int program : mPrograms) {
+            glDeleteProgram(program);
+        }
     }
 
     protected static int loadShader(int type, String shaderCode) {

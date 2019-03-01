@@ -8,6 +8,8 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 
+import amirz.dngprocessor.math.Histogram;
+
 import static android.opengl.GLES20.*;
 import static android.opengl.GLES30.*;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_2D;
@@ -204,47 +206,9 @@ public class GLProgram extends GLProgramBase {
         fb.get(f);
 
         // Calculate a histogram on the result
-        int histBins = 512;
-        int[] hist = new int[histBins];
-
-        // Loop over all values
-        sigma = new float[3];
-        for (int i = 0; i < f.length; i += 4) {
-            for (int j = 0; j < 3; j++) {
-                sigma[j] += f[i + j];
-            }
-            
-            int bin = (int) (f[i + 3] * histBins);
-            if (bin >= histBins) bin = histBins - 1;
-            hist[bin]++;
-        }
-
-        for (int j = 0; j < 3; j++) {
-            sigma[j] /= whPixels;
-        }
-
-        float[] cumulativeHist = new float[histBins + 1];
-        for (int i = 1; i < cumulativeHist.length; i++) {
-            cumulativeHist[i] = cumulativeHist[i - 1] + hist[i - 1];
-        }
-
-        float max = cumulativeHist[histBins];
-        int minZ = 0;
-        int maxZ = histBins;
-        for (int i = 0; i < cumulativeHist.length; i++) {
-            cumulativeHist[i] /= max;
-            if (cumulativeHist[i] < stretchPerc[0]) {
-                minZ = i;
-            } else if (cumulativeHist[i] > stretchPerc[1]) {
-                maxZ = Math.min(maxZ, i);
-            }
-        }
-
-        float zRangeStrength = 0.67f;
-        zRange = new float[] {
-                zRangeStrength * ((float) minZ) / histBins,
-                zRangeStrength * ((float) maxZ) / histBins + (1f - zRangeStrength)
-        };
+        Histogram hist = new Histogram(f, whPixels, stretchPerc);
+        sigma = hist.sigma;
+        zRange = hist.zRange;
 
         Log.d(TAG, "Sigma " + Arrays.toString(sigma));
         Log.d(TAG, "Z Range: " + Arrays.toString(zRange));
@@ -313,13 +277,5 @@ public class GLProgram extends GLProgramBase {
         seti("yOffset", y);
         mSquare.draw(vPosition());
         glFlush();
-    }
-
-    public void close() {
-        // Clean everything up
-        glDeleteProgram(mProgramSensorToIntermediate);
-        glDeleteProgram(mProgramIntermediateAnalysis);
-        glDeleteProgram(mProgramIntermediateDownscale);
-        glDeleteProgram(mProgramIntermediateToSRGB);
     }
 }
