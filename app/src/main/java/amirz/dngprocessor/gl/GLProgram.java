@@ -32,6 +32,7 @@ public class GLProgram extends GLProgramBase {
     private GLTex mSensorUI, mSensor, mSensorG, mIntermediate, mDownscaled;
     private float[] zRange;
     private float[] sigma;
+    private float[] hist;
 
     public GLProgram() {
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, fbo, 0);
@@ -199,9 +200,10 @@ public class GLProgram extends GLProgramBase {
         fb.get(f);
 
         // Calculate a histogram on the result
-        Histogram hist = new Histogram(f, whPixels, stretchPerc);
-        sigma = hist.sigma;
-        zRange = hist.zRange;
+        Histogram histParser = new Histogram(f, whPixels, stretchPerc);
+        sigma = histParser.sigma;
+        zRange = histParser.zRange;
+        hist = histParser.hist;
 
         Log.d(TAG, "Sigma " + Arrays.toString(sigma));
         Log.d(TAG, "Z Range: " + Arrays.toString(zRange));
@@ -240,6 +242,12 @@ public class GLProgram extends GLProgramBase {
         seti("intermediateHeight", inHeight);
         setf("zRange", zRange[0], zRange[1] - zRange[0]);
         setf("sigma", sigma);
+
+        GLTex histTex = new GLTex(hist.length, 1, 1, GLTex.Format.Float16,
+                FloatBuffer.wrap(hist), GL_LINEAR);
+        histTex.bind(GL_TEXTURE4);
+        seti("hist", 4);
+        setf("histFactor", 0.1f);
     }
 
     public void setToneMapCoeffs(float[] toneMapCoeffs) {

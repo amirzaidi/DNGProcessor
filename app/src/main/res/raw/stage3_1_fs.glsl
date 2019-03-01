@@ -25,6 +25,8 @@ uniform vec3 sigma;
 // Post processing
 uniform float sharpenFactor;
 uniform float saturationFactor;
+
+uniform sampler2D hist;
 uniform float histFactor;
 
 // Size
@@ -189,7 +191,9 @@ vec3 processPatch(ivec2 xyPos) {
     }
 
     // Histogram equalization and contrast stretching
-    z = clamp((z - zRange.x) / zRange.y, 0.f, 1.f);
+    float zDownscale = texelFetch(intermediateDownscale, xyPos / 2, 0).z;
+    float zFactor = texture(hist, vec2(zDownscale, 0.5f)).x / max(0.01f, zDownscale);
+    z *= 1.f + (zFactor - 1.f) * histFactor;
 
     if (radiusDenoise > 0) {
         // Grayshift xy based on noise level
