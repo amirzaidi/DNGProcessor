@@ -5,7 +5,7 @@ public class Histogram {
     public final float[] zRange = new float[2];
     public final float[] hist;
 
-    public Histogram(float[] f, int whPixels, float[] stretchPerc) {
+    public Histogram(float[] f, int whPixels) {
         int histBins = 512;
         int[] hist = new int[histBins];
 
@@ -30,24 +30,13 @@ public class Histogram {
         }
 
         float max = cumulativeHist[histBins];
-        //int minZ = 0;
-        //int maxZ = histBins;
         for (int i = 0; i < cumulativeHist.length; i++) {
             cumulativeHist[i] /= max;
-            /*
-            if (cumulativeHist[i] < stretchPerc[0]) {
-                minZ = i;
-            } else if (cumulativeHist[i] > stretchPerc[1]) {
-                maxZ = Math.min(maxZ, i);
-            }*/
         }
 
         float[] gauss = { 0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f };
         this.hist = Convolve.conv(cumulativeHist, gauss, true);
 
-        //float zRangeStrength = 0.67f;
-        //zRange[0] = zRangeStrength * ((float) minZ) / histBins;
-        //zRange[1] = zRangeStrength * ((float) maxZ) / histBins + (1f - zRangeStrength);
         zRange[0] = 0.f;
         zRange[1] = 1.f;
     }

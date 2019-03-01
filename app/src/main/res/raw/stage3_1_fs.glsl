@@ -9,7 +9,6 @@ uniform int intermediateHeight;
 
 uniform int yOffset;
 
-uniform vec2 zRange;
 uniform int radiusDenoise;
 uniform vec2 noiseProfile;
 

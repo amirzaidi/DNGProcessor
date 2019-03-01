@@ -19,9 +19,4 @@ public class Generic implements DeviceMap.Device {
     public float sharpenFactor(SparseArray<TIFFTag> tags) {
         return 0.4f;
     }
-
-    @Override
-    public float[] stretchPerc(SparseArray<TIFFTag> tags) {
-        return new float[] { 0.01f, 0.995f };
-    }
 }

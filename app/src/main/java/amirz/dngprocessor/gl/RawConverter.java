@@ -301,13 +301,12 @@ public class RawConverter implements AutoCloseable {
     public void sensorToIntermediate() {
         square.sensorToIntermediate();
         square.setOutOffset(sensor.outputOffsetX, sensor.outputOffsetY);
-        square.analyzeIntermediate(outWidth, outHeight, 32,
-                process.stretchPerc);
+        square.analyzeIntermediate(outWidth, outHeight, 32);
         square.downscaleIntermediate();
     }
 
     public void intermediateToOutput() {
-        square.prepareForOutput();
+        square.prepareForOutput(process.histFactor);
         square.setf("noiseProfile", sensor.noiseProfile[2], sensor.noiseProfile[3]);
         square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         square.setTransforms2(XYZtoProPhoto, proPhotoToSRGB);

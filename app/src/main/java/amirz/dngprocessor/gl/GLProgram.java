@@ -160,8 +160,7 @@ public class GLProgram extends GLProgramBase {
         seti("outOffset", offsetX, offsetY);
     }
 
-    public void analyzeIntermediate(int w, int h, int samplingFactor,
-                                    float[] stretchPerc) {
+    public void analyzeIntermediate(int w, int h, int samplingFactor) {
         // Analyze
         useProgram(mProgramIntermediateAnalysis);
 
@@ -200,7 +199,7 @@ public class GLProgram extends GLProgramBase {
         fb.get(f);
 
         // Calculate a histogram on the result
-        Histogram histParser = new Histogram(f, whPixels, stretchPerc);
+        Histogram histParser = new Histogram(f, whPixels);
         sigma = histParser.sigma;
         zRange = histParser.zRange;
         hist = histParser.hist;
@@ -226,7 +225,7 @@ public class GLProgram extends GLProgramBase {
         glFlush();
     }
 
-    public void prepareForOutput() {
+    public void prepareForOutput(float histFactor) {
         // Now switch to the last program
         useProgram(mProgramIntermediateToSRGB);
 
@@ -247,7 +246,7 @@ public class GLProgram extends GLProgramBase {
                 FloatBuffer.wrap(hist), GL_LINEAR);
         histTex.bind(GL_TEXTURE4);
         seti("hist", 4);
-        setf("histFactor", 0.1f);
+        setf("histFactor", histFactor);
     }
 
     public void setToneMapCoeffs(float[] toneMapCoeffs) {

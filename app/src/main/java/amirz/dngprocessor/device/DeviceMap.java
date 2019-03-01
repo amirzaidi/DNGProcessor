@@ -14,9 +14,6 @@ public class DeviceMap {
 
         void neutralPointCorrection(SparseArray<TIFFTag> tags, Rational[] neutral);
 
-        // [0, 1] is the default, closer means more histogram stretching.
-        float[] stretchPerc(SparseArray<TIFFTag> tags);
-
         // 0 is the default, higher means more value sharpening.
         float sharpenFactor(SparseArray<TIFFTag> tags);
     }

@@ -13,7 +13,7 @@ public class Presets {
             case Disabled:
                 process.sharpenFactor = 0f;
                 process.saturationFactor = 0f;
-                process.stretchPerc = new float[] { 0f, 1f };
+                process.histFactor = 0f;
                 break;
             case Natural:
                 TIFFTag modelTag = tags.get(TIFF.TAG_Model);
@@ -21,12 +21,12 @@ public class Presets {
                 device.neutralPointCorrection(tags, sensor.neutralColorPoint);
                 process.sharpenFactor = device.sharpenFactor(tags);
                 process.saturationFactor = 3.25f;
-                process.stretchPerc = device.stretchPerc(tags);
+                process.histFactor = 0.1f;
                 break;
             case Boosted:
                 process.sharpenFactor = 0.65f;
                 process.saturationFactor = 4.5f;
-                process.stretchPerc = new float[] { 0.1f, 0.95f };
+                process.histFactor = 0.2f;
                 break;
         }
     }
