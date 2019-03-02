@@ -242,7 +242,10 @@ public class GLProgram extends GLProgramBase {
                 FloatBuffer.wrap(hist), GL_LINEAR);
         histTex.bind(GL_TEXTURE4);
         seti("hist", 4);
-        setf("histFactor", histFactor);
+
+        histFactor -= (sigma[0] + sigma[1]);
+        Log.d(TAG, "Hist factor " + histFactor);
+        setf("histFactor", Math.max(histFactor, 0f));
     }
 
     public void setToneMapCoeffs(float[] toneMapCoeffs) {
