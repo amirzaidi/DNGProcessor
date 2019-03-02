@@ -30,7 +30,6 @@ public class GLProgram extends GLProgramBase {
     private final int[] fbo = new int[1];
     private int inWidth, inHeight, cfaPattern;
     private GLTex mSensorUI, mSensor, mSensorG, mIntermediate, mDownscaled;
-    private float[] zRange;
     private float[] sigma;
     private float[] hist;
 
@@ -201,11 +200,9 @@ public class GLProgram extends GLProgramBase {
         // Calculate a histogram on the result
         Histogram histParser = new Histogram(f, whPixels);
         sigma = histParser.sigma;
-        zRange = histParser.zRange;
         hist = histParser.hist;
 
         Log.d(TAG, "Sigma " + Arrays.toString(sigma));
-        Log.d(TAG, "Z Range: " + Arrays.toString(zRange));
     }
 
     public void downscaleIntermediate() {
@@ -239,7 +236,6 @@ public class GLProgram extends GLProgramBase {
 
         seti("intermediateWidth", inWidth);
         seti("intermediateHeight", inHeight);
-        setf("zRange", zRange[0], zRange[1] - zRange[0]);
         setf("sigma", sigma);
 
         GLTex histTex = new GLTex(hist.length, 1, 1, GLTex.Format.Float16,
