@@ -302,7 +302,6 @@ public class RawConverter implements AutoCloseable {
         square.sensorToIntermediate();
         square.setOutOffset(sensor.outputOffsetX, sensor.outputOffsetY);
         square.analyzeIntermediate(outWidth, outHeight, 32);
-        square.downscaleIntermediate();
     }
 
     public void intermediateToOutput() {

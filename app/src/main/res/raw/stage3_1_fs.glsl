@@ -3,7 +3,7 @@
 precision mediump float;
 
 uniform sampler2D intermediateBuffer;
-uniform sampler2D intermediateDownscale;
+//uniform sampler2D intermediateDownscale;
 uniform int intermediateWidth;
 uniform int intermediateHeight;
 
@@ -93,7 +93,7 @@ vec3 processPatch(ivec2 xyPos) {
     count = 0;
     dist = 0.f;
     while (coord > bound && dist < thStop) {
-        neighbour = texelFetch(intermediateDownscale, ivec2(coord, xyPos.y) / 2, 0).xyz;
+        neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y) / 2, 1).xyz;
         coord -= 2 << (count / shiftFactor);
         dist = distance(midDivSigma, neighbour / sigmaLocal);
         if (dist < thExclude) {
@@ -109,7 +109,7 @@ vec3 processPatch(ivec2 xyPos) {
     count = 0;
     dist = 0.f;
     while (coord < bound && dist < thStop) {
-        neighbour = texelFetch(intermediateDownscale, ivec2(coord, xyPos.y) / 2, 0).xyz;
+        neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y) / 2, 1).xyz;
         coord += 2 << (count / shiftFactor);
         dist = distance(midDivSigma, neighbour / sigmaLocal);
         if (dist < thExclude) {
@@ -125,7 +125,7 @@ vec3 processPatch(ivec2 xyPos) {
     count = 0;
     dist = 0.f;
     while (coord > bound && dist < thStop) {
-        neighbour = texelFetch(intermediateDownscale, ivec2(xyPos.x, coord) / 2, 0).xyz;
+        neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord) / 2, 1).xyz;
         coord -= 2 << (count / shiftFactor);
         dist = distance(midDivSigma, neighbour / sigmaLocal);
         if (dist < thExclude) {
@@ -141,7 +141,7 @@ vec3 processPatch(ivec2 xyPos) {
     count = 0;
     dist = 0.f;
     while (coord < bound && dist < thStop) {
-        neighbour = texelFetch(intermediateDownscale, ivec2(xyPos.x, coord) / 2, 0).xyz;
+        neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord) / 2, 1).xyz;
         coord += 2 << (count / shiftFactor);
         dist = distance(midDivSigma, neighbour / sigmaLocal);
         if (dist < thExclude) {
@@ -189,7 +189,7 @@ vec3 processPatch(ivec2 xyPos) {
     }
 
     // Histogram equalization
-    float zDownscale = texelFetch(intermediateDownscale, xyPos / 2, 0).z;
+    float zDownscale = texelFetch(intermediateBuffer, xyPos / 2, 1).z;
     float zFactor = texture(hist, vec2(zDownscale, 0.5f)).x / max(0.01f, zDownscale);
     z *= 1.f + (zFactor - 1.f) * histFactor;
 

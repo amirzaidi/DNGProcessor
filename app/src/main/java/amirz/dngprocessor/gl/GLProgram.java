@@ -24,7 +24,6 @@ public class GLProgram extends GLProgramBase {
     private final int mProgramSensorGreenDemosaic;
     private final int mProgramSensorToIntermediate;
     private final int mProgramIntermediateAnalysis;
-    private final int mProgramIntermediateDownscale;
     private final int mProgramIntermediateToSRGB;
 
     private final int[] fbo = new int[1];
@@ -42,7 +41,6 @@ public class GLProgram extends GLProgramBase {
         mProgramSensorGreenDemosaic = createProgram(vertexShader, Shaders.FS_GREENDEMOSAIC);
         mProgramSensorToIntermediate = createProgram(vertexShader, Shaders.FS_INTERMEDIATE);
         mProgramIntermediateAnalysis = createProgram(vertexShader, Shaders.FS_ANALYSIS);
-        mProgramIntermediateDownscale = createProgram(vertexShader, Shaders.FS_DOWNSCALE);
         mProgramIntermediateToSRGB = createProgram(vertexShader, Shaders.FS_OUTPUT);
 
         // Link first program
@@ -205,23 +203,6 @@ public class GLProgram extends GLProgramBase {
         Log.d(TAG, "Sigma " + Arrays.toString(sigma));
     }
 
-    public void downscaleIntermediate() {
-        useProgram(mProgramIntermediateDownscale);
-
-        // Texture 2 for downscaled data
-        // In height and width are always even because of the CFA layout
-        mDownscaled = new GLTex(inWidth / 2, inHeight / 2, 3, GLTex.Format.Float16, null);
-
-        // Load intermediate buffer as texture
-        mIntermediate.bind(GL_TEXTURE0);
-
-        // Configure frame buffer
-        mDownscaled.setFrameBuffer();
-
-        mSquare.draw(vPosition());
-        glFlush();
-    }
-
     public void prepareForOutput(float histFactor) {
         // Now switch to the last program
         useProgram(mProgramIntermediateToSRGB);
@@ -230,9 +211,10 @@ public class GLProgram extends GLProgramBase {
 
         // Load intermediate buffers as textures
         mIntermediate.bind(GL_TEXTURE0);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
         seti("intermediateBuffer", 0);
-        mDownscaled.bind(GL_TEXTURE2);
-        seti("intermediateDownscale", 2);
 
         seti("intermediateWidth", inWidth);
         seti("intermediateHeight", inHeight);
