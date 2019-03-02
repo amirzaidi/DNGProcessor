@@ -23,8 +23,7 @@ uniform vec3 sigma;
 
 // Post processing
 uniform float sharpenFactor;
-uniform float saturationFactor;
-
+uniform sampler2D saturation;
 uniform sampler2D hist;
 uniform float histFactor;
 
@@ -314,18 +313,6 @@ vec3 gammaCorrectPixel(vec3 rgb) {
     return ret;
 }
 
-vec3 applyColorspace(vec3 intermediate) {
-    vec3 XYZ = xyYtoXYZ(intermediate);
-
-    vec3 proPhoto = clamp(XYZtoProPhoto * XYZ, 0.f, 1.f);
-    proPhoto = tonemap(proPhoto);
-
-    vec3 sRGB = clamp(proPhotoToSRGB * proPhoto, 0.f, 1.f);
-    sRGB = gammaCorrectPixel(sRGB);
-
-    return sRGB;
-}
-
 // Source: https://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl
 // All components are in the range [0…1], including hue.
 vec3 rgb2hsv(vec3 c) {
@@ -348,9 +335,10 @@ vec3 hsv2rgb(vec3 c) {
 vec3 saturate(vec3 rgb) {
     float maxv = max(max(rgb.r, rgb.g), rgb.b);
     float minv = min(min(rgb.r, rgb.g), rgb.b);
-    if (maxv > minv && saturationFactor > 0.f) {
+    if (maxv > minv) {
         vec3 hsv = rgb2hsv(rgb);
-        hsv.y = 2.f / (1.f + exp(-saturationFactor * hsv.y)) - 1.f;
+        float f = texture(saturation, vec2(hsv.x, 0.5f)).x;
+        hsv.y = min(hsv.y * f, 1.f);
         rgb = hsv2rgb(hsv);
     }
     return rgb;
@@ -363,12 +351,21 @@ void main() {
     // Sharpen and denoise value
     vec3 intermediate = processPatch(xy);
 
-    // Convert to final colorspace
-    vec3 sRGB = applyColorspace(intermediate);
+    // Convert to XYZ space
+    vec3 XYZ = clamp(xyYtoXYZ(intermediate), 0.f, 1.f);
+
+    // Convert to ProPhoto space
+    vec3 proPhoto = clamp(XYZtoProPhoto * XYZ, 0.f, 1.f);
+
+    // Apply tonemap
+    proPhoto = clamp(tonemap(proPhoto), 0.f, 1.f);
+
+    // Convert to sRGB space
+    vec3 sRGB = clamp(proPhotoToSRGB * proPhoto, 0.f, 1.f);
 
     // Add saturation
-    sRGB = saturate(sRGB);
-    sRGB = clamp(sRGB, 0.f, 1.f);
+    sRGB = clamp(saturate(sRGB), 0.f, 1.f);
 
-    color = vec4(sRGB, 1.f);
+    // Return gamma corrected values
+    color = vec4(gammaCorrectPixel(sRGB), 1.f);
 }
