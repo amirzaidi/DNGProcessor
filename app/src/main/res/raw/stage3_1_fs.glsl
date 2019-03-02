@@ -337,7 +337,8 @@ vec3 saturate(vec3 rgb) {
     float minv = min(min(rgb.r, rgb.g), rgb.b);
     if (maxv > minv) {
         vec3 hsv = rgb2hsv(rgb);
-        float f = texture(saturation, vec2(hsv.x, 0.5f)).x;
+        // Assume saturation map is either constant or has 8+1 values, where the last wraps around
+        float f = texture(saturation, vec2(hsv.x * (16.f / 18.f) + (1.f / 18.f), 0.5f)).x;
         hsv.y = min(hsv.y * f, 1.f);
         rgb = hsv2rgb(hsv);
     }
