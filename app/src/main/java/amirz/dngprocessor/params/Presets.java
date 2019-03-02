@@ -32,7 +32,7 @@ public class Presets {
                 process.histFactor = 0.1f;
                 break;
             case Boosted:
-                process.sharpenFactor = 0.65f;
+                process.sharpenFactor = 0.45f;
                 process.saturationMap = new float[] { 1.75f };
                 process.histFactor = 0.2f;
                 break;
