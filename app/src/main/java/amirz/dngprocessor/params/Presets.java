@@ -29,12 +29,12 @@ public class Presets {
                 float dp = 1.1f;
                 float p = 0.95f;
                 process.saturationMap = new float[] { r, y, g, gb, lb, db, dp, p, r };
-                process.histFactor = 0.1f;
+                process.histFactor = 0.08f;
                 break;
             case Boosted:
                 process.sharpenFactor = 0.45f;
                 process.saturationMap = new float[] { 1.75f };
-                process.histFactor = 0.2f;
+                process.histFactor = 0.16f;
                 break;
         }
 
