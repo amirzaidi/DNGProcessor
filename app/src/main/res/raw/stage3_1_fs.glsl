@@ -1,9 +1,11 @@
 #version 300 es
+#define PI 3.1415926535897932384626433832795f
+#define hPI 1.57079632679489661923f
+#define qPI 0.785398163397448309616f
 
 precision mediump float;
 
 uniform sampler2D intermediateBuffer;
-//uniform sampler2D intermediateDownscale;
 uniform int intermediateWidth;
 uniform int intermediateHeight;
 
@@ -77,8 +79,8 @@ vec3 processPatch(ivec2 xyPos) {
     //float Npx = pow(noiseProfile.x * z + noiseProfile.y, 2.f);
 
     // Thresholds
-    float thExclude = 3.f;
-    float thStop = 4.f;
+    float thExclude = 2.25f;
+    float thStop = 2.5f;
 
     // Expand in a plus
     vec3 midDivSigma = mid / sigmaLocal;
@@ -87,69 +89,37 @@ vec3 processPatch(ivec2 xyPos) {
     int coord, bound, count, totalCount = 1, shiftFactor = 16;
     float dist;
 
-    // Left
-    coord = xyPos.x;
-    bound = max(coord - radiusDenoise, 0);
-    count = 0;
-    dist = 0.f;
-    while (coord > bound && dist < thStop) {
-        neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y) / 2, 1).xyz;
-        coord -= 2 << (count / shiftFactor);
-        dist = distance(midDivSigma, neighbour / sigmaLocal);
-        if (dist < thExclude) {
-            sum += neighbour;
-            count++;
-        }
-    }
-    totalCount += count;
+    float lastMinAngle = 0.f;
+    for (float radius = 1.f; radius <= float(radiusDenoise); radius += 1.f) {
+        float expansion = radius * 2.f;
+        float maxDist = 0.f;
 
-    // Right
-    coord = xyPos.x;
-    bound = min(coord + radiusDenoise, intermediateWidth - 1);
-    count = 0;
-    dist = 0.f;
-    while (coord < bound && dist < thStop) {
-        neighbour = texelFetch(intermediateBuffer, ivec2(coord, xyPos.y) / 2, 1).xyz;
-        coord += 2 << (count / shiftFactor);
-        dist = distance(midDivSigma, neighbour / sigmaLocal);
-        if (dist < thExclude) {
-            sum += neighbour;
-            count++;
-        }
-    }
-    totalCount += count;
+        float minAngle = lastMinAngle;
+        float minDist = thStop;
 
-    // Up
-    coord = xyPos.y;
-    bound = max(coord - radiusDenoise, 0);
-    count = 0;
-    dist = 0.f;
-    while (coord > bound && dist < thStop) {
-        neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord) / 2, 1).xyz;
-        coord -= 2 << (count / shiftFactor);
-        dist = distance(midDivSigma, neighbour / sigmaLocal);
-        if (dist < thExclude) {
-            sum += neighbour;
-            count++;
-        }
-    }
-    totalCount += count;
+        // Four samples for every radius
+        for (float angle = -hPI; angle < hPI; angle += qPI / 2.f) {
+            float realAngle = lastMinAngle + angle / radius;
 
-    // Down
-    coord = xyPos.y;
-    bound = min(coord + radiusDenoise, intermediateHeight - 1);
-    count = 0;
-    dist = 0.f;
-    while (coord < bound && dist < thStop) {
-        neighbour = texelFetch(intermediateBuffer, ivec2(xyPos.x, coord) / 2, 1).xyz;
-        coord += 2 << (count / shiftFactor);
-        dist = distance(midDivSigma, neighbour / sigmaLocal);
-        if (dist < thExclude) {
-            sum += neighbour;
-            count++;
+            int dx = int(round(expansion * cos(realAngle)));
+            int dy = int(round(expansion * sin(realAngle)));
+            neighbour = texelFetch(intermediateBuffer, (xyPos + ivec2(dx, dy)), 0).xyz;
+            dist = distance(midDivSigma, neighbour / sigmaLocal);
+            if (dist < minDist) {
+                minDist = dist;
+                minAngle = realAngle;
+            }
+            if (dist < thExclude) {
+                sum += neighbour;
+                totalCount++;
+            }
         }
+        // No direction left to continue, stop averaging
+        if (minDist > thStop) {
+            break;
+        }
+        lastMinAngle = minAngle;
     }
-    totalCount += count;
 
     xy = sum.xy / float(totalCount);
     //z = sum.z / float(totalCount);
