@@ -198,7 +198,7 @@ vec3 processPatch(ivec2 xyPos) {
         float shiftFactor = clamp((distxy - 0.15f) * 1.75f, 0.f, 1.f);
 
         // Shift towards D50 white
-        xy = shiftFactor * vec2(0.345703f, 0.358539f) + (1.f - shiftFactor) * xy;
+        xy = mix(xy, vec2(0.345703f, 0.358539f), shiftFactor);
 
         // Reduce z by at most a third
         z *= clamp(1.1f - shiftFactor, 0.67f, 1.f);

@@ -54,12 +54,12 @@ float demosaicG(int x, int y, float[25] inputArray) {
 
     float w = 0.5f, w1 = 0.87f;
     if (dx < dy) {
-        w = w1;
-    } else if (dx > dy) {
         w = 1.f - w1;
+    } else if (dx > dy) {
+        w = w1;
     }
 
-    return max(gx * w + gy * (1.f - w), 0.f);
+    return max(mix(gx, gy, w), 0.f);
 }
 
 void main() {
