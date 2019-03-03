@@ -79,8 +79,8 @@ vec3 processPatch(ivec2 xyPos) {
     //float Npx = pow(noiseProfile.x * z + noiseProfile.y, 2.f);
 
     // Thresholds
-    float thExclude = 2.25f;
-    float thStop = 2.5f;
+    float thExclude = 3.5f;
+    float thStop = 3.75f;
 
     // Expand in a plus
     vec3 midDivSigma = mid / sigmaLocal;
@@ -98,26 +98,33 @@ vec3 processPatch(ivec2 xyPos) {
         float minDist = thStop;
 
         // Four samples for every radius
-        for (float angle = -hPI; angle < hPI; angle += qPI / 2.f) {
-            float realAngle = lastMinAngle + angle / radius;
+        for (float angle = -hPI; angle < hPI; angle += qPI) {
+            // Reduce angle as radius grows
+            float realAngle = lastMinAngle + angle / pow(radius, 0.5f);
+            ivec2 c = xyPos + ivec2(
+                int(round(expansion * cos(realAngle))),
+                int(round(expansion * sin(realAngle)))
+            );
 
-            int dx = int(round(expansion * cos(realAngle)));
-            int dy = int(round(expansion * sin(realAngle)));
-            neighbour = texelFetch(intermediateBuffer, (xyPos + ivec2(dx, dy)), 0).xyz;
-            dist = distance(midDivSigma, neighbour / sigmaLocal);
-            if (dist < minDist) {
-                minDist = dist;
-                minAngle = realAngle;
-            }
-            if (dist < thExclude) {
-                sum += neighbour;
-                totalCount++;
+            // Don't go out of bounds
+            if (c.x >= 0 && c.x < intermediateWidth && c.y >= 0 && c.y < intermediateHeight - 1) {
+                neighbour = texelFetch(intermediateBuffer, c, 0).xyz;
+                dist = distance(midDivSigma, neighbour / sigmaLocal);
+                if (dist < minDist) {
+                    minDist = dist;
+                    minAngle = realAngle;
+                }
+                if (dist < thExclude) {
+                    sum += neighbour;
+                    totalCount++;
+                }
             }
         }
         // No direction left to continue, stop averaging
-        if (minDist > thStop) {
+        if (minDist >= thStop) {
             break;
         }
+        // Keep track of the best angle
         lastMinAngle = minAngle;
     }
 
