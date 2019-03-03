@@ -240,7 +240,7 @@ public class GLProgram extends GLProgramBase {
     }
 
     public void setDenoiseFactor(int denoiseFactor) {
-        denoiseFactor = (int)((float) denoiseFactor * (sigma[0] + sigma[1]));
+        denoiseFactor = (int)((float) denoiseFactor * Math.sqrt(sigma[0] + sigma[1]));
         Log.d(TAG, "Denoise radius " + denoiseFactor);
         seti("radiusDenoise", denoiseFactor);
     }

@@ -157,7 +157,7 @@ public class DngParser {
         }
 
         ProcessParams process = new ProcessParams();
-        process.denoiseFactor = Settings.noiseReduce(mContext) ? 250 : 0;
+        process.denoiseFactor = Settings.noiseReduce(mContext) ? 100 : 0;
         Presets.apply(Settings.postProcess(mContext), tags, sensor, process);
 
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS_INIT);
