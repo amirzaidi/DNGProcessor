@@ -195,7 +195,7 @@ vec3 processPatch(ivec2 xyPos) {
 
     if (radiusDenoise > 0) {
         // Grayshift xy based on noise level
-        float shiftFactor = clamp((distxy - 0.1f) * 2.f, 0.f, 1.f);
+        float shiftFactor = clamp((distxy - 0.15f) * 1.75f, 0.f, 1.f);
 
         // Shift towards D50 white
         xy = shiftFactor * vec2(0.345703f, 0.358539f) + (1.f - shiftFactor) * xy;
