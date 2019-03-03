@@ -20,8 +20,8 @@ public class Presets {
                 DeviceMap.Device device = DeviceMap.get(modelTag == null ? "" : modelTag.toString());
                 device.neutralPointCorrection(tags, sensor.neutralColorPoint);
                 process.sharpenFactor = device.sharpenFactor(tags);
-                float r = 1.25f; // Red, Skin
-                float y = 1.35f; // Yellow
+                float r = 1.2f; // Red, Skin
+                float y = 1.25f; // Yellow
                 float g = 1.55f; // Green, Grass
                 float gb = 1.65f; // Green, Foliage
                 float lb = 1.45f; // Blue, Water
