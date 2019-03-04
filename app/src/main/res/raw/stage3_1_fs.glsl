@@ -274,22 +274,6 @@ vec3 tonemap(vec3 rgb) {
     return finalRGB;
 }
 
-// Apply gamma correction using sRGB gamma curve
-float gammaEncode(float x) {
-    return x <= 0.0031308f
-        ? x * 12.92f
-        : 1.055f * pow(x, 0.4166667f) - 0.055f;
-}
-
-// Apply gamma correction to each color channel in RGB pixel
-vec3 gammaCorrectPixel(vec3 rgb) {
-    vec3 ret;
-    ret.r = gammaEncode(rgb.r);
-    ret.g = gammaEncode(rgb.g);
-    ret.b = gammaEncode(rgb.b);
-    return ret;
-}
-
 // Source: https://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl
 // All components are in the range [0…1], including hue.
 vec3 rgb2hsv(vec3 c) {
@@ -320,6 +304,22 @@ vec3 saturate(vec3 rgb) {
         rgb = hsv2rgb(hsv);
     }
     return rgb;
+}
+
+// Apply gamma correction using sRGB gamma curve
+float gammaEncode(float x) {
+    return x <= 0.0031308f
+        ? x * 12.92f
+        : 1.055f * pow(x, 0.4166667f) - 0.055f;
+}
+
+// Apply gamma correction to each color channel in RGB pixel
+vec3 gammaCorrectPixel(vec3 rgb) {
+    vec3 ret;
+    ret.r = gammaEncode(rgb.r);
+    ret.g = gammaEncode(rgb.g);
+    ret.b = gammaEncode(rgb.b);
+    return ret;
 }
 
 void main() {
