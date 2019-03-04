@@ -62,7 +62,6 @@ vec3 processPatch(ivec2 xyPos) {
         sigmaLocal += diff * diff;
     }
     sigmaLocal = max(sqrt(sigmaLocal / 9.f), sigma);
-    sigmaLocal.z *= clamp(0.25f / mean.z, 0.5f, 10.f);
 
     vec3 minxyz = impatch[0].xyz, maxxyz = minxyz;
     for (int i = 1; i < 9; i++) {
@@ -129,7 +128,6 @@ vec3 processPatch(ivec2 xyPos) {
     }
 
     xy = sum.xy / float(totalCount);
-    //z = sum.z / float(totalCount);
 
     /**
     LUMA DENOISE AND SHARPEN
@@ -151,18 +149,7 @@ vec3 processPatch(ivec2 xyPos) {
         // Use this difference to boost sharpness
         z += sharpenFactor * dz;
     } else if (sharpenFactor < 0.f) {
-        // Use median as z
-        float tmp;
-        for (int i = 0; i < 5; i++) {
-            for (int j = i + 1; j < 9; j++) {
-                if (impatch[i].z > impatch[j].z) {
-                    tmp = impatch[j].z;
-                    impatch[j].z = impatch[i].z;
-                    impatch[i].z = tmp;
-                }
-            }
-        }
-        z = (1.f + sharpenFactor) * z - sharpenFactor * impatch[4].z;
+        z = mix(z, sum.z / float(totalCount), -sharpenFactor);
     }
 
     // Histogram equalization
