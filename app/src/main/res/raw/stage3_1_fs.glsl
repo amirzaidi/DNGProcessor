@@ -211,8 +211,8 @@ vec3 tonemap(vec3 rgb) {
     minmax.y = sorted.z;
 
     // Apply tonemapping curve to min, max RGB channel values
-    minmax = pow(minmax, vec2(3.f, 3.f)) * toneMapCoeffs.x +
-        pow(minmax, vec2(2.f, 2.f)) * toneMapCoeffs.y +
+    minmax = pow(minmax, vec2(3.f)) * toneMapCoeffs.x +
+        pow(minmax, vec2(2.f)) * toneMapCoeffs.y +
         minmax * toneMapCoeffs.z +
         toneMapCoeffs.w;
 
