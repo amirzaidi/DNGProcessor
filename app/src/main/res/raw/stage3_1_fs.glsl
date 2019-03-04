@@ -155,7 +155,10 @@ vec3 processPatch(ivec2 xyPos) {
     // Histogram equalization
     float zDownscale = texelFetch(intermediateBuffer, xyPos / 2, 1).z;
     float zFactor = texture(hist, vec2(zDownscale, 0.5f)).x / max(0.01f, zDownscale);
-    z *= 1.f + (zFactor - 1.f) * histFactor;
+
+    // Reduce factor based on light level
+    zFactor = mix(1.f, zFactor, pow(zDownscale, 0.5f));
+    z = mix(z, z * zFactor, histFactor);
 
     if (radiusDenoise > 0) {
         // Grayshift xy based on noise level
