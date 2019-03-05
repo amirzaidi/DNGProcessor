@@ -157,8 +157,7 @@ vec3 processPatch(ivec2 xyPos) {
     float zFactor = texture(hist, vec2(zDownscale, 0.5f)).x / max(0.01f, zDownscale);
 
     // Reduce factor based on light level
-    zFactor = mix(1.f, zFactor, pow(zDownscale, 0.5f));
-    z = mix(z, z * zFactor, histFactor);
+    z = mix(z, z * zFactor, histFactor * pow(zDownscale, 0.5f));
 
     if (radiusDenoise > 0) {
         // Grayshift xy based on noise level
