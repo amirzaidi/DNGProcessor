@@ -39,6 +39,8 @@ public class GLTex {
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat(), w, h, 0, format(), type(), pixels);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, interp);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, interp);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
 
     public void bind(int slot) {
