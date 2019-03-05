@@ -1,4 +1,4 @@
-package amirz.dngprocessor.gl;
+package amirz.dngprocessor.gl.generic;
 
 import java.nio.Buffer;
 
@@ -20,10 +20,10 @@ public class GLTex {
     private final int mTexId;
 
     public GLTex(int w, int h, int channels, Format format, Buffer pixels) {
-        this(w, h, channels, format, pixels, GL_NEAREST);
+        this(w, h, channels, format, pixels, GL_NEAREST, GL_CLAMP_TO_EDGE);
     }
 
-    public GLTex(int w, int h, int channels, Format format, Buffer pixels, int interp) {
+    public GLTex(int w, int h, int channels, Format format, Buffer pixels, int texFilter, int texWrap) {
         mWidth = w;
         mHeight = h;
         mChannels = channels;
@@ -37,10 +37,10 @@ public class GLTex {
         glActiveTexture(GL_TEXTURE16);
         glBindTexture(GL_TEXTURE_2D, mTexId);
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat(), w, h, 0, format(), type(), pixels);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, interp);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, interp);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, texWrap);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texWrap);
     }
 
     public void bind(int slot) {
@@ -56,6 +56,10 @@ public class GLTex {
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexId, 0);
 
         glViewport(0, 0, mWidth, mHeight);
+    }
+
+    public void delete() {
+        glDeleteTextures(1, new int[] { mTexId }, 0);
     }
 
     private int internalFormat() {

@@ -1,4 +1,4 @@
-package amirz.dngprocessor.gl;
+package amirz.dngprocessor.gl.generic;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

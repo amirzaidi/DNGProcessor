@@ -1,4 +1,4 @@
-package amirz.dngprocessor.gl;
+package amirz.dngprocessor.gl.generic;
 
 import java.util.ArrayList;
 import java.util.Arrays;

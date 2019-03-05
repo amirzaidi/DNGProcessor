@@ -8,6 +8,9 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 
+import amirz.dngprocessor.gl.generic.GLProgramBase;
+import amirz.dngprocessor.gl.generic.GLSquare;
+import amirz.dngprocessor.gl.generic.GLTex;
 import amirz.dngprocessor.math.Histogram;
 
 import static android.opengl.GLES20.*;
@@ -28,7 +31,7 @@ public class GLProgram extends GLProgramBase {
 
     private final int[] fbo = new int[1];
     private int inWidth, inHeight, cfaPattern;
-    private GLTex mSensorUI, mSensor, mSensorG, mIntermediate, mDownscaled;
+    private GLTex mSensorUI, mSensor, mSensorG, mIntermediate;
     private float[] sigma;
     private float[] hist;
 
@@ -76,7 +79,7 @@ public class GLProgram extends GLProgramBase {
         if (gainMap != null) {
             Log.d(TAG, "Using gainmap");
             new GLTex(gainMapSize[0], gainMapSize[1], 4, GLTex.Format.Float16,
-                    FloatBuffer.wrap(gainMap), GL_LINEAR).bind(GL_TEXTURE2);
+                    FloatBuffer.wrap(gainMap), GL_LINEAR, GL_CLAMP_TO_EDGE).bind(GL_TEXTURE2);
         }
     }
 
@@ -89,6 +92,8 @@ public class GLProgram extends GLProgramBase {
         setui("cfaPattern", cfaPattern);
         mSquare.draw(vPosition());
         glFlush();
+
+        mSensorUI.delete();
     }
 
     public void greenDemosaic() {
@@ -151,6 +156,9 @@ public class GLProgram extends GLProgramBase {
         setui("cfaPattern", cfaPattern);
         mSquare.draw(vPosition());
         glFlush();
+
+        mSensor.delete();
+        mSensorG.delete();
     }
 
     public void setOutOffset(int offsetX, int offsetY) {
@@ -221,7 +229,7 @@ public class GLProgram extends GLProgramBase {
         setf("sigma", sigma);
 
         GLTex histTex = new GLTex(hist.length, 1, 1, GLTex.Format.Float16,
-                FloatBuffer.wrap(hist), GL_LINEAR);
+                FloatBuffer.wrap(hist), GL_LINEAR, GL_CLAMP_TO_EDGE);
         histTex.bind(GL_TEXTURE4);
         seti("hist", 4);
 
@@ -252,7 +260,7 @@ public class GLProgram extends GLProgramBase {
 
     public void setSaturation(float[] saturation) {
         GLTex satTex = new GLTex(saturation.length, 1, 1, GLTex.Format.Float16,
-                FloatBuffer.wrap(saturation), GL_LINEAR);
+                FloatBuffer.wrap(saturation), GL_LINEAR, GL_CLAMP_TO_EDGE);
         satTex.bind(GL_TEXTURE6);
         seti("saturation", 6);
     }
