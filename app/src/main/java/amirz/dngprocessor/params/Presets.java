@@ -29,7 +29,7 @@ public class Presets {
                 float dp = 1.15f; // Purple
                 float p = 0.85f; // Pink
                 process.saturationMap = new float[] { r, y, g, gb, lb, db, dp, p, r };
-                process.histFactor = 0.25f;
+                process.histFactor = 0.35f;
                 break;
             case Boosted:
                 process.sharpenFactor = 0.45f;
