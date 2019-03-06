@@ -1,6 +1,5 @@
 package amirz.dngprocessor.gl.generic;
 
-import android.graphics.Bitmap;
 import android.opengl.EGLConfig;
 import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
@@ -9,18 +8,12 @@ import android.opengl.EGLSurface;
 import static android.opengl.EGL14.*;
 
 public abstract class GLCoreBase implements AutoCloseable {
-    protected final Bitmap mOut;
-    protected final int mOutWidth, mOutHeight;
     private final EGLDisplay mDisplay;
     private final EGLContext mContext;
     private final EGLSurface mSurface;
     private final GLProgramBase mProgram;
 
-    public GLCoreBase(Bitmap out, int surfaceHeight) {
-        mOut = out;
-        mOutWidth = out.getWidth();
-        mOutHeight = out.getHeight();
-
+    public GLCoreBase(int surfaceWidth, int surfaceHeight) {
         int[] major = new int[2];
         int[] minor = new int[2];
 
@@ -28,7 +21,7 @@ public abstract class GLCoreBase implements AutoCloseable {
         mDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
         eglInitialize(mDisplay, major, 0, minor, 0);
 
-        int[] attribList2 = new int[] {
+        int[] attribList2 = {
                 EGL_DEPTH_SIZE, 0,
                 EGL_STENCIL_SIZE, 0,
                 EGL_RED_SIZE, 8,
@@ -67,7 +60,7 @@ public abstract class GLCoreBase implements AutoCloseable {
         }, 0);
 
         mSurface = eglCreatePbufferSurface(mDisplay, configs[0], new int[] {
-                EGL_WIDTH, mOutWidth,
+                EGL_WIDTH, surfaceWidth,
                 EGL_HEIGHT, surfaceHeight,
                 EGL_NONE
         }, 0);

@@ -12,11 +12,17 @@ import static android.opengl.GLES20.*;
 public class GLCore extends GLCoreBase {
     private static final int BLOCK_HEIGHT = 64;
 
+    private final Bitmap mOut;
+    private final int mOutWidth, mOutHeight;
     private final IntBuffer mBlockBuffer;
     private final IntBuffer mOutBuffer;
 
     public GLCore(Bitmap out) {
-        super(out, BLOCK_HEIGHT);
+        super(out.getWidth(), BLOCK_HEIGHT);
+
+        mOut = out;
+        mOutWidth = out.getWidth();
+        mOutHeight = out.getHeight();
 
         mBlockBuffer = IntBuffer.allocate(mOutWidth * BLOCK_HEIGHT);
         mOutBuffer = IntBuffer.allocate(mOutWidth * mOutHeight);
