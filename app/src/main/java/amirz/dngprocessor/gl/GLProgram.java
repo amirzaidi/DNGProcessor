@@ -27,11 +27,12 @@ public class GLProgram extends GLProgramBase {
     private final int mProgramSensorGreenDemosaic;
     private final int mProgramSensorToIntermediate;
     private final int mProgramIntermediateAnalysis;
+    private final int mProgramIntermediateBlur;
     private final int mProgramIntermediateToSRGB;
 
     private final int[] fbo = new int[1];
     private int inWidth, inHeight, cfaPattern;
-    private GLTex mSensorUI, mSensor, mSensorG, mIntermediate;
+    private GLTex mSensorUI, mSensor, mSensorG, mIntermediate, mBlurred;
     private float[] sigma;
     private float[] hist;
 
@@ -44,6 +45,7 @@ public class GLProgram extends GLProgramBase {
         mProgramSensorGreenDemosaic = createProgram(vertexShader, Shaders.FS_GREENDEMOSAIC);
         mProgramSensorToIntermediate = createProgram(vertexShader, Shaders.FS_INTERMEDIATE);
         mProgramIntermediateAnalysis = createProgram(vertexShader, Shaders.FS_ANALYSIS);
+        mProgramIntermediateBlur = createProgram(vertexShader, Shaders.FS_BLUR);
         mProgramIntermediateToSRGB = createProgram(vertexShader, Shaders.FS_OUTPUT);
 
         // Link first program
@@ -90,8 +92,7 @@ public class GLProgram extends GLProgramBase {
 
     public void sensorPreProcess() {
         setui("cfaPattern", cfaPattern);
-        mSquare.draw(vPosition());
-        glFlush();
+        draw();
 
         mSensorUI.delete();
     }
@@ -112,8 +113,7 @@ public class GLProgram extends GLProgramBase {
         mSensorG.setFrameBuffer();
 
         setui("cfaPattern", cfaPattern);
-        mSquare.draw(vPosition());
-        glFlush();
+        draw();
     }
 
     public void prepareToIntermediate() {
@@ -154,8 +154,7 @@ public class GLProgram extends GLProgramBase {
 
     public void sensorToIntermediate() {
         setui("cfaPattern", cfaPattern);
-        mSquare.draw(vPosition());
-        glFlush();
+        draw();
 
         mSensor.delete();
         mSensorG.delete();
@@ -172,28 +171,17 @@ public class GLProgram extends GLProgramBase {
         w /= samplingFactor;
         h /= samplingFactor;
 
-        int[] analyzeTex = new int[1];
-        glGenTextures(1, analyzeTex, 0);
-
-        glActiveTexture(0);
-        glBindTexture(GL_TEXTURE_2D, analyzeTex[0]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, w, h, 0, GL_RGBA, GL_FLOAT, null);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        GLTex analyzeTex = new GLTex(w, h, 4, GLTex.Format.Float16, null);
 
         // Load intermediate buffer as texture
         mIntermediate.bind(GL_TEXTURE0);
 
         // Configure frame buffer
-        int[] frameBuffer = new int[1];
-        glGenFramebuffers(1, frameBuffer, 0);
-        glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer[0]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, analyzeTex[0], 0);
+        analyzeTex.setFrameBuffer();
 
         glViewport(0, 0, w, h);
         seti("samplingFactor", samplingFactor);
-        mSquare.draw(vPosition());
-        glFlush();
+        draw();
 
         int whPixels = w * h;
         float[] f = new float[whPixels * 4];
@@ -209,6 +197,35 @@ public class GLProgram extends GLProgramBase {
         hist = histParser.hist;
 
         Log.d(TAG, "Sigma " + Arrays.toString(sigma));
+    }
+
+    public void blurIntermediate() {
+        int w = mIntermediate.getWidth() / 8;
+        int h = mIntermediate.getHeight() / 8;
+
+        useProgram(mProgramIntermediateBlur);
+        seti("buf", 0);
+        seti("lod", 3); // Downscale original
+        seti("dir", 0, 1); // Right
+        setf("ch", 0, 1); // xy[Y]
+
+        mIntermediate.bind(GL_TEXTURE0);
+        mIntermediate.enableMipmaps();
+
+        GLTex temp = new GLTex(w, h, 1, GLTex.Format.Float16, null);
+        temp.setFrameBuffer();
+        draw();
+
+        temp.bind(GL_TEXTURE0);
+        seti("lod", 0); // Keep same LOD
+        seti("dir", 1, 0); // Down
+        setf("ch", 1, 0); // [Y]00
+
+        mBlurred = new GLTex(w, h, 1, GLTex.Format.Float16, null, GL_LINEAR);
+        mBlurred.setFrameBuffer();
+        draw();
+
+        temp.delete();
     }
 
     public void prepareForOutput(float histFactor) {
@@ -227,6 +244,9 @@ public class GLProgram extends GLProgramBase {
         seti("intermediateWidth", inWidth);
         seti("intermediateHeight", inHeight);
         setf("sigma", sigma);
+
+        seti("blurred", 2);
+        mBlurred.bind(GL_TEXTURE2);
 
         GLTex histTex = new GLTex(hist.length, 1, 1, GLTex.Format.Float16,
                 FloatBuffer.wrap(hist), GL_LINEAR, GL_CLAMP_TO_EDGE);
@@ -268,6 +288,11 @@ public class GLProgram extends GLProgramBase {
     public void intermediateToOutput(int outWidth, int y, int height) {
         glViewport(0, 0, outWidth, height);
         seti("yOffset", y);
+        mSquare.draw(vPosition());
+        glFlush();
+    }
+
+    private void draw() {
         mSquare.draw(vPosition());
         glFlush();
     }

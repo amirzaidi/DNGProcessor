@@ -9,6 +9,8 @@ uniform sampler2D intermediateBuffer;
 uniform int intermediateWidth;
 uniform int intermediateHeight;
 
+uniform sampler2D blurred;
+
 uniform int yOffset;
 
 uniform int radiusDenoise;
@@ -152,12 +154,19 @@ vec3 processPatch(ivec2 xyPos) {
         z = mix(z, sum.z / float(totalCount), -sharpenFactor);
     }
 
+    // Find local contrast
+    vec2 xyPosF = vec2(xyPos) / vec2(intermediateWidth, intermediateHeight);
+    float averageZ = texture(blurred, xyPosF).x;
+
     // Histogram equalization
     float zDownscale = texelFetch(intermediateBuffer, xyPos / 2, 1).z;
     float zFactor = texture(hist, vec2(zDownscale, 0.5f)).x / max(0.01f, zDownscale);
 
     // Reduce factor based on light level
     z = mix(z, z * zFactor, histFactor * pow(zDownscale, 0.5f));
+
+    // Local contrast increase
+    z = mix(averageZ, z, 1.f + clamp(0.25f + sharpenFactor, 0.f, 0.25f));
 
     if (radiusDenoise > 0) {
         // Grayshift xy based on noise level

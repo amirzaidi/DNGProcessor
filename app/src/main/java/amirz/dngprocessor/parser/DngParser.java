@@ -31,6 +31,7 @@ public class DngParser {
     private static final int STEP_READ = STEPS++;
     private static final int STEP_PROCESS_INIT = STEPS++;
     private static final int STEP_PROCESS_SENSOR = STEPS++;
+    private static final int STEP_PROCESS_BLUR = STEPS++;
     private static final int STEP_PROCESS_XYZ = STEPS++;
     private static final int STEP_SAVE = STEPS++;
     private static final int STEP_META = STEPS++;
@@ -163,15 +164,19 @@ public class DngParser {
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS_INIT);
         Shaders.load(mContext);
         try (RawConverter converter = new RawConverter(sensor, process, rawImageInput, argbOutput)) {
-            Log.w(TAG, "Raw conversion 1/3");
+            Log.w(TAG, "Raw conversion 1/4");
 
             NotifHandler.progress(mContext, STEPS, STEP_PROCESS_SENSOR);
             converter.sensorToIntermediate();
-            Log.w(TAG, "Raw conversion 2/3");
+            Log.w(TAG, "Raw conversion 2/4");
+
+            NotifHandler.progress(mContext, STEPS, STEP_PROCESS_BLUR);
+            converter.blurIntermediate();
+            Log.w(TAG, "Raw conversion 3/4");
 
             NotifHandler.progress(mContext, STEPS, STEP_PROCESS_XYZ);
             converter.intermediateToOutput();
-            Log.w(TAG, "Raw conversion 3/3");
+            Log.w(TAG, "Raw conversion 4/4");
         }
 
         NotifHandler.progress(mContext, STEPS, STEP_SAVE);

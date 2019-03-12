@@ -20,7 +20,11 @@ public class GLTex {
     private final int mTexId;
 
     public GLTex(int w, int h, int channels, Format format, Buffer pixels) {
-        this(w, h, channels, format, pixels, GL_NEAREST, GL_CLAMP_TO_EDGE);
+        this(w, h, channels, format, pixels, GL_NEAREST);
+    }
+
+    public GLTex(int w, int h, int channels, Format format, Buffer pixels, int texFilter) {
+        this(w, h, channels, format, pixels, texFilter, GL_CLAMP_TO_EDGE);
     }
 
     public GLTex(int w, int h, int channels, Format format, Buffer pixels, int texFilter, int texWrap) {
@@ -48,6 +52,12 @@ public class GLTex {
         glBindTexture(GL_TEXTURE_2D, mTexId);
     }
 
+    public void enableMipmaps() {
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+    }
+
     public void setFrameBuffer() {
         // Configure frame buffer
         int[] frameBuffer = new int[1];
@@ -56,6 +66,14 @@ public class GLTex {
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mTexId, 0);
 
         glViewport(0, 0, mWidth, mHeight);
+    }
+
+    public int getWidth() {
+        return mWidth;
+    }
+
+    public int getHeight() {
+        return mHeight;
     }
 
     public void delete() {

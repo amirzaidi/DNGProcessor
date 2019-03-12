@@ -304,6 +304,10 @@ public class RawConverter implements AutoCloseable {
         square.analyzeIntermediate(outWidth, outHeight, 32);
     }
 
+    public void blurIntermediate() {
+        square.blurIntermediate();
+    }
+
     public void intermediateToOutput() {
         square.prepareForOutput(process.histFactor);
         square.setf("noiseProfile", sensor.noiseProfile[2], sensor.noiseProfile[3]);

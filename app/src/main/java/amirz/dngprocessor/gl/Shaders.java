@@ -22,6 +22,7 @@ public class Shaders {
 
     // Demosaiced
     public static String FS_ANALYSIS;
+    public static String FS_BLUR;
     public static String FS_OUTPUT;
 
     public static void load(Context context) {
@@ -33,6 +34,7 @@ public class Shaders {
         FS_GREENDEMOSAIC = readRaw(res, R.raw.stage1_2_fs);
         FS_INTERMEDIATE = readRaw(res, R.raw.stage1_3_fs);
         FS_ANALYSIS = readRaw(res, R.raw.stage2_1_fs);
+        FS_BLUR = readRaw(res, R.raw.stage2_2_fs);
         FS_OUTPUT = readRaw(res, R.raw.stage3_1_fs);
     }
 
