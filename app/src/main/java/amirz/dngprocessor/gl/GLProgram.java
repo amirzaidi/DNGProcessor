@@ -201,13 +201,13 @@ public class GLProgram extends GLProgramBase {
     }
 
     public void blurIntermediate() {
-        int w = mIntermediate.getWidth() / 8;
-        int h = mIntermediate.getHeight() / 8;
+        int w = mIntermediate.getWidth() / 4;
+        int h = mIntermediate.getHeight() / 4;
 
         useProgram(mProgramIntermediateBlur);
         seti("bufSize", w, h);
         seti("buf", 0);
-        seti("lod", 3); // Downscale original
+        seti("lod", 2); // Downscale original
         seti("dir", 0, 1); // Right
         setf("ch", 0, 1); // xy[Y]
 
