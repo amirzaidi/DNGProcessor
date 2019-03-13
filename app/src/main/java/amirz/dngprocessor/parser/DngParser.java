@@ -157,6 +157,11 @@ public class DngParser {
             }
         }
 
+        TIFFTag tag = tags.get(TIFF.TAG_Model);
+        if (tag != null && tag.toString().startsWith("ONEPLUS A5")) {
+            sensor.opDot = true;
+        }
+
         ProcessParams process = new ProcessParams();
         process.denoiseFactor = Settings.noiseReduce(mContext) ? 100 : 0;
         Presets.apply(Settings.postProcess(mContext), tags, sensor, process);

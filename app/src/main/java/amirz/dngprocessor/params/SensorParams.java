@@ -24,4 +24,5 @@ public class SensorParams {
     public int outputOffsetY;
     public float[] gainMap;
     public int[] gainMapSize;
+    public boolean opDot;
 }

@@ -97,7 +97,7 @@ public class GLProgram extends GLProgramBase {
         mSensorUI.delete();
     }
 
-    public void greenDemosaic() {
+    public void greenDemosaic(boolean oneDotFive) {
         useProgram(mProgramSensorGreenDemosaic);
 
         seti("rawBuffer", 0);
@@ -113,6 +113,7 @@ public class GLProgram extends GLProgramBase {
         mSensorG.setFrameBuffer();
 
         setui("cfaPattern", cfaPattern);
+        seti("oneDotFive", oneDotFive ? 1 : 0);
         draw();
     }
 
