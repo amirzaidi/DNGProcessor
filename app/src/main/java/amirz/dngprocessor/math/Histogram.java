@@ -14,7 +14,7 @@ public class Histogram {
                 sigma[j] += f[i + j];
             }
 
-            int bin = (int) (f[i + 3] * histBins);
+            int bin = (int) (f[i + 3] * 0.5f * histBins);
             if (bin >= histBins) bin = histBins - 1;
             histv[bin]++;
         }

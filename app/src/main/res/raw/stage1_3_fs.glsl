@@ -147,15 +147,6 @@ vec3 convertSensorToIntermediate(vec3 sensor) {
     vec3 XYZ = sensorToXYZ * sensor;
     vec3 intermediate = XYZtoxyY(XYZ);
 
-    float transfer = 0.75f;
-    if (intermediate.z > transfer) {
-        // This variable maps the cut off point in the linear curve to the sigmoid
-        float a = log((1.f + transfer) / (1.f - transfer)) / transfer;
-
-        // Transform z using the sigmoid curve
-        intermediate.z = 2.f / (1.f + exp(-a * intermediate.z)) - 1.f;
-    }
-
     return intermediate;
 }
 

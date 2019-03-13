@@ -163,7 +163,7 @@ vec3 processPatch(ivec2 xyPos) {
     zDiff += clamp(0.25f + sharpenFactor, 0.f, 0.25f) * clamp(z - zBlurred, -maxC, maxC);
 
     // Histogram equalization
-    float zFactor = texture(hist, vec2(zBlurred, 0.5f)).x / max(0.01f, zBlurred);
+    float zFactor = texture(hist, vec2(zBlurred * 0.5f, 0.5f)).x / max(0.01f, zBlurred);
     zDiff += (histFactor * pow(zBlurred, 0.5f)) * (z * zFactor - z);
 
     // Apply sharpening and local contrast increase after hist eq
@@ -181,6 +181,15 @@ vec3 processPatch(ivec2 xyPos) {
 
         // Reduce z by at most a third
         z *= clamp(1.1f - shiftFactor, 0.67f, 1.f);
+    }
+
+    float transfer = 0.75f;
+    if (z > transfer) {
+        // This variable maps the cut off point in the linear curve to the sigmoid
+        float a = log((1.f + transfer) / (1.f - transfer)) / transfer;
+
+        // Transform z using the sigmoid curve
+        z = 2.f / (1.f + exp(-a * z)) - 1.f;
     }
 
     return vec3(xy, z);
