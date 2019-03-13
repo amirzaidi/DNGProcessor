@@ -273,7 +273,7 @@ public class GLProgram extends GLProgramBase {
     }
 
     public void setSharpenFactor(float sharpenFactor) {
-        sharpenFactor -= 9f * Math.hypot(sigma[0], sigma[1]);
+        sharpenFactor -= 7f * Math.hypot(sigma[0], sigma[1]);
         Log.d(TAG, "Sharpen " + sharpenFactor);
         setf("sharpenFactor", Math.max(sharpenFactor, -0.25f));
     }
