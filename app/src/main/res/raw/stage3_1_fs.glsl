@@ -53,6 +53,7 @@ vec3 processPatch(ivec2 xyPos) {
     vec2 xy = mid.xy;
     float z = mid.z;
 
+    // Calculate stddev for patch
     vec3 mean;
     for (int i = 0; i < 9; i++) {
         mean += impatch[i];
@@ -134,8 +135,10 @@ vec3 processPatch(ivec2 xyPos) {
     /**
     LUMA DENOISE AND SHARPEN
     **/
-    impatch = load3x3(xyPos, 1);
+    float zDiff;
     if (sharpenFactor > 0.f) {
+        impatch = load3x3(xyPos, 1);
+
         // Sum of difference with all pixels nearby
         float dz = mid.z * 12.f;
         for (int i = 0; i < 9; i++) {
@@ -148,26 +151,27 @@ vec3 processPatch(ivec2 xyPos) {
             }
         }
 
-        // Use this difference to boost sharpness
-        z += sharpenFactor * dz;
+        // Use this difference to boost pixel sharpness
+        zDiff += sharpenFactor * dz;
     } else if (sharpenFactor < 0.f) {
-        z = mix(z, sum.z / float(totalCount), -sharpenFactor);
+        zDiff += sharpenFactor * (z - sum.z / float(totalCount));
     }
 
-    // Find local contrast
-    vec2 xyPosF = vec2(xyPos) / vec2(intermediateWidth, intermediateHeight);
-    float averageZ = texture(blurred, xyPosF).x;
+    // Local contrast enhancement
+    float zBlurred = texture(blurred, vec2(xyPos) / vec2(intermediateWidth, intermediateHeight)).x;
+    float maxC = 0.05f;
+    zDiff += clamp(0.25f + sharpenFactor, 0.f, 0.25f) * clamp(z - zBlurred, -maxC, maxC);
 
     // Histogram equalization
-    float zDownscale = texelFetch(intermediateBuffer, xyPos / 2, 1).z;
-    float zFactor = texture(hist, vec2(zDownscale, 0.5f)).x / max(0.01f, zDownscale);
+    float zFactor = texture(hist, vec2(zBlurred, 0.5f)).x / max(0.01f, zBlurred);
+    zDiff += (histFactor * pow(zBlurred, 0.5f)) * (z * zFactor - z);
 
-    // Reduce factor based on light level
-    z = mix(z, z * zFactor, histFactor * pow(zDownscale, 0.5f));
+    // Apply sharpening and local contrast increase after hist eq
+    z += zDiff;
 
-    // Local contrast increase
-    z = mix(averageZ, z, 1.f + clamp(0.25f + sharpenFactor, 0.f, 0.25f));
-
+    /**
+    DENOISE BY DESATURATION
+    **/
     if (radiusDenoise > 0) {
         // Grayshift xy based on noise level
         float shiftFactor = clamp((distxy - 0.15f) * 1.75f, 0.f, 1.f);
