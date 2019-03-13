@@ -5,6 +5,7 @@
 precision mediump float;
 
 uniform sampler2D buf;
+uniform ivec2 bufSize;
 uniform int lod;
 uniform ivec2 dir;
 uniform vec2 ch;
@@ -29,7 +30,8 @@ void main() {
     vec2 res;
     for (int i = 0; i < 15; i++) {
         int j = i < 8 ? i : 14 - i;
-        res += gauss[j] * texelFetch(buf, xy + (i - 7) * dir, lod).xz;
+        ivec2 pos = clamp(xy + (i - 7) * dir, ivec2(1, 1), bufSize - 2);
+        res += gauss[j] * texelFetch(buf, pos, lod).xz;
     }
     blurred = dot(ch, res);
 }

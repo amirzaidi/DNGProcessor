@@ -205,6 +205,7 @@ public class GLProgram extends GLProgramBase {
         int h = mIntermediate.getHeight() / 8;
 
         useProgram(mProgramIntermediateBlur);
+        seti("bufSize", w, h);
         seti("buf", 0);
         seti("lod", 3); // Downscale original
         seti("dir", 0, 1); // Right
