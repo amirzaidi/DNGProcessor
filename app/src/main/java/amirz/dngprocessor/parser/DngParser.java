@@ -17,9 +17,9 @@ import java.nio.ByteOrder;
 import amirz.dngprocessor.NotifHandler;
 import amirz.dngprocessor.Path;
 import amirz.dngprocessor.Settings;
+import amirz.dngprocessor.device.DeviceMap;
 import amirz.dngprocessor.gl.RawConverter;
 import amirz.dngprocessor.gl.Shaders;
-import amirz.dngprocessor.params.Presets;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 
@@ -125,7 +125,6 @@ public class DngParser {
         }
         sensor.neutralColorPoint = tags.get(TIFF.TAG_AsShotNeutral).getRationalArray();
         sensor.noiseProfile = tags.get(TIFF.TAG_NoiseProfile).getFloatArray();
-        //LensShadingMap shadingMap = dynamicMetadata.get(CaptureResult.STATISTICS_LENS_SHADING_CORRECTION_MAP);
 
         int[] defaultCropOrigin = tags.get(TIFF.TAG_DefaultCropOrigin).getIntArray();
         sensor.outputOffsetX = defaultCropOrigin[0];
@@ -157,15 +156,15 @@ public class DngParser {
             }
         }
 
-        TIFFTag tag = tags.get(TIFF.TAG_Model);
-        if (tag != null && tag.toString().startsWith("ONEPLUS A5")) {
-            sensor.opDot = true;
-        }
-
-        ProcessParams process = new ProcessParams();
+        ProcessParams process = ProcessParams.getPreset(Settings.postProcess(mContext));
         process.denoiseFactor = Settings.noiseReduce(mContext) ? 100 : 0;
         process.lce = Settings.lce(mContext);
-        Presets.apply(Settings.postProcess(mContext), tags, sensor, process);
+
+        // Override sensor and process settings with model specific ones
+        TIFFTag modelTag = tags.get(TIFF.TAG_Model);
+        DeviceMap.Device device = DeviceMap.get(modelTag == null ? "" : modelTag.toString());
+        device.sensorCorrection(tags, sensor);
+        device.processCorrection(tags, process);
 
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS_INIT);
         Shaders.load(mContext);

@@ -6,21 +6,24 @@ import android.util.SparseArray;
 import java.util.ArrayList;
 import java.util.List;
 
+import amirz.dngprocessor.params.ProcessParams;
+import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.parser.TIFFTag;
 
 public class DeviceMap {
     public interface Device {
         boolean isModel(String model);
 
-        void neutralPointCorrection(SparseArray<TIFFTag> tags, Rational[] neutral);
+        void sensorCorrection(SparseArray<TIFFTag> tags, SensorParams sensor);
 
-        // 0 is the default, higher means more value sharpening.
-        float sharpenFactor(SparseArray<TIFFTag> tags);
+        void processCorrection(SparseArray<TIFFTag> tags, ProcessParams process);
     }
 
     private static final List<Device> sDevices = new ArrayList<>();
     static {
+        sDevices.add(new OnePlus5());
         sDevices.add(new OnePlus3());
+        sDevices.add(new OnePlus());
         sDevices.add(new Generic());
     }
 

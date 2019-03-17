@@ -3,33 +3,31 @@ package amirz.dngprocessor.device;
 import android.util.Rational;
 import android.util.SparseArray;
 
+import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.parser.TIFF;
 import amirz.dngprocessor.parser.TIFFTag;
 
-public class OnePlus3 extends Generic {
+public class OnePlus3 extends OnePlus {
     @Override
     public boolean isModel(String model) {
         return model.startsWith("ONEPLUS A3");
     }
 
     @Override
-    public void neutralPointCorrection(SparseArray<TIFFTag> tags, Rational[] neutral) {
-        if (lowLight(tags)) {
-            // Set a more red neutral point, to blue shift the final image
-            neutral[2] = new Rational(neutral[2].getNumerator() * 14, neutral[2].getDenominator() * 15);
-        } else {
-            super.neutralPointCorrection(tags, neutral);
+    public void sensorCorrection(SparseArray<TIFFTag> tags, SensorParams sensor) {
+        super.sensorCorrection(tags, sensor);
+
+        // Set a more red neutral point, to blue shift the final image
+        if (noLight(tags)) {
+            sensor.neutralColorPoint[2] = new Rational(
+                    sensor.neutralColorPoint[2].getNumerator() * 13,
+                    sensor.neutralColorPoint[2].getDenominator() * 15);
+        } else if (lowLight(tags)) {
+            sensor.neutralColorPoint[2] = new Rational(
+                    sensor.neutralColorPoint[2].getNumerator() * 14,
+                    sensor.neutralColorPoint[2].getDenominator() * 15);
         }
     }
-
-    /*
-    @Override
-    public float[] stretchPerc(SparseArray<TIFFTag> tags) {
-        return noLight(tags)
-                ? new float[] { 0f, 1f }
-                : super.stretchPerc(tags);
-    }
-    */
 
     private boolean lowLight(SparseArray<TIFFTag> tags) {
         return exposureAtLeast(tags, 0.05f);
