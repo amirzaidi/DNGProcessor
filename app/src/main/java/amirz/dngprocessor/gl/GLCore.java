@@ -6,6 +6,7 @@ import java.nio.IntBuffer;
 
 import amirz.dngprocessor.gl.generic.GLCoreBase;
 import amirz.dngprocessor.gl.generic.GLProgramBase;
+import amirz.dngprocessor.math.BlockDivider;
 
 import static android.opengl.GLES20.*;
 
@@ -31,10 +32,11 @@ public class GLCore extends GLCoreBase {
     public void intermediateToOutput() {
         GLProgram program = (GLProgram) getProgram();
 
-        for (int remainingRows = mOutHeight; remainingRows > 0; remainingRows -= BLOCK_HEIGHT) {
-            int y = mOutHeight - remainingRows;
-            int height = Math.min(remainingRows, BLOCK_HEIGHT);
-
+        BlockDivider divider = new BlockDivider(mOutHeight, BLOCK_HEIGHT);
+        int[] row = new int[2];
+        while (divider.nextBlock(row)) {
+            int y = row[0];
+            int height = row[1];
             program.intermediateToOutput(mOutWidth, y, height);
             mBlockBuffer.position(0);
             glReadPixels(0, 0, mOutWidth, height, GL_RGBA, GL_UNSIGNED_BYTE, mBlockBuffer);
