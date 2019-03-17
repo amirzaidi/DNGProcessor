@@ -187,7 +187,7 @@ vec3 processPatch(ivec2 xyPos) {
         z *= clamp(1.1f - shiftFactor, 0.67f, 1.f);
     }
 
-    float transfer = 0.75f;
+    float transfer = 0.25f;
     if (z > transfer) {
         // This variable maps the cut off point in the linear curve to the sigmoid
         float a = log((1.f + transfer) / (1.f - transfer)) / transfer;
