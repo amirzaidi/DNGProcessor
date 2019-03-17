@@ -36,7 +36,6 @@ int ind(int x, int y) {
     return x + dim / 2 + (y + dim / 2) * dim;
 }
 
-// Apply bilinear-interpolation to demosaic
 float demosaicG(int x, int y, float[25] inputArray) {
     uint index = uint((x & 1) | ((y & 1) << 1));
     index |= (cfaPattern << 2);
