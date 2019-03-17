@@ -142,7 +142,7 @@ vec3 convertSensorToIntermediate(vec3 sensor) {
     // Use a bias so only high green values become higher
     // In highlights, bias should be one
     float bias = pow(sensor.g, 3.f);
-    sensor *= (1.f - bias) + max(npf.r + npf.b, 2.f) * 0.5f * bias;
+    sensor *= mix(1.f, max(npf.r + npf.b, 2.f) * 0.5f, bias);
 
     vec3 XYZ = sensorToXYZ * sensor;
     vec3 intermediate = XYZtoxyY(XYZ);
