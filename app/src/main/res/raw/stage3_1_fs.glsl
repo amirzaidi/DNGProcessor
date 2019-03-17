@@ -46,6 +46,17 @@ vec3[9] load3x3(ivec2 xy, int n) {
     return outputArray;
 }
 
+float sigmoid(float val, float transfer) {
+    if (val > transfer) {
+        // This variable maps the cut off point in the linear curve to the sigmoid
+        float a = log((1.f + transfer) / (1.f - transfer)) / transfer;
+
+        // Transform val using the sigmoid curve
+        val = 2.f / (1.f + exp(-a * val)) - 1.f;
+    }
+    return val;
+}
+
 vec3 processPatch(ivec2 xyPos) {
     vec3[9] impatch = load3x3(xyPos, 2);
     vec3 mid = impatch[4];
@@ -187,16 +198,7 @@ vec3 processPatch(ivec2 xyPos) {
         z *= clamp(1.1f - shiftFactor, 0.67f, 1.f);
     }
 
-    float transfer = 0.25f;
-    if (z > transfer) {
-        // This variable maps the cut off point in the linear curve to the sigmoid
-        float a = log((1.f + transfer) / (1.f - transfer)) / transfer;
-
-        // Transform z using the sigmoid curve
-        z = 2.f / (1.f + exp(-a * z)) - 1.f;
-    }
-
-    return vec3(xy, z);
+    return vec3(xy, sigmoid(z, 0.25f));
 }
 
 vec3 xyYtoXYZ(vec3 xyY) {
@@ -315,7 +317,7 @@ vec3 saturate(vec3 rgb) {
         vec3 hsv = rgb2hsv(rgb);
         // Assume saturation map is either constant or has 8+1 values, where the last wraps around
         float f = texture(saturation, vec2(hsv.x * (16.f / 18.f) + (1.f / 18.f), 0.5f)).x;
-        hsv.y = min(hsv.y * f, 1.f);
+        hsv.y = sigmoid(hsv.y * f, 0.85f);
         rgb = hsv2rgb(hsv);
     }
     return rgb;
