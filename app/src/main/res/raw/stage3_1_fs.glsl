@@ -345,19 +345,19 @@ void main() {
     vec3 intermediate = processPatch(xy);
 
     // Convert to XYZ space
-    vec3 XYZ = clamp(xyYtoXYZ(intermediate), 0.f, 1.f);
+    vec3 XYZ = xyYtoXYZ(intermediate);
 
     // Convert to ProPhoto space
     vec3 proPhoto = clamp(XYZtoProPhoto * XYZ, 0.f, 1.f);
 
     // Apply tonemap
-    proPhoto = clamp(tonemap(proPhoto), 0.f, 1.f);
+    proPhoto = tonemap(proPhoto);
 
     // Convert to sRGB space
     vec3 sRGB = clamp(proPhotoToSRGB * proPhoto, 0.f, 1.f);
 
     // Add saturation
-    sRGB = clamp(saturate(sRGB), 0.f, 1.f);
+    sRGB = saturate(sRGB);
 
     // Return gamma corrected values
     color = vec4(gammaCorrectPixel(sRGB), 1.f);
