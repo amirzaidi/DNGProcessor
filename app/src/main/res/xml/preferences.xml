@@ -49,6 +49,12 @@
             android:defaultValue="true" />
 
         <SwitchPreference
+            android:key="pref_lce"
+            android:title="@string/pref_lce_title"
+            android:summary="@string/pref_lce_desc"
+            android:defaultValue="true" />
+
+        <SwitchPreference
             android:key="pref_forward_matrix"
             android:title="@string/pref_forward_matrix_title"
             android:summary="@string/pref_forward_matrix_desc"

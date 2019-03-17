@@ -201,29 +201,28 @@ public class GLProgram extends GLProgramBase {
     }
 
     public void blurIntermediate() {
-        int w = mIntermediate.getWidth() / 4;
-        int h = mIntermediate.getHeight() / 4;
+        int w = mIntermediate.getWidth();
+        int h = mIntermediate.getHeight();
 
         useProgram(mProgramIntermediateBlur);
-        seti("bufSize", w, h);
-        seti("buf", 0);
-        seti("lod", 2); // Downscale original
-        seti("dir", 0, 1); // Right
-        setf("ch", 0, 1); // xy[Y]
 
         mIntermediate.bind(GL_TEXTURE0);
-        mIntermediate.enableMipmaps();
+        seti("sampleBuf", 0);
+        seti("blurBuf", 0);
+        seti("bufSize", w, h);
+
+        seti("dir", 1, 0); // Right
+        setf("ch", 0, 1); // xy[Y]
 
         GLTex temp = new GLTex(w, h, 1, GLTex.Format.Float16, null);
         temp.setFrameBuffer();
         draw();
 
         temp.bind(GL_TEXTURE0);
-        seti("lod", 0); // Keep same LOD
-        seti("dir", 1, 0); // Down
+        seti("dir", 0, 1); // Down
         setf("ch", 1, 0); // [Y]00
 
-        mBlurred = new GLTex(w, h, 1, GLTex.Format.Float16, null, GL_LINEAR);
+        mBlurred = new GLTex(w, h, 1, GLTex.Format.Float16, null);
         mBlurred.setFrameBuffer();
         draw();
 
@@ -257,6 +256,10 @@ public class GLProgram extends GLProgramBase {
 
         Log.d(TAG, "Hist factor " + histFactor);
         setf("histFactor", Math.max(histFactor, 0f));
+    }
+
+    public void setLCE(boolean lce) {
+        seti("lce", lce ? 1 : 0);
     }
 
     public void setToneMapCoeffs(float[] toneMapCoeffs) {

@@ -5,4 +5,5 @@ public class ProcessParams {
     public float sharpenFactor;
     public float[] saturationMap;
     public float histFactor;
+    public boolean lce;
 }

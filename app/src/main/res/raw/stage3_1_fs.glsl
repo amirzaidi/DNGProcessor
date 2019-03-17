@@ -15,6 +15,7 @@ uniform int yOffset;
 
 uniform int radiusDenoise;
 uniform vec2 noiseProfile;
+uniform bool lce;
 
 // Sensor and picture variables
 uniform vec4 toneMapCoeffs; // Coefficients for a polynomial tonemapping curve
@@ -157,14 +158,17 @@ vec3 processPatch(ivec2 xyPos) {
         zDiff += sharpenFactor * (z - sum.z / float(totalCount));
     }
 
-    // Local contrast enhancement
-    float zBlurred = texture(blurred, vec2(xyPos) / vec2(intermediateWidth, intermediateHeight)).x;
-    float maxC = 0.025f;
-    zDiff += clamp(0.25f + sharpenFactor, 0.f, 0.5f) * clamp(z - zBlurred, -maxC, maxC);
+    if (lce) {
+        // Local contrast enhancement
+        float zBlurred = texelFetch(blurred, xyPos, 0).x;
+        float zBlurDiff = z - zBlurred;
+        zDiff += zBlurDiff * (0.35f + min(0.f, sharpenFactor));
+    }
 
     // Histogram equalization
-    float zFactor = texture(hist, vec2(zBlurred * 0.5f, 0.5f)).x / max(0.01f, zBlurred);
-    zDiff += (histFactor * pow(zBlurred, 0.5f)) * (z * zFactor - z);
+    float zFactor = texture(hist, vec2(z * 0.5f, 0.5f)).x;
+    float zFactorDiff = z * zFactor - z;
+    zDiff += zFactorDiff * pow(z, 0.5f) * histFactor;
 
     // Apply sharpening and local contrast increase after hist eq
     z += zDiff;

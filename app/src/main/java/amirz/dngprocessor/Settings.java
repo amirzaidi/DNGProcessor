@@ -11,6 +11,7 @@ public class Settings {
     private static final String PREF_SAVE_PATH = "pref_save_path";
     private static final String PREF_POST_PROCESS = "pref_post_process_type";
     private static final String PREF_NOISE_REDUCE = "pref_noise_reduce";
+    private static final String PREF_LCE = "pref_lce";
     private static final String PREF_FORWARD_MATRIX = "pref_forward_matrix";
     private static final String PREF_GAIN_MAP = "pref_gain_map";
 
@@ -54,6 +55,10 @@ public class Settings {
 
     public static boolean noiseReduce(Context context) {
         return Utilities.prefs(context).getBoolean(PREF_NOISE_REDUCE, true);
+    }
+
+    public static boolean lce(Context context) {
+        return Utilities.prefs(context).getBoolean(PREF_LCE, true);
     }
 
     public static boolean forwardMatrix(Context context) {

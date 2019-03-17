@@ -4,34 +4,47 @@
 
 precision mediump float;
 
-uniform sampler2D buf;
+uniform sampler2D sampleBuf;
+uniform sampler2D blurBuf;
 uniform ivec2 bufSize;
-uniform int lod;
 uniform ivec2 dir;
 uniform vec2 ch;
+
+const int w = 61;
+const float b = 1.f;
+const float maxs = 15.f;
 
 // Out
 out float blurred;
 
-// Total size of 15
-float gauss[8] = float[8](
-    0.000489f,
-    0.002403f,
-    0.009246f,
-    0.02784f,
-    0.065602f,
-    0.120999f,
-    0.174697f,
-    0.197448f
-);
+float unscaledGaussian(int dx, float s) {
+    return exp(-0.5f * pow(float(dx) / s, 2.f));
+}
 
 void main() {
     ivec2 xy = ivec2(gl_FragCoord.xy);
-    vec2 res;
-    for (int i = 0; i < 15; i++) {
-        int j = i < 8 ? i : 14 - i;
-        ivec2 pos = clamp(xy + (i - 7) * dir, ivec2(1, 1), bufSize - 2);
-        res += gauss[j] * texelFetch(buf, pos, lod).xz;
+    float res;
+
+    float mean, sigma;
+    for (int i = 0; i < w; i++) {
+        ivec2 pos = clamp(xy + (i - w / 2) * dir, ivec2(1, 1), bufSize - 2);
+        mean += dot(ch, texelFetch(sampleBuf, pos, 0).xz);
     }
-    blurred = dot(ch, res);
+    mean /= float(w);
+    for (int i = 0; i < w; i++) {
+        ivec2 pos = clamp(xy + (i - w / 2) * dir, ivec2(1, 1), bufSize - 2);
+        float diff = mean - dot(ch, texelFetch(sampleBuf, pos, 0).xz);
+        sigma += diff * diff;
+    }
+
+    float s = min(b / pow(sigma / float(w), 0.5f), maxs);
+    float totalGauss;
+    for (int i = 0; i < w; i++) {
+        float gauss = unscaledGaussian(i - w / 2, s);
+        totalGauss += gauss;
+
+        ivec2 pos = clamp(xy + (i - w / 2) * dir, ivec2(1, 1), bufSize - 2);
+        res += gauss * dot(ch, texelFetch(blurBuf, pos, 0).xz);
+    }
+    blurred = res / totalGauss;
 }
