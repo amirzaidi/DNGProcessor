@@ -11,10 +11,11 @@ import java.util.Arrays;
 import amirz.dngprocessor.gl.generic.GLProgramBase;
 import amirz.dngprocessor.gl.generic.GLSquare;
 import amirz.dngprocessor.gl.generic.GLTex;
+import amirz.dngprocessor.math.BlockDivider;
 import amirz.dngprocessor.math.Histogram;
 
+import static amirz.dngprocessor.Constants.BLOCK_HEIGHT;
 import static android.opengl.GLES20.*;
-import static android.opengl.GLES30.*;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_2D;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MAG_FILTER;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MIN_FILTER;
@@ -92,7 +93,7 @@ public class GLProgram extends GLProgramBase {
 
     public void sensorPreProcess() {
         setui("cfaPattern", cfaPattern);
-        draw();
+        drawBlocks(inWidth, inHeight);
 
         mSensorUI.delete();
     }
@@ -114,7 +115,7 @@ public class GLProgram extends GLProgramBase {
 
         setui("cfaPattern", cfaPattern);
         seti("oneDotFive", oneDotFive ? 1 : 0);
-        draw();
+        drawBlocks(inWidth, inHeight);
     }
 
     public void prepareToIntermediate() {
@@ -155,7 +156,7 @@ public class GLProgram extends GLProgramBase {
 
     public void sensorToIntermediate() {
         setui("cfaPattern", cfaPattern);
-        draw();
+        drawBlocks(inWidth, inHeight);
 
         mSensor.delete();
         mSensorG.delete();
@@ -216,7 +217,7 @@ public class GLProgram extends GLProgramBase {
 
         GLTex temp = new GLTex(w, h, 1, GLTex.Format.Float16, null);
         temp.setFrameBuffer();
-        draw();
+        drawBlocks(w, h);
 
         temp.bind(GL_TEXTURE0);
         seti("dir", 0, 1); // Down
@@ -224,7 +225,7 @@ public class GLProgram extends GLProgramBase {
 
         mBlurred = new GLTex(w, h, 1, GLTex.Format.Float16, null);
         mBlurred.setFrameBuffer();
-        draw();
+        drawBlocks(w, h);
 
         temp.delete();
     }
@@ -293,8 +294,16 @@ public class GLProgram extends GLProgramBase {
     public void intermediateToOutput(int outWidth, int y, int height) {
         glViewport(0, 0, outWidth, height);
         seti("yOffset", y);
-        mSquare.draw(vPosition());
-        glFlush();
+        draw();
+    }
+
+    private void drawBlocks(int w, int h) {
+        BlockDivider divider = new BlockDivider(h, BLOCK_HEIGHT);
+        int[] row = new int[2];
+        while (divider.nextBlock(row)) {
+            glViewport(0, row[0], w, row[1]);
+            draw();
+        }
     }
 
     private void draw() {

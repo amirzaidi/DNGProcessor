@@ -8,11 +8,10 @@ import amirz.dngprocessor.gl.generic.GLCoreBase;
 import amirz.dngprocessor.gl.generic.GLProgramBase;
 import amirz.dngprocessor.math.BlockDivider;
 
+import static amirz.dngprocessor.Constants.BLOCK_HEIGHT;
 import static android.opengl.GLES20.*;
 
 public class GLCore extends GLCoreBase {
-    private static final int BLOCK_HEIGHT = 64;
-
     private final Bitmap mOut;
     private final int mOutWidth, mOutHeight;
     private final IntBuffer mBlockBuffer;
