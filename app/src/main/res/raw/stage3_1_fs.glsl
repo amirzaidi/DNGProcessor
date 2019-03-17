@@ -350,15 +350,12 @@ void main() {
     // Convert to ProPhoto space
     vec3 proPhoto = clamp(XYZtoProPhoto * XYZ, 0.f, 1.f);
 
-    // Apply tonemap
-    proPhoto = tonemap(proPhoto);
-
     // Convert to sRGB space
     vec3 sRGB = clamp(proPhotoToSRGB * proPhoto, 0.f, 1.f);
 
     // Add saturation
     sRGB = saturate(sRGB);
 
-    // Return gamma corrected values
-    color = vec4(gammaCorrectPixel(sRGB), 1.f);
+    // Apply tonemap after gamma correction
+    color = vec4(tonemap(gammaCorrectPixel(sRGB)), 1.f);
 }
