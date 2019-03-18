@@ -230,7 +230,7 @@ public class GLProgram extends GLProgramBase {
         temp.delete();
     }
 
-    public void prepareForOutput(float histFactor) {
+    public void prepareForOutput(float histFactor, float satLimit) {
         // Now switch to the last program
         useProgram(mProgramIntermediateToSRGB);
 
@@ -257,6 +257,9 @@ public class GLProgram extends GLProgramBase {
 
         Log.d(TAG, "Hist factor " + histFactor);
         setf("histFactor", Math.max(histFactor, 0f));
+
+        Log.d(TAG, "Saturation limit " + satLimit);
+        setf("satLimit", satLimit);
     }
 
     public void setLCE(boolean lce) {

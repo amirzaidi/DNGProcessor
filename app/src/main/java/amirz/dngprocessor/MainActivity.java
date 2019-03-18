@@ -37,7 +37,7 @@ public class MainActivity extends Activity {
         if (hasPermissions()) {
             DngScanJob.scheduleJob(this);
             getFragmentManager().beginTransaction()
-                    .replace(android.R.id.content, new Settings.Fragment())
+                    .replace(android.R.id.content, new Preferences.Fragment())
                     .commit();
         } else {
             requestPermissions(new String[] {
@@ -83,6 +83,12 @@ public class MainActivity extends Activity {
                 }
                 break;
         }
+    }
+
+    @Override
+    public void recreate() {
+        finish();
+        startActivity(getIntent());
     }
 
     private void process(Uri uri) {

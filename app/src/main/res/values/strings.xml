@@ -11,8 +11,20 @@
     <string name="pref_delete_original_title">Delete original</string>
     <string name="pref_delete_original_desc">Remove files that were successfully processed</string>
     <string name="pref_save_path_title">Save directory</string>
-    <string name="pref_save_path_desc">Results are stored in this path</string>
-    <string name="pref_save_path_default">DCIM/Processed</string>
+
+    <string name="category_saturation_map">Saturation map</string>
+    <string name="category_saturation_map_desc">Tweak intensity per hue</string>
+    <string name="pref_saturation_r_title">Red - Skin tones</string>
+    <string name="pref_saturation_y_title">Yellow</string>
+    <string name="pref_saturation_g_title">Green - Grass</string>
+    <string name="pref_saturation_c_title">Cyan - Foliage</string>
+    <string name="pref_saturation_b_title">Blue - Water</string>
+    <string name="pref_saturation_i_title">Indigo - Skies</string>
+    <string name="pref_saturation_v_title">Violet</string>
+    <string name="pref_saturation_m_title">Magenta</string>
+    <string name="pref_saturation_limit_title">Soft limit</string>
+    <string name="pref_saturation_reset_title">Reset</string>
+    <string name="pref_saturation_reset_desc">Restore to default values</string>
 
     <string name="category_pipeline">Pipeline</string>
     <string name="pref_post_process_title">Post processing mode</string>

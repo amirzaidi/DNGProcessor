@@ -13,7 +13,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import amirz.dngprocessor.Path;
-import amirz.dngprocessor.Settings;
+import amirz.dngprocessor.Preferences;
 import amirz.dngprocessor.Utilities;
 
 public class DngScanJob extends JobService {
@@ -47,7 +47,8 @@ public class DngScanJob extends JobService {
 
     @Override
     public boolean onStartJob(JobParameters params) {
-        boolean backgroundProcess = Settings.backgroundProcess(this);
+        Preferences pref = Preferences.global();
+        boolean backgroundProcess = pref.apply(Utilities.prefs(this), getResources(), pref.backgroundProcess);
 
         StringBuilder sb = new StringBuilder();
         sb.append("onStartJob: Media content has changed: ");

@@ -309,7 +309,7 @@ public class RawConverter implements AutoCloseable {
     }
 
     public void intermediateToOutput() {
-        square.prepareForOutput(process.histFactor);
+        square.prepareForOutput(process.histFactor, process.satLimit);
         square.setf("noiseProfile", sensor.noiseProfile[2], sensor.noiseProfile[3]);
         square.setLCE(process.lce);
         square.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);

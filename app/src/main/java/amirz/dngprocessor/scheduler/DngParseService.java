@@ -13,7 +13,8 @@ import java.io.File;
 
 import amirz.dngprocessor.NotifHandler;
 import amirz.dngprocessor.Path;
-import amirz.dngprocessor.Settings;
+import amirz.dngprocessor.Preferences;
+import amirz.dngprocessor.Utilities;
 import amirz.dngprocessor.parser.DngParser;
 
 import static amirz.dngprocessor.Utilities.ATLEAST_OREO;
@@ -46,8 +47,10 @@ public class DngParseService extends IntentService {
 
         NotifHandler.create(this, file);
         try {
+            Preferences pref = Preferences.global();
+            pref.applyAll(Utilities.prefs(this), getResources());
             new DngParser(this, uri).run();
-            if (Settings.deleteOriginal(this)) {
+            if (pref.deleteOriginal.get()) {
                 String path = Path.getPathFromUri(this, uri);
                 Log.e(TAG, "Deleting " + path);
                 File resolvedFile = new File(path);

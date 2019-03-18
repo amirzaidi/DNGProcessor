@@ -29,6 +29,7 @@ uniform vec3 sigma;
 // Post processing
 uniform float sharpenFactor;
 uniform sampler2D saturation;
+uniform float satLimit;
 uniform sampler2D hist;
 uniform float histFactor;
 
@@ -317,7 +318,7 @@ vec3 saturate(vec3 rgb) {
         vec3 hsv = rgb2hsv(rgb);
         // Assume saturation map is either constant or has 8+1 values, where the last wraps around
         float f = texture(saturation, vec2(hsv.x * (16.f / 18.f) + (1.f / 18.f), 0.5f)).x;
-        hsv.y = sigmoid(hsv.y * f, 0.85f);
+        hsv.y = sigmoid(hsv.y * f, satLimit);
         rgb = hsv2rgb(hsv);
     }
     return rgb;

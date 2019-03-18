@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pref_manual_select">pref_manual_select</string>
+
+    <string name="pref_background_process">pref_background_process</string>
+    <string name="pref_delete_original">pref_delete_original</string>
+    <string name="pref_save_path">pref_save_path</string>
+
+    <string name="pref_saturation_r">pref_saturation_r</string>
+    <string name="pref_saturation_y">pref_saturation_y</string>
+    <string name="pref_saturation_g">pref_saturation_g</string>
+    <string name="pref_saturation_c">pref_saturation_c</string>
+    <string name="pref_saturation_b">pref_saturation_b</string>
+    <string name="pref_saturation_i">pref_saturation_i</string>
+    <string name="pref_saturation_v">pref_saturation_v</string>
+    <string name="pref_saturation_m">pref_saturation_m</string>
+    <string name="pref_saturation_limit">pref_saturation_limit</string>
+    <string name="pref_saturation_reset">pref_saturation_reset</string>
+
+    <string name="pref_post_process">pref_post_process</string>
+    <string name="pref_noise_reduce">pref_noise_reduce</string>
+    <string name="pref_lce">pref_lce</string>
+    <string name="pref_forward_matrix">pref_forward_matrix</string>
+    <string name="pref_gain_map">pref_gain_map</string>
+</resources>

@@ -16,7 +16,7 @@ import java.nio.ByteOrder;
 
 import amirz.dngprocessor.NotifHandler;
 import amirz.dngprocessor.Path;
-import amirz.dngprocessor.Settings;
+import amirz.dngprocessor.Preferences;
 import amirz.dngprocessor.device.DeviceMap;
 import amirz.dngprocessor.gl.RawConverter;
 import amirz.dngprocessor.gl.Shaders;
@@ -48,6 +48,8 @@ public class DngParser {
 
     public void run() {
         NotifHandler.progress(mContext, STEPS, STEP_READ);
+
+        Preferences pref = Preferences.global();
 
         ByteReader.ReaderWithExif reader = ByteReader.fromUri(mContext, mUri);
         Log.e(TAG, "Starting processing of " + mFile + " (" + mUri.getPath() + ") size " +
@@ -115,7 +117,7 @@ public class DngParser {
         sensor.calibrationTransform2 = tags.get(TIFF.TAG_CameraCalibration2).getFloatArray();
         sensor.colorMatrix1 = tags.get(TIFF.TAG_ColorMatrix1).getFloatArray();
         sensor.colorMatrix2 = tags.get(TIFF.TAG_ColorMatrix2).getFloatArray();
-        if (Settings.forwardMatrix(mContext)) {
+        if (pref.forwardMatrix.get()) {
             TIFFTag fm1 = tags.get(TIFF.TAG_ForwardMatrix1);
             TIFFTag fm2 = tags.get(TIFF.TAG_ForwardMatrix2);
             if (fm1 != null && fm2 != null) {
@@ -134,7 +136,7 @@ public class DngParser {
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
 
         TIFFTag Op2 = tags.get(TIFF.TAG_OpcodeList2);
-        if (Op2 != null && Settings.gainMap(mContext)) {
+        if (Op2 != null && pref.gainMap.get()) {
             Object[] opParsed = OpParser.parseAll(Op2.getByteArray());
             OpParser.GainMap[] mapPlanes = new OpParser.GainMap[4];
 
@@ -156,9 +158,19 @@ public class DngParser {
             }
         }
 
-        ProcessParams process = ProcessParams.getPreset(Settings.postProcess(mContext));
-        process.denoiseFactor = Settings.noiseReduce(mContext) ? 100 : 0;
-        process.lce = Settings.lce(mContext);
+        ProcessParams process = ProcessParams.getPreset(Preferences.postProcess());
+        float r = pref.saturationRed.get();
+        float y = pref.saturationYellow.get();
+        float g = pref.saturationGreen.get();
+        float c = pref.saturationCyan.get();
+        float b = pref.saturationBlue.get();
+        float i = pref.saturationIndigo.get();
+        float v = pref.saturationViolet.get();
+        float m = pref.saturationMagenta.get();
+        process.saturationMap = new float[] { r, y, g, c, b, i, v, m, r };
+        process.satLimit = pref.saturationLimit.get();
+        process.denoiseFactor = pref.noiseReduce.get() ? 100 : 0;
+        process.lce = pref.lce.get();
 
         // Override sensor and process settings with model specific ones
         TIFFTag modelTag = tags.get(TIFF.TAG_Model);
@@ -185,7 +197,7 @@ public class DngParser {
         }
 
         NotifHandler.progress(mContext, STEPS, STEP_SAVE);
-        String savePath = Path.processedPath(Settings.savePath(mContext), mFile);
+        String savePath = Path.processedPath(pref.savePath.get(), mFile);
         try (FileOutputStream out = new FileOutputStream(savePath)) {
             argbOutput.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out);
         } catch (Exception e) {

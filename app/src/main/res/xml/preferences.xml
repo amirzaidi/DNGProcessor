@@ -4,74 +4,141 @@
     <PreferenceCategory android:title="@string/category_features">
 
         <Preference
-            android:key="pref_manual_select"
+            android:key="@string/pref_manual_select"
             android:title="@string/pref_manual_select_title"
-            android:summary="@string/pref_manual_select_summary" />
+            android:summary="@string/pref_manual_select_summary"
+            android:persistent="false" />
 
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/category_files">
 
         <SwitchPreference
-            android:key="pref_background_process"
+            android:key="@string/pref_background_process"
             android:title="@string/pref_background_process_title"
             android:summary="@string/pref_background_process_desc"
-            android:defaultValue="true" />
+            android:defaultValue="@bool/pref_background_process_default" />
 
         <SwitchPreference
-            android:key="pref_delete_original"
+            android:key="@string/pref_delete_original"
             android:title="@string/pref_delete_original_title"
             android:summary="@string/pref_delete_original_desc"
-            android:defaultValue="false" />
+            android:defaultValue="@bool/pref_delete_original_default" />
 
-        <EditTextPreference
-            android:key="pref_save_path"
+        <amirz.library.settings.TextPreference
+            android:key="@string/pref_save_path"
             android:title="@string/pref_save_path_title"
-            android:summary="@string/pref_save_path_desc"
             android:defaultValue="@string/pref_save_path_default" />
 
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/category_pipeline">
 
+        <PreferenceScreen
+            android:title="@string/category_saturation_map"
+            android:summary="@string/category_saturation_map_desc"
+            android:persistent="false">
+
+            <amirz.library.settings.TextPreference
+                android:key="@string/pref_saturation_r"
+                android:title="@string/pref_saturation_r_title"
+                android:defaultValue="@integer/pref_saturation_r_default"
+                android:inputType="numberDecimal" />
+
+            <amirz.library.settings.TextPreference
+                android:key="@string/pref_saturation_y"
+                android:title="@string/pref_saturation_y_title"
+                android:defaultValue="@integer/pref_saturation_y_default"
+                android:inputType="numberDecimal" />
+
+            <amirz.library.settings.TextPreference
+                android:key="@string/pref_saturation_g"
+                android:title="@string/pref_saturation_g_title"
+                android:defaultValue="@integer/pref_saturation_g_default"
+                android:inputType="numberDecimal" />
+
+            <amirz.library.settings.TextPreference
+                android:key="@string/pref_saturation_c"
+                android:title="@string/pref_saturation_c_title"
+                android:defaultValue="@integer/pref_saturation_c_default"
+                android:inputType="numberDecimal" />
+
+            <amirz.library.settings.TextPreference
+                android:key="@string/pref_saturation_b"
+                android:title="@string/pref_saturation_b_title"
+                android:defaultValue="@integer/pref_saturation_b_default"
+                android:inputType="numberDecimal" />
+
+            <amirz.library.settings.TextPreference
+                android:key="@string/pref_saturation_i"
+                android:title="@string/pref_saturation_i_title"
+                android:defaultValue="@integer/pref_saturation_i_default"
+                android:inputType="numberDecimal" />
+
+            <amirz.library.settings.TextPreference
+                android:key="@string/pref_saturation_v"
+                android:title="@string/pref_saturation_v_title"
+                android:defaultValue="@integer/pref_saturation_v_default"
+                android:inputType="numberDecimal" />
+
+            <amirz.library.settings.TextPreference
+                android:key="@string/pref_saturation_m"
+                android:title="@string/pref_saturation_m_title"
+                android:defaultValue="@integer/pref_saturation_m_default"
+                android:inputType="numberDecimal" />
+
+            <amirz.library.settings.TextPreference
+                android:key="@string/pref_saturation_limit"
+                android:title="@string/pref_saturation_limit_title"
+                android:defaultValue="@integer/pref_saturation_limit_default"
+                android:inputType="numberDecimal" />
+
+            <Preference
+                android:key="@string/pref_saturation_reset"
+                android:title="@string/pref_saturation_reset_title"
+                android:summary="@string/pref_saturation_reset_desc"
+                android:persistent="false">
+            </Preference>
+
+        </PreferenceScreen>
+
         <ListPreference
-            android:key="pref_post_process_type"
+            android:key="@string/pref_post_process"
             android:title="@string/pref_post_process_title"
             android:summary="%s"
             android:entries="@array/post_processing_preset_names"
             android:entryValues="@array/post_processing_preset_values"
-            android:defaultValue="Natural" />
+            android:defaultValue="@string/pref_post_process_default" />
 
         <SwitchPreference
-            android:key="pref_noise_reduce"
+            android:key="@string/pref_noise_reduce"
             android:title="@string/pref_noise_reduce_title"
             android:summary="@string/pref_noise_reduce_desc"
-            android:defaultValue="true" />
+            android:defaultValue="@bool/pref_noise_reduce_default" />
 
         <SwitchPreference
-            android:key="pref_lce"
+            android:key="@string/pref_lce"
             android:title="@string/pref_lce_title"
             android:summary="@string/pref_lce_desc"
-            android:defaultValue="true" />
+            android:defaultValue="@bool/pref_lce_default" />
 
         <SwitchPreference
-            android:key="pref_forward_matrix"
+            android:key="@string/pref_forward_matrix"
             android:title="@string/pref_forward_matrix_title"
             android:summary="@string/pref_forward_matrix_desc"
-            android:defaultValue="true" />
+            android:defaultValue="@bool/pref_forward_matrix_default" />
 
         <SwitchPreference
-            android:key="pref_gain_map"
+            android:key="@string/pref_gain_map"
             android:title="@string/pref_gain_map_title"
             android:summary="@string/pref_gain_map_desc"
-            android:defaultValue="true" />
+            android:defaultValue="@bool/pref_gain_map_default" />
 
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/category_other">
 
         <Preference
-            android:key="pref_donate"
             android:title="@string/pref_donate_title"
             android:summary="@string/pref_donate_desc"
             android:persistent="false">
