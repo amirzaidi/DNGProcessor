@@ -1,6 +1,5 @@
 package amirz.dngprocessor.device;
 
-import android.util.Rational;
 import android.util.SparseArray;
 
 import java.util.ArrayList;
@@ -21,9 +20,11 @@ public class DeviceMap {
 
     private static final List<Device> sDevices = new ArrayList<>();
     static {
+        sDevices.add(new OnePlus6());
         sDevices.add(new OnePlus5());
         sDevices.add(new OnePlus3());
         sDevices.add(new OnePlus());
+
         sDevices.add(new Generic());
     }
 

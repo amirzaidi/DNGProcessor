@@ -1,6 +1,5 @@
 package amirz.dngprocessor;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
 
