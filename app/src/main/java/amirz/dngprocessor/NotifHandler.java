@@ -7,10 +7,12 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import static amirz.dngprocessor.Utilities.ATLEAST_OREO;
 
 public class NotifHandler {
+    private static final String TAG = "NotifHandler";
     private static final String CHANNEL = "default";
     private static final int FOREGROUND_ID = 1;
     private static Notification.Builder mBuilder;
@@ -43,6 +45,7 @@ public class NotifHandler {
     public static void progress(Context context, int max, int progress) {
         Notification notif = mBuilder.setProgress(max, progress, false).build();
         manager(context).notify(FOREGROUND_ID, notif);
+        Log.w(TAG, "Raw conversion " + progress + "/" + max);
     }
 
     public static void done(Service service) {

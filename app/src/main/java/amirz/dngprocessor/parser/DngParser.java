@@ -182,23 +182,17 @@ public class DngParser {
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS_INIT);
         Shaders.load(mContext);
         try (RawConverter converter = new RawConverter(sensor, process, rawImageInput, argbOutput)) {
-            Log.w(TAG, "Raw conversion 1/5");
-
             NotifHandler.progress(mContext, STEPS, STEP_PROCESS_SENSOR);
             converter.sensorToIntermediate();
-            Log.w(TAG, "Raw conversion 2/5");
 
             NotifHandler.progress(mContext, STEPS, STEP_PROCESS_ANALYZE);
             converter.analyzeIntermediate();
-            Log.w(TAG, "Raw conversion 3/5");
 
             NotifHandler.progress(mContext, STEPS, STEP_PROCESS_BLUR);
             converter.blurIntermediate();
-            Log.w(TAG, "Raw conversion 4/5");
 
             NotifHandler.progress(mContext, STEPS, STEP_PROCESS_XYZ);
             converter.intermediateToOutput();
-            Log.w(TAG, "Raw conversion 5/5");
         }
 
         NotifHandler.progress(mContext, STEPS, STEP_SAVE);
