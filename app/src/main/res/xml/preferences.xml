@@ -42,49 +42,49 @@
             <amirz.library.settings.TextPreference
                 android:key="@string/pref_saturation_r"
                 android:title="@string/pref_saturation_r_title"
-                android:defaultValue="@integer/pref_saturation_r_default"
+                android:defaultValue="@integer/pref_saturation_default"
                 android:inputType="numberDecimal" />
 
             <amirz.library.settings.TextPreference
                 android:key="@string/pref_saturation_y"
                 android:title="@string/pref_saturation_y_title"
-                android:defaultValue="@integer/pref_saturation_y_default"
+                android:defaultValue="@integer/pref_saturation_default"
                 android:inputType="numberDecimal" />
 
             <amirz.library.settings.TextPreference
                 android:key="@string/pref_saturation_g"
                 android:title="@string/pref_saturation_g_title"
-                android:defaultValue="@integer/pref_saturation_g_default"
+                android:defaultValue="@integer/pref_saturation_default"
                 android:inputType="numberDecimal" />
 
             <amirz.library.settings.TextPreference
                 android:key="@string/pref_saturation_c"
                 android:title="@string/pref_saturation_c_title"
-                android:defaultValue="@integer/pref_saturation_c_default"
+                android:defaultValue="@integer/pref_saturation_default"
                 android:inputType="numberDecimal" />
 
             <amirz.library.settings.TextPreference
                 android:key="@string/pref_saturation_b"
                 android:title="@string/pref_saturation_b_title"
-                android:defaultValue="@integer/pref_saturation_b_default"
+                android:defaultValue="@integer/pref_saturation_default"
                 android:inputType="numberDecimal" />
 
             <amirz.library.settings.TextPreference
                 android:key="@string/pref_saturation_i"
                 android:title="@string/pref_saturation_i_title"
-                android:defaultValue="@integer/pref_saturation_i_default"
+                android:defaultValue="@integer/pref_saturation_default"
                 android:inputType="numberDecimal" />
 
             <amirz.library.settings.TextPreference
                 android:key="@string/pref_saturation_v"
                 android:title="@string/pref_saturation_v_title"
-                android:defaultValue="@integer/pref_saturation_v_default"
+                android:defaultValue="@integer/pref_saturation_default"
                 android:inputType="numberDecimal" />
 
             <amirz.library.settings.TextPreference
                 android:key="@string/pref_saturation_m"
                 android:title="@string/pref_saturation_m_title"
-                android:defaultValue="@integer/pref_saturation_m_default"
+                android:defaultValue="@integer/pref_saturation_default"
                 android:inputType="numberDecimal" />
 
             <amirz.library.settings.TextPreference

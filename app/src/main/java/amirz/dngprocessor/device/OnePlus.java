@@ -41,4 +41,16 @@ class OnePlus extends Generic {
             };
         }
     }
+
+    @Override
+    void saturationCorrection(float[] saturationMap) {
+        saturationMap[0] *= 1.3f;
+        saturationMap[1] *= 1.25f;
+        saturationMap[2] *= 1.5f;
+        saturationMap[3] *= 1.6f;
+        saturationMap[4] *= 1.55f;
+        saturationMap[5] *= 1.5f;
+        saturationMap[6] *= 1.45f;
+        saturationMap[7] *= 1.25f;
+    }
 }

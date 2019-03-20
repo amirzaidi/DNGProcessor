@@ -288,8 +288,12 @@ public class GLProgram extends GLProgramBase {
     }
 
     public void setSaturation(float[] saturation) {
-        GLTex satTex = new GLTex(saturation.length, 1, 1, GLTex.Format.Float16,
-                FloatBuffer.wrap(saturation), GL_LINEAR, GL_CLAMP_TO_EDGE);
+        float[] sat = new float[saturation.length + 1];
+        System.arraycopy(saturation, 0, sat, 0, saturation.length);
+        sat[saturation.length] = saturation[0];
+
+        GLTex satTex = new GLTex(sat.length, 1, 1, GLTex.Format.Float16,
+                FloatBuffer.wrap(sat), GL_LINEAR, GL_CLAMP_TO_EDGE);
         satTex.bind(GL_TEXTURE6);
         seti("saturation", 6);
     }

@@ -158,15 +158,16 @@ public class DngParser {
         }
 
         ProcessParams process = ProcessParams.getPreset(Preferences.postProcess());
-        float r = pref.saturationRed.get();
-        float y = pref.saturationYellow.get();
-        float g = pref.saturationGreen.get();
-        float c = pref.saturationCyan.get();
-        float b = pref.saturationBlue.get();
-        float i = pref.saturationIndigo.get();
-        float v = pref.saturationViolet.get();
-        float m = pref.saturationMagenta.get();
-        process.saturationMap = new float[] { r, y, g, c, b, i, v, m, r };
+        process.saturationMap = new float[] {
+                pref.saturationRed.get(),
+                pref.saturationYellow.get(),
+                pref.saturationGreen.get(),
+                pref.saturationCyan.get(),
+                pref.saturationBlue.get(),
+                pref.saturationIndigo.get(),
+                pref.saturationViolet.get(),
+                pref.saturationMagenta.get()
+        };
         process.satLimit = pref.saturationLimit.get();
         process.denoiseFactor = pref.noiseReduce.get() ? 100 : 0;
         process.lce = pref.lce.get();

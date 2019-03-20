@@ -32,37 +32,41 @@ public class Preferences extends GlobalPreferences {
      * SATURATION
      */
 
+    public final FloatRef saturationMultiplier =
+            new FloatRef(R.string.pref_saturation_mult,
+                    R.integer.pref_saturation_generic_mult_default);
+
     public final FloatRef saturationRed =
             new FloatRef(R.string.pref_saturation_r,
-                    R.integer.pref_saturation_r_default);
+                    R.integer.pref_saturation_default);
 
     public final FloatRef saturationYellow =
             new FloatRef(R.string.pref_saturation_y,
-                    R.integer.pref_saturation_y_default);
+                    R.integer.pref_saturation_default);
 
     public final FloatRef saturationGreen =
             new FloatRef(R.string.pref_saturation_g,
-                    R.integer.pref_saturation_g_default);
+                    R.integer.pref_saturation_default);
 
     public final FloatRef saturationCyan =
             new FloatRef(R.string.pref_saturation_c,
-                    R.integer.pref_saturation_c_default);
+                    R.integer.pref_saturation_default);
 
     public final FloatRef saturationBlue =
             new FloatRef(R.string.pref_saturation_b,
-                    R.integer.pref_saturation_b_default);
+                    R.integer.pref_saturation_default);
 
     public final FloatRef saturationIndigo =
             new FloatRef(R.string.pref_saturation_i,
-                    R.integer.pref_saturation_i_default);
+                    R.integer.pref_saturation_default);
 
     public final FloatRef saturationViolet =
             new FloatRef(R.string.pref_saturation_v,
-                    R.integer.pref_saturation_v_default);
+                    R.integer.pref_saturation_default);
 
     public final FloatRef saturationMagenta =
             new FloatRef(R.string.pref_saturation_m,
-                    R.integer.pref_saturation_m_default);
+                    R.integer.pref_saturation_default);
 
     public final FloatRef saturationLimit =
             new FloatRef(R.string.pref_saturation_limit,

@@ -6,6 +6,7 @@
     <string name="pref_delete_original">pref_delete_original</string>
     <string name="pref_save_path">pref_save_path</string>
 
+    <string name="pref_saturation_mult">pref_saturation_mult</string>
     <string name="pref_saturation_r">pref_saturation_r</string>
     <string name="pref_saturation_y">pref_saturation_y</string>
     <string name="pref_saturation_g">pref_saturation_g</string>
