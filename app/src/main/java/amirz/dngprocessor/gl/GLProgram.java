@@ -92,7 +92,7 @@ public class GLProgram extends GLProgramBase {
     }
 
     public void sensorPreProcess() {
-        setui("cfaPattern", cfaPattern);
+        seti("cfaPattern", cfaPattern);
         drawBlocks(inWidth, inHeight);
 
         mSensorUI.delete();
@@ -113,7 +113,7 @@ public class GLProgram extends GLProgramBase {
         // Configure frame buffer
         mSensorG.setFrameBuffer();
 
-        setui("cfaPattern", cfaPattern);
+        seti("cfaPattern", cfaPattern);
         seti("oneDotFive", oneDotFive ? 1 : 0);
         drawBlocks(inWidth, inHeight);
     }
@@ -155,7 +155,7 @@ public class GLProgram extends GLProgramBase {
     }
 
     public void sensorToIntermediate() {
-        setui("cfaPattern", cfaPattern);
+        seti("cfaPattern", cfaPattern);
         drawBlocks(inWidth, inHeight);
 
         mSensor.delete();

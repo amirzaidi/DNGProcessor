@@ -8,7 +8,7 @@ uniform int rawWidth;
 uniform int rawHeight;
 
 // Sensor and picture variables
-uniform uint cfaPattern; // The Color Filter Arrangement pattern used
+uniform int cfaPattern; // The Color Filter Arrangement pattern used
 uniform vec4 neutralLevel; // Neutrallevel of sensor
 uniform vec3 neutralPoint; // The camera neutral
 
@@ -33,7 +33,7 @@ int ind(int x, int y) {
 
 // Apply bilinear-interpolation to demosaic
 vec3 demosaic(int x, int y, float[9] inputArray, float[9] greenArray) {
-    uint index = uint((x & 1) | ((y & 1) << 1));
+    int index = (x & 1) | ((y & 1) << 1);
     index |= (cfaPattern << 2);
     vec3 pRGB;
     int pxType = -1;
@@ -122,12 +122,11 @@ vec3 demosaic(int x, int y, float[9] inputArray, float[9] greenArray) {
 }
 
 vec3 XYZtoxyY(vec3 XYZ) {
-    vec3 result = vec3(0.345703f, 0.358539f, 0.f);
+    vec3 result = vec3(0.345703f, 0.358539f, XYZ.y);
     float sum = XYZ.x + XYZ.y + XYZ.z;
-    if (sum > 0.f) {
+    if (sum > 0.0001f) {
         result.x = XYZ.x / sum;
         result.y = XYZ.y / sum;
-        result.z = XYZ.y;
     }
     return result;
 }

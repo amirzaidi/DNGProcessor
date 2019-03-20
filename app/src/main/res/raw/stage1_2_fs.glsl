@@ -7,7 +7,7 @@ uniform int rawWidth;
 uniform int rawHeight;
 
 // Sensor and picture variables
-uniform uint cfaPattern; // The Color Filter Arrangement pattern used
+uniform int cfaPattern; // The Color Filter Arrangement pattern used
 uniform bool oneDotFive;
 
 // Out
@@ -37,7 +37,7 @@ int ind(int x, int y) {
 }
 
 float demosaicG(int x, int y, float[25] inputArray) {
-    uint index = uint((x & 1) | ((y & 1) << 1));
+    int index = (x & 1) | ((y & 1) << 1);
     index |= (cfaPattern << 2);
     float p = inputArray[ind(0, 0)];
     switch (index) {
