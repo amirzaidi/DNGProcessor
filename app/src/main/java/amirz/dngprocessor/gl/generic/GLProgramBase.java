@@ -36,6 +36,13 @@ public class GLProgramBase {
         int shader = glCreateShader(type);
         glShaderSource(shader, shaderCode);
         glCompileShader(shader);
+
+        int[] status = new int[1];
+        glGetShaderiv(shader, GL_COMPILE_STATUS, status, 0);
+        if (status[0] == GL_FALSE) {
+            throw new RuntimeException("Shader compile error: " + glGetShaderInfoLog(shader));
+        }
+
         return shader;
     }
 
