@@ -47,6 +47,14 @@ vec3[9] load3x3(ivec2 xy, int n) {
     return outputArray;
 }
 
+float[9] load3x3z(ivec2 xy) {
+    float outputArray[9];
+    for (int i = 0; i < 9; i++) {
+        outputArray[i] = texelFetch(intermediateBuffer, xy + ivec2((i % 3) - 1, (i / 3) - 1), 0).z;
+    }
+    return outputArray;
+}
+
 float sigmoid(float val, float transfer) {
     if (val > transfer) {
         // This variable maps the cut off point in the linear curve to the sigmoid
@@ -150,22 +158,23 @@ vec3 processPatch(ivec2 xyPos) {
     **/
     float zDiff;
     if (sharpenFactor > 0.f) {
-        impatch = load3x3(xyPos, 1);
+        float[9] impz = load3x3z(xyPos);
+        float lx = impz[0] - impz[2] + (impz[3] - impz[5]) * 2.f + impz[6] - impz[8];
+        float ly = impz[0] - impz[6] + (impz[1] - impz[7]) * 2.f + impz[2] - impz[8];
+        float l = sqrt(lx * lx + ly * ly);
 
         // Sum of difference with all pixels nearby
-        float dz = mid.z * 12.f;
+        float dz = mid.z * 13.f;
         for (int i = 0; i < 9; i++) {
             if (i % 2 == 0) {
-                if (i != 4) {
-                    dz -= impatch[i].z;
-                }
+                dz -= impz[i];
             } else {
-                dz -= 2.f * impatch[i].z;
+                dz -= 2.f * impz[i];
             }
         }
 
         // Use this difference to boost pixel sharpness
-        zDiff += sharpenFactor * dz;
+        zDiff += min(sqrt(l) * 3.f, 1.f) * sharpenFactor * dz;
     } else if (sharpenFactor < 0.f) {
         zDiff += sharpenFactor * (z - sum.z / float(totalCount));
     }
