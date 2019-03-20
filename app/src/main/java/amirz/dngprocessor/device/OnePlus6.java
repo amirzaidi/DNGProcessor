@@ -15,6 +15,5 @@ public class OnePlus6 extends OnePlus {
     public void sensorCorrection(SparseArray<TIFFTag> tags, SensorParams sensor) {
         super.sensorCorrection(tags, sensor);
         super.matrixCorrection(tags, sensor);
-        sensor.opDot = true;
     }
 }
