@@ -118,13 +118,11 @@ public class DngParser {
         sensor.calibrationTransform2 = tags.get(TIFF.TAG_CameraCalibration2).getFloatArray();
         sensor.colorMatrix1 = tags.get(TIFF.TAG_ColorMatrix1).getFloatArray();
         sensor.colorMatrix2 = tags.get(TIFF.TAG_ColorMatrix2).getFloatArray();
-        if (pref.forwardMatrix.get()) {
-            TIFFTag fm1 = tags.get(TIFF.TAG_ForwardMatrix1);
-            TIFFTag fm2 = tags.get(TIFF.TAG_ForwardMatrix2);
-            if (fm1 != null && fm2 != null) {
-                sensor.forwardTransform1 = fm1.getFloatArray();
-                sensor.forwardTransform2 = fm2.getFloatArray();
-            }
+        TIFFTag fm1 = tags.get(TIFF.TAG_ForwardMatrix1);
+        TIFFTag fm2 = tags.get(TIFF.TAG_ForwardMatrix2);
+        if (fm1 != null && fm2 != null) {
+            sensor.forwardTransform1 = fm1.getFloatArray();
+            sensor.forwardTransform2 = fm2.getFloatArray();
         }
         sensor.neutralColorPoint = tags.get(TIFF.TAG_AsShotNeutral).getRationalArray();
         sensor.noiseProfile = tags.get(TIFF.TAG_NoiseProfile).getFloatArray();
@@ -137,7 +135,7 @@ public class DngParser {
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
 
         TIFFTag Op2 = tags.get(TIFF.TAG_OpcodeList2);
-        if (Op2 != null && pref.gainMap.get()) {
+        if (Op2 != null) {
             Object[] opParsed = OpParser.parseAll(Op2.getByteArray());
             OpParser.GainMap[] mapPlanes = new OpParser.GainMap[4];
 
@@ -178,6 +176,16 @@ public class DngParser {
         DeviceMap.Device device = DeviceMap.get(modelTag == null ? "" : modelTag.toString());
         device.sensorCorrection(tags, sensor);
         device.processCorrection(tags, process);
+
+        if (!pref.forwardMatrix.get()) {
+            sensor.forwardTransform1 = null;
+            sensor.forwardTransform2 = null;
+        }
+
+        if (!pref.gainMap.get()) {
+            sensor.gainMap = null;
+            sensor.gainMapSize = null;
+        }
 
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS_INIT);
         Shaders.load(mContext);
