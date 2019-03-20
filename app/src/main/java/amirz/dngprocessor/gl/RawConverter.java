@@ -92,6 +92,7 @@ public class RawConverter implements AutoCloseable {
 
     static {
         sStandardIlluminants.append(CameraMetadata.SENSOR_REFERENCE_ILLUMINANT1_DAYLIGHT, 6504);
+        sStandardIlluminants.append(CameraMetadata.SENSOR_REFERENCE_ILLUMINANT1_TUNGSTEN, 2856);
         sStandardIlluminants.append(CameraMetadata.SENSOR_REFERENCE_ILLUMINANT1_D65, 6504);
         sStandardIlluminants.append(CameraMetadata.SENSOR_REFERENCE_ILLUMINANT1_D50, 5003);
         sStandardIlluminants.append(CameraMetadata.SENSOR_REFERENCE_ILLUMINANT1_D55, 5503);
@@ -109,7 +110,6 @@ public class RawConverter implements AutoCloseable {
 
         /*
         public static final int SENSOR_REFERENCE_ILLUMINANT1_FLUORESCENT = 2;
-        public static final int SENSOR_REFERENCE_ILLUMINANT1_TUNGSTEN = 3;
         public static final int SENSOR_REFERENCE_ILLUMINANT1_FLASH = 4;
         public static final int SENSOR_REFERENCE_ILLUMINANT1_FINE_WEATHER = 9;
         public static final int SENSOR_REFERENCE_ILLUMINANT1_CLOUDY_WEATHER = 10;
