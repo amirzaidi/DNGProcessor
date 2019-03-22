@@ -2,7 +2,6 @@ package amirz.dngprocessor.device;
 
 import android.util.SparseArray;
 
-import amirz.dngprocessor.Preferences;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.parser.TIFFTag;
@@ -23,7 +22,7 @@ class Generic implements DeviceMap.Device {
     }
 
     void saturationCorrection(float[] saturationMap) {
-        float genericMult = Preferences.global().saturationMultiplier.get();
+        float genericMult = 1.2f;
         saturationMap[0] *= genericMult;
         saturationMap[1] *= genericMult;
         saturationMap[2] *= genericMult;

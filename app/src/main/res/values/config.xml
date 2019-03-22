@@ -19,7 +19,6 @@
     <string name="pref_save_path_default">DCIM/Processed</string>
 
     <item name="pref_saturation_default" type="integer" format="float">1</item>
-    <item name="pref_saturation_generic_mult_default" type="integer" format="float">1.2</item>
     <item name="pref_saturation_limit_default" type="integer" format="float">0.95</item>
 
     <bool name="pref_noise_reduce_default">true</bool>

@@ -32,10 +32,6 @@ public class Preferences extends GlobalPreferences {
      * SATURATION
      */
 
-    public final FloatRef saturationMultiplier =
-            new FloatRef(R.string.pref_saturation_mult,
-                    R.integer.pref_saturation_generic_mult_default);
-
     public final FloatRef saturationRed =
             new FloatRef(R.string.pref_saturation_r,
                     R.integer.pref_saturation_default);
