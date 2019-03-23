@@ -32,4 +32,14 @@ class Generic implements DeviceMap.Device {
         saturationMap[6] *= genericMult;
         saturationMap[7] *= genericMult;
     }
+
+    static float[] d2f(double... doubles) {
+        float[] floats = new float[doubles.length * 4];
+        for (int i = 0; i < doubles.length; i++) {
+            for (int j = 0; j < 4; j++) {
+                floats[i * 4 + j] = (float) doubles[i];
+            }
+        }
+        return floats;
+    }
 }

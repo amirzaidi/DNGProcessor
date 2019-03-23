@@ -25,6 +25,8 @@ public class DeviceMap {
         sDevices.add(new OnePlus3());
         sDevices.add(new OnePlus());
 
+        sDevices.add(new MotoG6());
+
         sDevices.add(new Generic());
     }
 

@@ -36,14 +36,4 @@ public class OnePlus6 extends OnePlus {
             sensor.gainMapSize = new int[] { 17, 13 };
         }
     }
-
-    private static float[] d2f(double... doubles) {
-        float[] floats = new float[doubles.length * 4];
-        for (int i = 0; i < doubles.length; i++) {
-            for (int j = 0; j < 4; j++) {
-                floats[i * 4 + j] = (float) doubles[i];
-            }
-        }
-        return floats;
-    }
 }
