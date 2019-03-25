@@ -6,7 +6,7 @@ android {
         applicationId "amirz.dngprocessor"
         minSdkVersion 24
         targetSdkVersion 28
-        versionCode 3
+        versionCode 4
         versionName = versionCode
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
