@@ -40,15 +40,14 @@ public class MotoG6 extends Generic {
         TIFFTag software = tags.get(TIFF.TAG_Software);
         if (software != null && software.toString().contains("HDR+")) {
             float[] saturationMap = process.saturationMap;
-            float genericMult = 2.1f;
-            saturationMap[0] *= genericMult;
-            saturationMap[1] *= genericMult;
-            saturationMap[2] *= genericMult;
-            saturationMap[3] *= genericMult;
-            saturationMap[4] *= genericMult;
-            saturationMap[5] *= genericMult;
-            saturationMap[6] *= genericMult;
-            saturationMap[7] *= genericMult;
+            saturationMap[0] *= 2.31f;
+            saturationMap[1] *= 2.63f;
+            saturationMap[2] *= 3.15f;
+            saturationMap[3] *= 2.1f;
+            saturationMap[4] *= 2f;
+            saturationMap[5] *= 2f;
+            saturationMap[6] *= 2.52f;
+            saturationMap[7] *= 2.31f;
         } else {
             super.processCorrection(tags, process);
         }
