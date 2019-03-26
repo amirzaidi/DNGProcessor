@@ -27,6 +27,8 @@ public class DeviceMap {
 
         sDevices.add(new MotoG6());
 
+        sDevices.add(new Redmi());
+
         sDevices.add(new Generic());
     }
 
