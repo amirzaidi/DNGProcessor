@@ -183,7 +183,7 @@ vec3 processPatch(ivec2 xyPos) {
         // Local contrast enhancement
         float zBlurred = texelFetch(blurred, xyPos, 0).x;
         float zBlurDiff = z - zBlurred;
-        zDiff += zBlurDiff * (0.35f + min(0.f, sharpenFactor));
+        zDiff += zBlurDiff * max(0.f, 0.35f + min(0.f, sharpenFactor));
     }
 
     // Histogram equalization
