@@ -52,7 +52,4 @@ public class MotoG6 extends Generic {
             super.processCorrection(tags, process);
         }
     }
-
-    void saturationCorrection(float[] saturationMap) {
-    }
 }
