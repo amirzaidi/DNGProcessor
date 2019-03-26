@@ -91,14 +91,15 @@ public class GLProgram extends GLProgramBase {
         setf("whiteLevel", whiteLevel);
     }
 
-    public void sensorPreProcess() {
+    public void sensorPreProcess(boolean oneDotFive) {
         seti("cfaPattern", cfaPattern);
+        seti("oneDotFive", oneDotFive ? 1 : 0);
         drawBlocks(inWidth, inHeight);
 
         mSensorUI.delete();
     }
 
-    public void greenDemosaic(boolean oneDotFive) {
+    public void greenDemosaic() {
         useProgram(mProgramSensorGreenDemosaic);
 
         seti("rawBuffer", 0);
@@ -114,7 +115,6 @@ public class GLProgram extends GLProgramBase {
         mSensorG.setFrameBuffer();
 
         seti("cfaPattern", cfaPattern);
-        seti("oneDotFive", oneDotFive ? 1 : 0);
         drawBlocks(inWidth, inHeight);
     }
 

@@ -8,7 +8,6 @@ uniform int rawHeight;
 
 // Sensor and picture variables
 uniform int cfaPattern; // The Color Filter Arrangement pattern used
-uniform bool oneDotFive;
 
 // Out
 out float intermediate;
@@ -17,16 +16,7 @@ float[25] load5x5(int x, int y) {
     float outputArray[25];
     for (int i = 0; i < 25; i++) {
         ivec2 pos = ivec2(x + (i % 5) - 2, y + (i / 5) - 2);
-        if (oneDotFive && ((pos.x % 8 == 6 && pos.y % 16 == 1) || (pos.x % 8 == 2 && pos.y % 16 == 9))) {
-            // OnePlus 5 Dot-Fix: Bilinear interpolate this green pixel in a cross
-            for (int j = 0; j < 4; j++) {
-                outputArray[i] += texelFetch(rawBuffer, pos
-                    + ivec2(2 * (j % 2) - 1, 2 * (j / 2) - 1), 0).x;
-            }
-            outputArray[i] *= 0.25f;
-        } else {
-            outputArray[i] = texelFetch(rawBuffer, pos, 0).x;
-        }
+        outputArray[i] = texelFetch(rawBuffer, pos, 0).x;
     }
     return outputArray;
 }

@@ -14,6 +14,7 @@ uniform bool hasGainMap;
 uniform uint cfaPattern; // The Color Filter Arrangement pattern used
 uniform vec4 blackLevel; // Blacklevel to subtract for each channel, given in CFA order
 uniform float whiteLevel; // Whitelevel of sensor
+uniform bool oneDotFive;
 
 // Out
 out float intermediate;
@@ -45,6 +46,17 @@ float linearizeAndGainmap(int x, int y, float v) {
 
 void main() {
     ivec2 xy = ivec2(gl_FragCoord.xy);
-    float v = float(texelFetch(rawBuffer, xy, 0).x);
+    float v;
+    if (oneDotFive && ((xy.x % 8 == 6 && xy.y % 16 == 1) || (xy.x % 8 == 2 && xy.y % 16 == 9))) {
+        // OnePlus 5 Dot-Fix: Bilinear interpolate this green pixel in a cross
+        uint vx;
+        for (int j = 0; j < 4; j++) {
+            ivec2 pos = xy + ivec2(2 * (j % 2) - 1, 2 * (j / 2) - 1);
+            vx += texelFetch(rawBuffer, pos, 0).x;
+        }
+        v = float(vx) * 0.25f;
+    } else {
+        v = float(texelFetch(rawBuffer, xy, 0).x);
+    }
     intermediate = linearizeAndGainmap(xy.x, xy.y, v);
 }
