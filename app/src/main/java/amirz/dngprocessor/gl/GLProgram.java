@@ -6,6 +6,7 @@ import android.util.Rational;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.ShortBuffer;
 import java.util.Arrays;
 
 import amirz.dngprocessor.gl.generic.GLProgramBase;
@@ -33,7 +34,7 @@ public class GLProgram extends GLProgramBase {
 
     private final int[] fbo = new int[1];
     private int inWidth, inHeight, cfaPattern;
-    private GLTex mSensorUI, mSensor, mSensorG, mIntermediate, mBlurred;
+    private GLTex mSensorUI, mGainMap, mSensor, mSensorG, mIntermediate, mBlurred;
     private float[] sigma;
     private float[] hist;
 
@@ -77,13 +78,15 @@ public class GLProgram extends GLProgramBase {
     }
 
     public void setGainMap(float[] gainMap, int[] gainMapSize) {
-        seti("hasGainMap", gainMap == null ? 0 : 1);
         seti("gainMap", 2);
-        if (gainMap != null) {
-            Log.d(TAG, "Using gainmap");
-            new GLTex(gainMapSize[0], gainMapSize[1], 4, GLTex.Format.Float16,
-                    FloatBuffer.wrap(gainMap), GL_LINEAR, GL_CLAMP_TO_EDGE).bind(GL_TEXTURE2);
+        if (gainMap == null) {
+            gainMap = new float[] { 1.f, 1.f, 1.f, 1.f };
+            gainMapSize = new int[] { 1, 1 };
         }
+
+        mGainMap = new GLTex(gainMapSize[0], gainMapSize[1], 4, GLTex.Format.Float16,
+                FloatBuffer.wrap(gainMap), GL_LINEAR, GL_CLAMP_TO_EDGE);
+        mGainMap.bind(GL_TEXTURE2);
     }
 
     public void setBlackWhiteLevel(int[] blackLevel, int whiteLevel) {
@@ -91,12 +94,20 @@ public class GLProgram extends GLProgramBase {
         setf("whiteLevel", whiteLevel);
     }
 
-    public void sensorPreProcess(boolean oneDotFive) {
+    public void sensorPreProcess(short[] hotPixels, int[] hotPixelsSize) {
         seti("cfaPattern", cfaPattern);
-        seti("oneDotFive", oneDotFive ? 1 : 0);
+        seti("hotPixels", 4);
+        seti("hotPixelsSize", hotPixelsSize);
+
+        GLTex hotPx = new GLTex(hotPixelsSize[0], hotPixelsSize[1], 1, GLTex.Format.UInt16,
+                ShortBuffer.wrap(hotPixels), GL_NEAREST, GL_REPEAT);
+        hotPx.bind(GL_TEXTURE4);
+
         drawBlocks(inWidth, inHeight);
 
         mSensorUI.delete();
+        mGainMap.delete();
+        hotPx.delete();
     }
 
     public void greenDemosaic() {

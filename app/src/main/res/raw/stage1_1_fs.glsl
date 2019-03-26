@@ -8,30 +8,47 @@ uniform int rawWidth;
 uniform int rawHeight;
 
 uniform sampler2D gainMap;
-uniform bool hasGainMap;
+uniform usampler2D hotPixels;
+uniform ivec2 hotPixelsSize;
 
 // Sensor and picture variables
 uniform uint cfaPattern; // The Color Filter Arrangement pattern used
 uniform vec4 blackLevel; // Blacklevel to subtract for each channel, given in CFA order
 uniform float whiteLevel; // Whitelevel of sensor
-uniform bool oneDotFive;
 
 // Out
 out float intermediate;
 
-vec4 getGainMap(int x, int y) {
-    if (hasGainMap) {
-        float interpX = float(x) / float(rawWidth);
-        float interpY = float(y) / float(rawHeight);
-        return texture(gainMap, vec2(interpX, interpY));
+void main() {
+    ivec2 xy = ivec2(gl_FragCoord.xy);
+
+    float v;
+    int pxInfo = int(texelFetch(hotPixels, xy % hotPixelsSize, 0).x);
+    if (pxInfo == 0) {
+        v = float(texelFetch(rawBuffer, xy, 0).x);
+    } else {
+        uint vx;
+        int c;
+        if ((pxInfo & 1) > 0) {
+            // HORIZONTAL INTERPOLATE
+            for (int j = -2; j <= 2; j += 4) {
+                vx += texelFetch(rawBuffer, xy + ivec2(j, 0), 0).x;
+            }
+            c += 2;
+        }
+        if ((pxInfo & 2) > 0) {
+            // VERTICAL INTERPOLATE
+            for (int j = -2; j <= 2; j += 4) {
+                vx += texelFetch(rawBuffer, xy + ivec2(0, j), 0).x;
+            }
+            c += 2;
+        }
+        v = float(vx) / float(c);
     }
-    return vec4(1.f, 1.f, 1.f, 1.f);
-}
 
-float linearizeAndGainmap(int x, int y, float v) {
-    vec4 gains = getGainMap(x, y);
-
-    int index = (x & 1) | ((y & 1) << 1);  // bits [0,1] are blacklevel offset
+    vec2 xyInterp = vec2(float(xy.x) / float(rawWidth), float(xy.y) / float(rawHeight));
+    vec4 gains = texture(gainMap, xyInterp);
+    int index = (xy.x & 1) | ((xy.y & 1) << 1);  // bits [0,1] are blacklevel offset
     float bl = 0.f;
     float g = 1.f;
     switch (index) {
@@ -41,22 +58,5 @@ float linearizeAndGainmap(int x, int y, float v) {
         case 3: bl = blackLevel.w; g = gains.w; break;
     }
 
-    return g * (v - bl) / (whiteLevel - bl);
-}
-
-void main() {
-    ivec2 xy = ivec2(gl_FragCoord.xy);
-    float v;
-    if (oneDotFive && ((xy.x % 8 == 6 && xy.y % 16 == 1) || (xy.x % 8 == 2 && xy.y % 16 == 9))) {
-        // OnePlus 5 Dot-Fix: Bilinear interpolate this green pixel in a cross
-        uint vx;
-        for (int j = 0; j < 4; j++) {
-            ivec2 pos = xy + ivec2(2 * (j % 2) - 1, 2 * (j / 2) - 1);
-            vx += texelFetch(rawBuffer, pos, 0).x;
-        }
-        v = float(vx) * 0.25f;
-    } else {
-        v = float(texelFetch(rawBuffer, xy, 0).x);
-    }
-    intermediate = linearizeAndGainmap(xy.x, xy.y, v);
+    intermediate = g * (v - bl) / (whiteLevel - bl);
 }

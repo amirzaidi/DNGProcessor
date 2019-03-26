@@ -24,5 +24,6 @@ public class SensorParams {
     public int outputOffsetY;
     public float[] gainMap;
     public int[] gainMapSize;
-    public boolean opDot;
+    public short[] hotPixels = new short[1];
+    public int[] hotPixelsSize = new int[] { 1, 1 };
 }
