@@ -52,11 +52,11 @@ float demosaicG(int x, int y, float[25] inputArray) {
     float dy = abs(inputArray[ind(0, -1)] - inputArray[ind(0, 1)]) + abs(dyp);
     float gy = (inputArray[ind(0, -1)] + inputArray[ind(0, 1)]) * 0.5f + dyp * 0.25f;
 
-    float w = 0.5f, w1 = 0.87f;
+    float w = 0.13f;
     if (dx < dy) {
-        w = 1.f - w1;
+        w = 0.5f;
     } else if (dx > dy) {
-        w = w1;
+        w = 1.f - w;
     }
 
     return max(mix(gx, gy, w), 0.f);
