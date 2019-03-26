@@ -153,7 +153,7 @@ public class RawConverter implements AutoCloseable {
         }
         if ((sensor.inputStride % 2) != 0) {
             throw new IllegalArgumentException("Invalid stride for RAW16 format ("
-                    + sensor.inputStride + "), see graphics.h.");
+                    + sensor.inputStride + ")");
         }
 
         outWidth = argbOutput.getWidth();
@@ -237,7 +237,7 @@ public class RawConverter implements AutoCloseable {
             XYZ[2] /= XYZ[1];
             XYZ[1] = 1f;
 
-            float[] CA = mapWhiteMatrix(XYZ, D50_XYZ);
+            float[] CA = mapWhiteMatrix(XYZ);
             multiply(CA, sensorToXYZ, sensorToXYZ_D50);
         }
 
@@ -266,7 +266,7 @@ public class RawConverter implements AutoCloseable {
         square.setTransforms1(sensorToXYZ_D50);
     }
 
-    private float[] mapWhiteMatrix(float[] white_d50, float[] white_xyz) {
+    private float[] mapWhiteMatrix(float[] sensorWhiteXYZ) {
         float[] Mb = {
                 0.8951f,  0.2664f, -0.1614f,
                 -0.7502f, 1.7135f,  0.0367f,
@@ -274,10 +274,10 @@ public class RawConverter implements AutoCloseable {
         };
 
         float[] w1 = new float[3];
-        map(Mb, white_d50, w1);
+        map(Mb, sensorWhiteXYZ, w1);
 
         float[] w2 = new float[3];
-        map(Mb, white_xyz, w2);
+        map(Mb, RawConverter.D50_XYZ, w2);
 
         float[] A = new float[9];
         A[0] = (float) Math.max(0.1, Math.min(w1[0] > 0 ? w2[0] / w1[0] : 10, 10));
