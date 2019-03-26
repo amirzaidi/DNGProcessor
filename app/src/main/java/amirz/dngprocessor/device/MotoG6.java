@@ -7,6 +7,8 @@ import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.parser.TIFF;
 import amirz.dngprocessor.parser.TIFFTag;
 
+import static amirz.dngprocessor.Constants.PLUS;
+
 public class MotoG6 extends Generic {
     @Override
     public boolean isModel(String model) {
@@ -33,6 +35,18 @@ public class MotoG6 extends Generic {
             );
             sensor.gainMapSize = new int[] { 13, 10 };
         }
+
+        // Dot-fix
+        int w = 16;
+        int h = 16;
+
+        sensor.hotPixelsSize = new int[] { w, h };
+        sensor.hotPixels = new short[w * h];
+
+        sensor.hotPixels[2 * w + 14] = PLUS;
+        sensor.hotPixels[6 * w + 14] = PLUS;
+        sensor.hotPixels[10 * w + 6] = PLUS;
+        sensor.hotPixels[14 * w + 6] = PLUS;
     }
 
     @Override
