@@ -43,6 +43,13 @@ void main() {
             }
             c += 2;
         }
+        if ((pxInfo & 4) > 0) {
+            // CROSS INTERPOLATE
+            for (int j = 0; j < 4; j++) {
+                vx += texelFetch(rawBuffer, xy + ivec2(2 * (j % 4) - 1, 2 * (j / 4) - 1), 0).x;
+            }
+            c += 4;
+        }
         v = float(vx) / float(c);
     }
 
