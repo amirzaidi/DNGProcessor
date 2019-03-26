@@ -125,7 +125,13 @@ public class DngParser {
             sensor.forwardTransform2 = fm2.getFloatArray();
         }
         sensor.neutralColorPoint = tags.get(TIFF.TAG_AsShotNeutral).getRationalArray();
-        sensor.noiseProfile = tags.get(TIFF.TAG_NoiseProfile).getFloatArray();
+
+        TIFFTag noiseProfile = tags.get(TIFF.TAG_NoiseProfile);
+        if (noiseProfile == null) {
+            sensor.noiseProfile = new float[6];
+        } else {
+            sensor.noiseProfile = noiseProfile.getFloatArray();
+        }
 
         int[] defaultCropOrigin = tags.get(TIFF.TAG_DefaultCropOrigin).getIntArray();
         sensor.outputOffsetX = defaultCropOrigin[0];
