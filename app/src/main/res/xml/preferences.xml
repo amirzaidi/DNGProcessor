@@ -129,6 +129,12 @@
             android:defaultValue="@bool/pref_lce_default" />
 
         <SwitchPreference
+            android:key="@string/pref_ahe"
+            android:title="@string/pref_ahe_title"
+            android:summary="@string/pref_ahe_desc"
+            android:defaultValue="@bool/pref_ahe_default" />
+
+        <SwitchPreference
             android:key="@string/pref_forward_matrix"
             android:title="@string/pref_forward_matrix_title"
             android:summary="@string/pref_forward_matrix_desc"

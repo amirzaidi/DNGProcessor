@@ -63,6 +63,7 @@ public class MainActivity extends Activity {
     public boolean requestImage(Preference preference) {
         Intent picker = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         picker.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        picker.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         picker.setType(Path.MIME_RAW);
         picker.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         startActivityForResult(picker, REQUEST_IMAGE);

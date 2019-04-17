@@ -10,12 +10,14 @@ uniform int intermediateWidth;
 uniform int intermediateHeight;
 
 uniform sampler2D blurred;
+uniform sampler2D ahemap;
 
 uniform int yOffset;
 
 uniform int radiusDenoise;
 uniform vec2 noiseProfile;
 uniform bool lce;
+uniform bool ahe;
 
 // Sensor and picture variables
 uniform vec4 toneMapCoeffs; // Coefficients for a polynomial tonemapping curve
@@ -125,8 +127,8 @@ vec3 processPatch(ivec2 xyPos) {
             // Reduce angle as radius grows
             float realAngle = lastMinAngle + angle / pow(radius, 0.5f);
             ivec2 c = xyPos + ivec2(
-                int(round(expansion * cos(realAngle))),
-                int(round(expansion * sin(realAngle)))
+            int(round(expansion * cos(realAngle))),
+            int(round(expansion * sin(realAngle)))
             );
 
             // Don't go out of bounds
@@ -186,6 +188,27 @@ vec3 processPatch(ivec2 xyPos) {
         zDiff += zBlurDiff * max(0.f, 0.35f + min(0.f, sharpenFactor));
     }
 
+    if (ahe) {
+        // Adaptive histogram equalization
+        float aheStrength = 0.3f * max(0.f, 0.35f + min(0.f, sharpenFactor));
+
+        vec3 histDistribution = texelFetch(ahemap, xyPos, 0).xyz;
+        const float c1 = 0.25f, c2 = 0.5f, c3 = 0.75f;
+
+        float z1 = sigmoid(z, 0.75f), z2;
+        if (z1 <= histDistribution.x) {
+            z2 = c1 * z1 / histDistribution.x;
+        } else if (z1 <= histDistribution.y) {
+            z2 = c1 + (c2 - c1) * (z1 - histDistribution.x) / (histDistribution.y - histDistribution.x);
+        } else if (z1 <= histDistribution.z) {
+            z2 = c2 + (c3 - c2) * (z1 - histDistribution.y) / (histDistribution.z - histDistribution.y);
+        } else {
+            z2 = c3 + (1.f - c3) * (z1 - histDistribution.z) / (1.f - histDistribution.z);
+        }
+
+        zDiff += aheStrength * pow(z, 0.33f) * (z2 - z);
+    }
+
     // Histogram equalization
     float zFactor = texture(hist, vec2(z * 0.5f, 0.5f)).x;
     float zFactorDiff = z * zFactor - z;
@@ -208,7 +231,7 @@ vec3 processPatch(ivec2 xyPos) {
         z *= clamp(1.1f - shiftFactor, 0.67f, 1.f);
     }
 
-    return vec3(xy, sigmoid(z, 0.25f));
+    return clamp(vec3(xy, sigmoid(z, 0.25f)), 0.f, 1.f);
 }
 
 vec3 xyYtoXYZ(vec3 xyY) {
@@ -252,9 +275,9 @@ vec3 tonemap(vec3 rgb) {
 
     // Apply tonemapping curve to min, max RGB channel values
     minmax = pow(minmax, vec2(3.f)) * toneMapCoeffs.x +
-        pow(minmax, vec2(2.f)) * toneMapCoeffs.y +
-        minmax * toneMapCoeffs.z +
-        toneMapCoeffs.w;
+    pow(minmax, vec2(2.f)) * toneMapCoeffs.y +
+    minmax * toneMapCoeffs.z +
+    toneMapCoeffs.w;
 
     // Rescale middle value
     float newMid;
@@ -268,35 +291,35 @@ vec3 tonemap(vec3 rgb) {
     vec3 finalRGB;
     switch (permutation) {
         case 0: // b >= g >= r
-            finalRGB.r = minmax.x;
-            finalRGB.g = newMid;
-            finalRGB.b = minmax.y;
-            break;
+        finalRGB.r = minmax.x;
+        finalRGB.g = newMid;
+        finalRGB.b = minmax.y;
+        break;
         case 1: // g >= b >= r
-            finalRGB.r = minmax.x;
-            finalRGB.b = newMid;
-            finalRGB.g = minmax.y;
-            break;
+        finalRGB.r = minmax.x;
+        finalRGB.b = newMid;
+        finalRGB.g = minmax.y;
+        break;
         case 2: // b >= r >= g
-            finalRGB.g = minmax.x;
-            finalRGB.r = newMid;
-            finalRGB.b = minmax.y;
-            break;
+        finalRGB.g = minmax.x;
+        finalRGB.r = newMid;
+        finalRGB.b = minmax.y;
+        break;
         case 3: // g >= r >= b
-            finalRGB.b = minmax.x;
-            finalRGB.r = newMid;
-            finalRGB.g = minmax.y;
-            break;
+        finalRGB.b = minmax.x;
+        finalRGB.r = newMid;
+        finalRGB.g = minmax.y;
+        break;
         case 6: // r >= b >= g
-            finalRGB.g = minmax.x;
-            finalRGB.b = newMid;
-            finalRGB.r = minmax.y;
-            break;
+        finalRGB.g = minmax.x;
+        finalRGB.b = newMid;
+        finalRGB.r = minmax.y;
+        break;
         case 7: // r >= g >= b
-            finalRGB.b = minmax.x;
-            finalRGB.g = newMid;
-            finalRGB.r = minmax.y;
-            break;
+        finalRGB.b = minmax.x;
+        finalRGB.g = newMid;
+        finalRGB.r = minmax.y;
+        break;
     }
     return finalRGB;
 }
@@ -336,8 +359,8 @@ vec3 saturate(vec3 rgb) {
 // Apply gamma correction using sRGB gamma curve
 float gammaEncode(float x) {
     return x <= 0.0031308f
-        ? x * 12.92f
-        : 1.055f * pow(x, 0.4166667f) - 0.055f;
+    ? x * 12.92f
+    : 1.055f * pow(x, 0.4166667f) - 0.055f;
 }
 
 // Apply gamma correction to each color channel in RGB pixel

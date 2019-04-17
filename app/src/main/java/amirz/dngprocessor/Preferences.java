@@ -87,6 +87,10 @@ public class Preferences extends GlobalPreferences {
             new BooleanRef(R.string.pref_lce,
                     R.bool.pref_lce_default);
 
+    public final BooleanRef ahe =
+            new BooleanRef(R.string.pref_ahe,
+                    R.bool.pref_ahe_default);
+
     public final BooleanRef forwardMatrix =
             new BooleanRef(R.string.pref_forward_matrix,
                     R.bool.pref_forward_matrix_default);

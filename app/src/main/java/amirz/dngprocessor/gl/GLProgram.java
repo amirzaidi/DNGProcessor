@@ -30,11 +30,13 @@ public class GLProgram extends GLProgramBase {
     private final int mProgramSensorToIntermediate;
     private final int mProgramIntermediateAnalysis;
     private final int mProgramIntermediateBlur;
+    private final int mProgramIntermediateHistGen;
+    private final int mProgramIntermediateHistBlur;
     private final int mProgramIntermediateToSRGB;
 
     private final int[] fbo = new int[1];
     private int inWidth, inHeight, cfaPattern;
-    private GLTex mSensorUI, mGainMap, mSensor, mSensorG, mIntermediate, mBlurred;
+    private GLTex mSensorUI, mGainMap, mSensor, mSensorG, mIntermediate, mBlurred, mAHEMap;
     private float[] sigma;
     private float[] hist;
 
@@ -48,6 +50,8 @@ public class GLProgram extends GLProgramBase {
         mProgramSensorToIntermediate = createProgram(vertexShader, Shaders.FS_INTERMEDIATE);
         mProgramIntermediateAnalysis = createProgram(vertexShader, Shaders.FS_ANALYSIS);
         mProgramIntermediateBlur = createProgram(vertexShader, Shaders.FS_BLUR);
+        mProgramIntermediateHistGen = createProgram(vertexShader, Shaders.FS_HISTGEN);
+        mProgramIntermediateHistBlur = createProgram(vertexShader, Shaders.FS_HISTBLUR);
         mProgramIntermediateToSRGB = createProgram(vertexShader, Shaders.FS_OUTPUT);
 
         // Link first program
@@ -216,6 +220,7 @@ public class GLProgram extends GLProgramBase {
         int w = mIntermediate.getWidth();
         int h = mIntermediate.getHeight();
 
+        // LCE
         useProgram(mProgramIntermediateBlur);
 
         mIntermediate.bind(GL_TEXTURE0);
@@ -236,6 +241,47 @@ public class GLProgram extends GLProgramBase {
 
         mBlurred = new GLTex(w, h, 1, GLTex.Format.Float16, null);
         mBlurred.setFrameBuffer();
+        drawBlocks(w, h);
+
+        temp.delete();
+
+        // AHE
+        useProgram(mProgramIntermediateHistGen);
+
+        mIntermediate.bind(GL_TEXTURE0);
+        seti("buf", 0);
+        seti("bufSize", w, h);
+        seti("mode", 0);
+        seti("dir", 1, 0); // Right
+
+        temp = new GLTex(w, h, 3, GLTex.Format.Float16, null);
+        temp.setFrameBuffer();
+        drawBlocks(w, h);
+
+        temp.bind(GL_TEXTURE0);
+        seti("mode", 1);
+        seti("dir", 0, 1); // Down
+
+        mAHEMap = new GLTex(w, h, 3, GLTex.Format.Float16, null);
+        mAHEMap.setFrameBuffer();
+        drawBlocks(w, h);
+
+        useProgram(mProgramIntermediateHistBlur);
+
+        mAHEMap.bind(GL_TEXTURE0);
+        seti("buf", 0);
+        seti("bufSize", w, h);
+        seti("mode", 0);
+        seti("dir", 1, 0); // Right
+
+        temp.setFrameBuffer();
+        drawBlocks(w, h);
+
+        temp.bind(GL_TEXTURE0);
+        seti("mode", 1);
+        seti("dir", 0, 1); // Down
+
+        mAHEMap.setFrameBuffer();
         drawBlocks(w, h);
 
         temp.delete();
@@ -261,10 +307,13 @@ public class GLProgram extends GLProgramBase {
         seti("blurred", 2);
         mBlurred.bind(GL_TEXTURE2);
 
+        seti("ahemap", 4);
+        mAHEMap.bind(GL_TEXTURE4);
+
         GLTex histTex = new GLTex(hist.length, 1, 1, GLTex.Format.Float16,
                 FloatBuffer.wrap(hist), GL_LINEAR, GL_CLAMP_TO_EDGE);
-        histTex.bind(GL_TEXTURE4);
-        seti("hist", 4);
+        histTex.bind(GL_TEXTURE6);
+        seti("hist", 6);
 
         Log.d(TAG, "Hist factor " + histFactor);
         setf("histFactor", Math.max(histFactor, 0f));
@@ -275,6 +324,10 @@ public class GLProgram extends GLProgramBase {
 
     public void setLCE(boolean lce) {
         seti("lce", lce ? 1 : 0);
+    }
+
+    public void setAHE(boolean ahe) {
+        seti("ahe", ahe ? 1 : 0);
     }
 
     public void setToneMapCoeffs(float[] toneMapCoeffs) {
