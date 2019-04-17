@@ -4,6 +4,8 @@
     <string name="category_features">Features</string>
     <string name="pref_manual_select_title">Select manually</string>
     <string name="pref_manual_select_summary">Pick files to process</string>
+    <string name="pref_reprocess_title">Reprocess</string>
+    <string name="pref_reprocess_summary">The last processed image</string>
 
     <string name="category_files">Files</string>
     <string name="pref_background_process_title">Background processing</string>

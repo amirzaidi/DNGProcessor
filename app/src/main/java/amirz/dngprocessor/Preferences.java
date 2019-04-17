@@ -1,8 +1,11 @@
 package amirz.dngprocessor;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
+import android.text.TextUtils;
 
+import amirz.dngprocessor.scheduler.DngParseService;
 import amirz.library.settings.GlobalPreferences;
 
 public class Preferences extends GlobalPreferences {
@@ -111,6 +114,16 @@ public class Preferences extends GlobalPreferences {
 
             findPreference(getString(R.string.pref_manual_select))
                     .setOnPreferenceClickListener(mActivity::requestImage);
+
+            findPreference(getString(R.string.pref_reprocess))
+                    .setOnPreferenceClickListener(p -> {
+                        String uri = Utilities.prefs(mActivity)
+                                .getString(mActivity.getString(R.string.pref_reprocess), "");
+                        if (!TextUtils.isEmpty(uri)) {
+                            DngParseService.runForUri(mActivity, Uri.parse(uri));
+                        }
+                        return false;
+                    });
 
             findPreference(getString(R.string.pref_saturation_reset))
                     .setOnPreferenceClickListener(p -> {

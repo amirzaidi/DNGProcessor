@@ -14,6 +14,7 @@ import java.io.File;
 import amirz.dngprocessor.NotifHandler;
 import amirz.dngprocessor.Path;
 import amirz.dngprocessor.Preferences;
+import amirz.dngprocessor.R;
 import amirz.dngprocessor.Utilities;
 import amirz.dngprocessor.parser.DngParser;
 
@@ -49,6 +50,10 @@ public class DngParseService extends IntentService {
         try {
             Preferences pref = Preferences.global();
             pref.applyAll(Utilities.prefs(this), getResources());
+            Utilities.prefs(this)
+                    .edit()
+                    .putString(getString(R.string.pref_reprocess), uri.toString())
+                    .apply();
             new DngParser(this, uri).run();
             if (pref.deleteOriginal.get()) {
                 String path = Path.getPathFromUri(this, uri);

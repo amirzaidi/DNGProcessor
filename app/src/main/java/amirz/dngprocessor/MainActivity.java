@@ -2,6 +2,7 @@ package amirz.dngprocessor;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -60,7 +61,8 @@ public class MainActivity extends Activity {
     }
 
     public boolean requestImage(Preference preference) {
-        Intent picker = new Intent(Intent.ACTION_GET_CONTENT);
+        Intent picker = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        picker.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         picker.setType(Path.MIME_RAW);
         picker.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         startActivityForResult(picker, REQUEST_IMAGE);
@@ -70,18 +72,16 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            case REQUEST_IMAGE:
-                if (resultCode == RESULT_OK) {
-                    if (data.getClipData() != null) {
-                        for (int i = 0; i < data.getClipData().getItemCount(); i++) {
-                            process(data.getClipData().getItemAt(i).getUri());
-                        }
-                    } else {
-                        process(data.getData());
-                    }
+        if (requestCode == REQUEST_IMAGE && resultCode == RESULT_OK) {
+            int flags = data.getFlags();
+            ClipData cd = data.getClipData();
+            if (cd == null) {
+                process(data.getData(), flags);
+            } else {
+                for (int i = 0; i < cd.getItemCount(); i++) {
+                    process(cd.getItemAt(i).getUri(), flags);
                 }
-                break;
+            }
         }
     }
 
@@ -91,7 +91,9 @@ public class MainActivity extends Activity {
         startActivity(getIntent());
     }
 
-    private void process(Uri uri) {
+    private void process(Uri uri, int flags) {
+        getContentResolver().takePersistableUriPermission(uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION);
         DngParseService.runForUri(this, uri);
     }
 }

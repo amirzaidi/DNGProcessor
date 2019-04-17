@@ -9,6 +9,12 @@
             android:summary="@string/pref_manual_select_summary"
             android:persistent="false" />
 
+        <Preference
+            android:key="@string/pref_reprocess"
+            android:title="@string/pref_reprocess_title"
+            android:summary="@string/pref_reprocess_summary"
+            android:persistent="false" />
+
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/category_files">
