@@ -11,13 +11,13 @@ uniform ivec2 dir;
 
 const float s = 15.f;
 const int w = 61;
-const int b = 32;
-const int j = 8;
+const int b = 24;
+const int j = 4;
 
-const float c1 = 0.25f, c2 = 0.5f, c3 = 0.75f;
+const float c1 = 0.2f, c2 = 0.4f, c3 = 0.6f, c4 = 0.8f;
 
 // Out
-out vec3 result;
+out vec4 result;
 
 float unscaledGaussian(int dx, float s) {
     return exp(-0.5f * pow(float(dx) / s, 2.f));
@@ -32,12 +32,14 @@ void main() {
 
     float totalGauss, minv = 999.f, maxv = 0.f;
     if (mode == 0) {
-        float lv;
+        xy *= 2;
+
+        float cv;
         for (int i = 0; i < w; i++) {
-            ivec2 pos = clamppos(xy + (i - w / 2) * dir * j);
-            lv = texelFetch(buf, pos, 0).z;
-            minv = min(lv, minv);
-            maxv = max(lv, maxv);
+            ivec2 pos = clamppos(xy + (i - w / 2) * dir * j * 2);
+            cv = texelFetch(buf, pos, 0).z;
+            minv = min(cv, minv);
+            maxv = max(cv, maxv);
         }
 
         float h[b], bins = float(b + 1), vrange = maxv - minv;
@@ -46,28 +48,22 @@ void main() {
             float gauss = unscaledGaussian(i - w / 2, s);
             totalGauss += gauss;
 
-            ivec2 pos = clamppos(xy + (i - w / 2) * dir * j);
-            lv = texelFetch(buf, pos, 0).z;
+            ivec2 pos = clamppos(xy + (i - w / 2) * dir * j * 2);
+            cv = texelFetch(buf, pos, 0).z;
 
-            float normv = (lv - minv) / vrange;
+            float normv = (cv - minv) / vrange;
             int bin = min(b - 1, int(normv * bins));
             h[bin] += gauss;
         }
 
-        // Normalize
-        for (int i = 0; i < b; i++) {
-            h[i] /= totalGauss;
-        }
+        // Normalize and cumulate, then calculate threshold indices.
 
-        // Transform into cumulative
-        for (int i = 1; i < b; i++) {
-            h[i] = h[i] + h[i - 1];
-        }
-
-        float pv, cv, dv, iv, b1, b2, b3;
+        h[0] /= totalGauss;
+        float pv, dv, iv, b1, b2, b3, b4;
         for (int i = 0; i < b; i++) {
             if (i > 0) {
                 pv = h[i - 1];
+                h[i] = h[i] / totalGauss + h[i - 1];
             }
             cv = h[i];
             dv = cv - pv;
@@ -81,16 +77,19 @@ void main() {
             if (pv < c3 && cv >= c3) {
                 b3 = iv + (c3 - pv) / dv;
             }
+            if (pv < c4 && cv >= c4) {
+                b4 = iv + (c4 - pv) / dv;
+            }
         }
 
-        result.xyz = vec3(b1, b2, b3) / bins * vrange + minv;
+        result = vec4(b1, b2, b3, b4) / bins * vrange + minv;
     } else {
-        vec3 distribution;
+        vec4 distribution;
         for (int i = 0; i < w; i++) {
             ivec2 pos = clamppos(xy + (i - w / 2) * dir * j);
             float gauss = unscaledGaussian(i - w / 2, s);
             totalGauss += gauss;
-            distribution += gauss * texelFetch(buf, pos, 0).xyz;
+            distribution += gauss * texelFetch(buf, pos, 0);
         }
         result = distribution / totalGauss;
     }

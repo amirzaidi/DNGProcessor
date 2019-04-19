@@ -192,8 +192,8 @@ vec3 processPatch(ivec2 xyPos) {
         // Adaptive histogram equalization
         float aheStrength = 0.3f * max(0.f, 0.35f + min(0.f, sharpenFactor));
 
-        vec3 histDistribution = texelFetch(ahemap, xyPos, 0).xyz;
-        const float c1 = 0.25f, c2 = 0.5f, c3 = 0.75f;
+        vec4 histDistribution = texture(ahemap, vec2(xyPos) / vec2(intermediateWidth, intermediateHeight));
+        const float c1 = 0.2f, c2 = 0.4f, c3 = 0.6f, c4 = 0.8f;
 
         float z1 = sigmoid(z, 0.75f), z2;
         if (z1 <= histDistribution.x) {
@@ -202,8 +202,10 @@ vec3 processPatch(ivec2 xyPos) {
             z2 = c1 + (c2 - c1) * (z1 - histDistribution.x) / (histDistribution.y - histDistribution.x);
         } else if (z1 <= histDistribution.z) {
             z2 = c2 + (c3 - c2) * (z1 - histDistribution.y) / (histDistribution.z - histDistribution.y);
+        } else if (z1 <= histDistribution.w) {
+            z2 = c3 + (c4 - c3) * (z1 - histDistribution.z) / (histDistribution.w - histDistribution.z);
         } else {
-            z2 = c3 + (1.f - c3) * (z1 - histDistribution.z) / (1.f - histDistribution.z);
+            z2 = c4 + (1.f - c4) * (z1 - histDistribution.w) / (1.f - histDistribution.w);
         }
 
         zDiff += aheStrength * pow(z, 0.33f) * (z2 - z);

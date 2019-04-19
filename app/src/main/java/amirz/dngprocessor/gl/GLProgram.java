@@ -208,6 +208,8 @@ public class GLProgram extends GLProgramBase {
         glReadPixels(0, 0, w, h, GL_RGBA, GL_FLOAT, fb.reset());
         fb.get(f);
 
+        analyzeTex.delete();
+
         // Calculate a histogram on the result
         Histogram histParser = new Histogram(f, whPixels);
         sigma = histParser.sigma;
@@ -216,75 +218,80 @@ public class GLProgram extends GLProgramBase {
         Log.d(TAG, "Sigma " + Arrays.toString(sigma));
     }
 
-    public void blurIntermediate() {
+    public void blurIntermediate(boolean lce, boolean ahe) {
         int w = mIntermediate.getWidth();
         int h = mIntermediate.getHeight();
 
         // LCE
-        useProgram(mProgramIntermediateBlur);
+        if (lce) {
+            useProgram(mProgramIntermediateBlur);
 
-        mIntermediate.bind(GL_TEXTURE0);
-        seti("sampleBuf", 0);
-        seti("blurBuf", 0);
-        seti("bufSize", w, h);
+            mIntermediate.bind(GL_TEXTURE0);
+            seti("sampleBuf", 0);
+            seti("blurBuf", 0);
+            seti("bufSize", w, h);
 
-        seti("dir", 1, 0); // Right
-        setf("ch", 0, 1); // xy[Y]
+            seti("dir", 1, 0); // Right
+            setf("ch", 0, 1); // xy[Y]
 
-        GLTex temp = new GLTex(w, h, 1, GLTex.Format.Float16, null);
-        temp.setFrameBuffer();
-        drawBlocks(w, h);
+            GLTex temp = new GLTex(w, h, 1, GLTex.Format.Float16, null);
+            temp.setFrameBuffer();
+            drawBlocks(w, h);
 
-        temp.bind(GL_TEXTURE0);
-        seti("dir", 0, 1); // Down
-        setf("ch", 1, 0); // [Y]00
+            temp.bind(GL_TEXTURE0);
+            seti("dir", 0, 1); // Down
+            setf("ch", 1, 0); // [Y]00
 
-        mBlurred = new GLTex(w, h, 1, GLTex.Format.Float16, null);
-        mBlurred.setFrameBuffer();
-        drawBlocks(w, h);
+            mBlurred = new GLTex(w, h, 1, GLTex.Format.Float16, null);
+            mBlurred.setFrameBuffer();
+            drawBlocks(w, h);
 
-        temp.delete();
+            temp.delete();
+        }
 
         // AHE
-        useProgram(mProgramIntermediateHistGen);
+        if (ahe) {
+            useProgram(mProgramIntermediateHistGen);
 
-        mIntermediate.bind(GL_TEXTURE0);
-        seti("buf", 0);
-        seti("bufSize", w, h);
-        seti("mode", 0);
-        seti("dir", 1, 0); // Right
+            mIntermediate.bind(GL_TEXTURE0);
+            seti("buf", 0);
+            seti("bufSize", w, h);
+            seti("mode", 0);
+            seti("dir", 1, 0); // Right
 
-        temp = new GLTex(w, h, 3, GLTex.Format.Float16, null);
-        temp.setFrameBuffer();
-        drawBlocks(w, h);
+            GLTex temp = new GLTex(w / 2, h / 2, 4, GLTex.Format.Float16, null);
+            temp.setFrameBuffer();
+            drawBlocks(w / 2, h / 2);
 
-        temp.bind(GL_TEXTURE0);
-        seti("mode", 1);
-        seti("dir", 0, 1); // Down
+            temp.bind(GL_TEXTURE0);
+            seti("bufSize", w / 2, h / 2);
+            seti("mode", 1);
+            seti("dir", 0, 1); // Down
 
-        mAHEMap = new GLTex(w, h, 3, GLTex.Format.Float16, null);
-        mAHEMap.setFrameBuffer();
-        drawBlocks(w, h);
+            mAHEMap = new GLTex(w / 2, h / 2, 4, GLTex.Format.Float16, null, GL_LINEAR);
+            mAHEMap.setFrameBuffer();
+            drawBlocks(w / 2, h / 2);
 
-        useProgram(mProgramIntermediateHistBlur);
+            useProgram(mProgramIntermediateHistBlur);
 
-        mAHEMap.bind(GL_TEXTURE0);
-        seti("buf", 0);
-        seti("bufSize", w, h);
-        seti("mode", 0);
-        seti("dir", 1, 0); // Right
+            mAHEMap.bind(GL_TEXTURE0);
+            seti("buf", 0);
+            seti("bufSize", w / 2, h / 2);
+            seti("mode", 0);
+            seti("dir", 1, 0); // Right
 
-        temp.setFrameBuffer();
-        drawBlocks(w, h);
+            temp.setFrameBuffer();
+            drawBlocks(w / 2, h / 2);
 
-        temp.bind(GL_TEXTURE0);
-        seti("mode", 1);
-        seti("dir", 0, 1); // Down
+            temp.bind(GL_TEXTURE0);
+            seti("mode", 1);
+            seti("dir", 0, 1); // Down
 
-        mAHEMap.setFrameBuffer();
-        drawBlocks(w, h);
+            mAHEMap.setFrameBuffer();
+            drawBlocks(w / 2, h / 2);
 
-        temp.delete();
+            temp.delete();
+        }
     }
 
     public void prepareForOutput(float histFactor, float satLimit) {
@@ -304,11 +311,15 @@ public class GLProgram extends GLProgramBase {
         seti("intermediateHeight", inHeight);
         setf("sigma", sigma);
 
-        seti("blurred", 2);
-        mBlurred.bind(GL_TEXTURE2);
+        if (mBlurred != null) {
+            seti("blurred", 2);
+            mBlurred.bind(GL_TEXTURE2);
+        }
 
-        seti("ahemap", 4);
-        mAHEMap.bind(GL_TEXTURE4);
+        if (mAHEMap != null) {
+            seti("ahemap", 4);
+            mAHEMap.bind(GL_TEXTURE4);
+        }
 
         GLTex histTex = new GLTex(hist.length, 1, 1, GLTex.Format.Float16,
                 FloatBuffer.wrap(hist), GL_LINEAR, GL_CLAMP_TO_EDGE);

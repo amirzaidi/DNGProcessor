@@ -11,10 +11,10 @@ uniform ivec2 dir;
 
 const float s = 3.f;
 const int w = 61;
-const int j = 16;
+const int j = 8;
 
 // Out
-out vec3 result;
+out vec4 result;
 
 float unscaledGaussian(int dx, float s) {
     return exp(-0.5f * pow(float(dx) / s, 2.f));
@@ -28,13 +28,12 @@ void main() {
     ivec2 xy = ivec2(gl_FragCoord.xy);
 
     float totalGauss;
-    vec3 distribution;
+    vec4 distribution;
     for (int i = 0; i < w; i++) {
         ivec2 pos = clamppos(xy + (i - w / 2) * dir * j);
         float gauss = unscaledGaussian(i - w / 2, s);
         totalGauss += gauss;
-        vec3 v = texelFetch(buf, pos, 0).xyz;
-        distribution += gauss * v;
+        distribution += gauss * texelFetch(buf, pos, 0);
     }
     result = distribution / totalGauss;
 }

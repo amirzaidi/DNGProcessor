@@ -308,7 +308,7 @@ public class RawConverter implements AutoCloseable {
     }
 
     public void blurIntermediate() {
-        square.blurIntermediate();
+        square.blurIntermediate(process.lce, process.ahe);
     }
 
     public void intermediateToOutput() {
