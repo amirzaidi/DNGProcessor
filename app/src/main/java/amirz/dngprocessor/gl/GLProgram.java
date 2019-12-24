@@ -11,7 +11,6 @@ import java.util.Arrays;
 
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.generic.GLProgramBase;
-import amirz.dngprocessor.gl.generic.GLSquare;
 import amirz.dngprocessor.gl.generic.GLTex;
 import amirz.dngprocessor.gl.generic.ShaderLoader;
 import amirz.dngprocessor.math.BlockDivider;
@@ -26,7 +25,6 @@ import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MIN_FILTER;
 public class GLProgram extends GLProgramBase {
     private static final String TAG = "GLProgram";
 
-    private final GLSquare mSquare = new GLSquare();
     private final int mProgramHelperDownscale;
     private final int mProgramSensorPreProcess;
     private final int mProgramSensorGreenDemosaic;
@@ -431,10 +429,5 @@ public class GLProgram extends GLProgramBase {
             glViewport(0, row[0], w, row[1]);
             draw();
         }
-    }
-
-    private void draw() {
-        mSquare.draw(vPosition());
-        glFlush();
     }
 }

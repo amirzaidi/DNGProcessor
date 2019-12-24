@@ -8,6 +8,7 @@ import static android.opengl.GLES20.*;
 import static android.opengl.GLES30.*;
 
 public class GLProgramBase {
+    private final GLSquare mSquare = new GLSquare();
     private final List<Integer> mPrograms = new ArrayList<>();
     private int mProgramActive;
 
@@ -30,6 +31,11 @@ public class GLProgramBase {
         glAttachShader(program, fragment);
         mPrograms.add(program);
         return program;
+    }
+
+    protected void draw() {
+        mSquare.draw(vPosition());
+        glFlush();
     }
 
     public void close() {

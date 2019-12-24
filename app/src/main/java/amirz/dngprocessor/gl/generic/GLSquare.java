@@ -6,7 +6,7 @@ import java.nio.FloatBuffer;
 
 import static android.opengl.GLES20.*;
 
-public class GLSquare {
+class GLSquare {
     private static final int COORDS_PER_VERTEX = 3;
     private static final float COORDS[] = {
             -1, 1, 0,
@@ -18,7 +18,7 @@ public class GLSquare {
 
     private final FloatBuffer mVertexBuffer;
 
-    public GLSquare() {
+    GLSquare() {
         // (# of coordinate values * 4 bytes per float)
         ByteBuffer bb = ByteBuffer.allocateDirect(COORDS.length * 4);
 
@@ -28,7 +28,7 @@ public class GLSquare {
         mVertexBuffer.position(0);
     }
 
-    public void draw(int posHandle) {
+    void draw(int posHandle) {
         glEnableVertexAttribArray(posHandle);
         glVertexAttribPointer(
                 posHandle, COORDS_PER_VERTEX,
