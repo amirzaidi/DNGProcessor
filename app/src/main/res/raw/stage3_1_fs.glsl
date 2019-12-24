@@ -11,6 +11,7 @@ uniform int intermediateHeight;
 
 uniform sampler2D blurred;
 uniform sampler2D ahemap;
+uniform sampler2D downscaledBuffer;
 
 uniform int yOffset;
 
@@ -104,8 +105,8 @@ vec3 processPatch(ivec2 xyPos) {
     //float Npx = pow(noiseProfile.x * z + noiseProfile.y, 2.f);
 
     // Thresholds
-    float thExclude = 3.5f;
-    float thStop = 3.75f;
+    float thExclude = 1.5f;
+    float thStop = 2.25f;
 
     // Expand in a plus
     vec3 midDivSigma = mid / sigmaLocal;
@@ -154,6 +155,7 @@ vec3 processPatch(ivec2 xyPos) {
     }
 
     xy = sum.xy / float(totalCount);
+    z = sum.z / float(totalCount);
 
     /**
     LUMA DENOISE AND SHARPEN
@@ -181,6 +183,7 @@ vec3 processPatch(ivec2 xyPos) {
         zDiff += sharpenFactor * (z - sum.z / float(totalCount));
     }
 
+    /*
     if (lce) {
         // Local contrast enhancement
         float zBlurred = texelFetch(blurred, xyPos, 0).x;
@@ -218,6 +221,7 @@ vec3 processPatch(ivec2 xyPos) {
 
     // Apply sharpening and local contrast increase after hist eq
     z += zDiff;
+    */
 
     /**
     DENOISE BY DESATURATION
@@ -233,7 +237,11 @@ vec3 processPatch(ivec2 xyPos) {
         z *= clamp(1.1f - shiftFactor, 0.67f, 1.f);
     }
 
-    return clamp(vec3(xy, sigmoid(z, 0.25f)), 0.f, 1.f);
+    //z = texture(downscaledBuffer, vec2(xyPos) / vec2(intermediateWidth, intermediateHeight)).x;
+    //z = texelFetch(downscaledBuffer, xyPos / 8, 0).x;
+    //return clamp(vec3(xy, sigmoid(z, 0.25f)), 0.f, 1.f);
+    //return clamp(vec3(vec2(0.345703f, 0.358539f), z), 0.f, 1.f);
+    return clamp(vec3(xy, z), 0.f, 1.f);
 }
 
 vec3 xyYtoXYZ(vec3 xyY) {

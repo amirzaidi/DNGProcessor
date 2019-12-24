@@ -25,6 +25,7 @@ public class GLProgram extends GLProgramBase {
     private static final String TAG = "GLProgram";
 
     private final GLSquare mSquare = new GLSquare();
+    private final int mProgramHelperDownscale;
     private final int mProgramSensorPreProcess;
     private final int mProgramSensorGreenDemosaic;
     private final int mProgramSensorToIntermediate;
@@ -32,11 +33,13 @@ public class GLProgram extends GLProgramBase {
     private final int mProgramIntermediateBlur;
     private final int mProgramIntermediateHistGen;
     private final int mProgramIntermediateHistBlur;
+    private final int mProgramIntermediateBilateral;
     private final int mProgramIntermediateToSRGB;
 
     private final int[] fbo = new int[1];
     private int inWidth, inHeight, cfaPattern;
-    private GLTex mSensorUI, mGainMap, mSensor, mSensorG, mIntermediate, mBlurred, mAHEMap;
+    private GLTex mSensorUI, mGainMap, mSensor, mSensorG, mIntermediate, mBlurred, mAHEMap, mDownscaled;
+    private GLTex mBilateralFiltered;
     private float[] sigma;
     private float[] hist;
 
@@ -45,6 +48,7 @@ public class GLProgram extends GLProgramBase {
 
         int vertexShader = loadShader(GL_VERTEX_SHADER, Shaders.VS);
 
+        mProgramHelperDownscale = createProgram(vertexShader, Shaders.FS_DOWNSCALE);
         mProgramSensorPreProcess = createProgram(vertexShader, Shaders.FS_PREPROCESS);
         mProgramSensorGreenDemosaic = createProgram(vertexShader, Shaders.FS_GREENDEMOSAIC);
         mProgramSensorToIntermediate = createProgram(vertexShader, Shaders.FS_INTERMEDIATE);
@@ -52,6 +56,7 @@ public class GLProgram extends GLProgramBase {
         mProgramIntermediateBlur = createProgram(vertexShader, Shaders.FS_BLUR);
         mProgramIntermediateHistGen = createProgram(vertexShader, Shaders.FS_HISTGEN);
         mProgramIntermediateHistBlur = createProgram(vertexShader, Shaders.FS_HISTBLUR);
+        mProgramIntermediateBilateral = createProgram(vertexShader, Shaders.FS_BILATERAL);
         mProgramIntermediateToSRGB = createProgram(vertexShader, Shaders.FS_OUTPUT);
 
         // Link first program
@@ -216,11 +221,26 @@ public class GLProgram extends GLProgramBase {
         hist = histParser.hist;
 
         Log.d(TAG, "Sigma " + Arrays.toString(sigma));
+        Log.d(TAG, "LogAvg " + histParser.logAvgLuminance);
     }
 
     public void blurIntermediate(boolean lce, boolean ahe) {
+        lce = false;
+        ahe = false;
+
         int w = mIntermediate.getWidth();
         int h = mIntermediate.getHeight();
+
+        useProgram(mProgramHelperDownscale);
+
+        int scale = 8;
+        mIntermediate.bind(GL_TEXTURE0);
+        seti("inBuffer", 0);
+        seti("scale", scale);
+
+        mDownscaled = new GLTex(w / scale, h / scale, 1, GLTex.Format.Float16, null, GL_LINEAR);
+        mDownscaled.setFrameBuffer();
+        draw();
 
         // LCE
         if (lce) {
@@ -292,6 +312,26 @@ public class GLProgram extends GLProgramBase {
 
             temp.delete();
         }
+
+        // Double bilateral filter.
+        useProgram(mProgramIntermediateBilateral);
+
+        seti("buf", 0);
+        seti("bufSize", w, h);
+        mBilateralFiltered = new GLTex(inWidth, inHeight, 3, GLTex.Format.Float16, null);
+
+        // Two iterations means four total filters.
+        for (int i = 0; i < 2; i++) {
+            mIntermediate.bind(GL_TEXTURE0);
+            mBilateralFiltered.setFrameBuffer();
+
+            drawBlocks(w, h);
+
+            mBilateralFiltered.bind(GL_TEXTURE0);
+            mIntermediate.setFrameBuffer();
+
+            drawBlocks(w, h);
+        }
     }
 
     public void prepareForOutput(float histFactor, float satLimit) {
@@ -325,6 +365,9 @@ public class GLProgram extends GLProgramBase {
                 FloatBuffer.wrap(hist), GL_LINEAR, GL_CLAMP_TO_EDGE);
         histTex.bind(GL_TEXTURE6);
         seti("hist", 6);
+
+        mDownscaled.bind(GL_TEXTURE8);
+        seti("downscaledBuffer", 8);
 
         Log.d(TAG, "Hist factor " + histFactor);
         setf("histFactor", Math.max(histFactor, 0f));

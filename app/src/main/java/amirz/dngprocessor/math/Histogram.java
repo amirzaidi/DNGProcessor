@@ -1,13 +1,17 @@
 package amirz.dngprocessor.math;
 
 public class Histogram {
+    private static final double EPSILON = 0.001;
+
     public final float[] sigma = new float[3];
     public final float[] hist;
+    public final float logAvgLuminance;
 
     public Histogram(float[] f, int whPixels) {
         int histBins = 512;
         int[] histv = new int[histBins];
 
+        double logTotalLuminance = 0d;
         // Loop over all values
         for (int i = 0; i < f.length; i += 4) {
             for (int j = 0; j < 3; j++) {
@@ -17,6 +21,8 @@ public class Histogram {
             int bin = (int) (f[i + 3] * 0.5f * histBins);
             if (bin >= histBins) bin = histBins - 1;
             histv[bin]++;
+
+            logTotalLuminance += Math.log(f[i + 3] + EPSILON);
         }
 
         for (int j = 0; j < 3; j++) {
@@ -35,5 +41,7 @@ public class Histogram {
 
         float[] gauss = { 0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f };
         hist = Convolve.conv(cumulativeHist, gauss, true);
+
+        logAvgLuminance = (float) Math.exp(logTotalLuminance * 4 / f.length);
     }
 }
