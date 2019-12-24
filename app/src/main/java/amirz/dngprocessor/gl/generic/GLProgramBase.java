@@ -17,10 +17,17 @@ public class GLProgramBase {
         mProgramActive = program;
     }
 
-    protected int createProgram(int vertex, String fragment) {
+    protected int createProgram(int vertex, String fragmentId) {
+        int fragment;
+        try {
+            fragment = loadShader(GL_FRAGMENT_SHADER, fragmentId);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Error initializing fragment shader:\n" + fragmentId, e);
+        }
+
         int program = glCreateProgram();
         glAttachShader(program, vertex);
-        glAttachShader(program, loadShader(GL_FRAGMENT_SHADER, fragment));
+        glAttachShader(program, fragment);
         mPrograms.add(program);
         return program;
     }
