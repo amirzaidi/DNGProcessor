@@ -18,7 +18,7 @@ import amirz.dngprocessor.NotifHandler;
 import amirz.dngprocessor.Path;
 import amirz.dngprocessor.Preferences;
 import amirz.dngprocessor.device.DeviceMap;
-import amirz.dngprocessor.gl.RawConverter;
+import amirz.dngprocessor.gl.GLControllerRawConverter;
 import amirz.dngprocessor.gl.generic.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
@@ -197,8 +197,8 @@ public class DngParser {
 
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS_INIT);
         ShaderLoader loader = new ShaderLoader(mContext.getResources());
-        try (RawConverter converter
-                     = new RawConverter(sensor, process, rawImageInput, argbOutput, loader)) {
+        try (GLControllerRawConverter converter = new GLControllerRawConverter(
+                sensor, process, rawImageInput, argbOutput, loader)) {
             NotifHandler.progress(mContext, STEPS, STEP_PROCESS_SENSOR);
             converter.sensorToIntermediate();
 

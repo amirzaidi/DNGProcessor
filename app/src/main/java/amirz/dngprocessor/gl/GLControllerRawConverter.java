@@ -30,7 +30,7 @@ import amirz.dngprocessor.params.SensorParams;
 /**
  * Utility class providing methods for rendering RAW16 images into other colorspaces.
  */
-public class RawConverter implements AutoCloseable {
+public class GLControllerRawConverter implements AutoCloseable {
     private static final String TAG = "RawConverter";
     private static final boolean DEBUG = true;
 
@@ -132,8 +132,8 @@ public class RawConverter implements AutoCloseable {
     /**
      * Convert a RAW16 buffer into an sRGB buffer, and write the result into a bitmap.
      */
-    public RawConverter(SensorParams sensor, ProcessParams process,
-                        byte[] rawImageInput, Bitmap argbOutput, ShaderLoader loader) {
+    public GLControllerRawConverter(SensorParams sensor, ProcessParams process,
+                                    byte[] rawImageInput, Bitmap argbOutput, ShaderLoader loader) {
         this.sensor = sensor;
         this.process = process;
 
@@ -278,7 +278,7 @@ public class RawConverter implements AutoCloseable {
         map(Mb, sensorWhiteXYZ, w1);
 
         float[] w2 = new float[3];
-        map(Mb, RawConverter.D50_XYZ, w2);
+        map(Mb, GLControllerRawConverter.D50_XYZ, w2);
 
         float[] A = new float[9];
         A[0] = (float) Math.max(0.1, Math.min(w1[0] > 0 ? w2[0] / w1[0] : 10, 10));
