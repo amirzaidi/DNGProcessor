@@ -9,6 +9,7 @@ import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 import java.util.Arrays;
 
+import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.generic.GLProgramBase;
 import amirz.dngprocessor.gl.generic.GLSquare;
 import amirz.dngprocessor.gl.generic.GLTex;
@@ -43,21 +44,21 @@ public class GLProgram extends GLProgramBase {
     private float[] sigma;
     private float[] hist;
 
-    public GLProgram() {
+    public GLProgram(ShaderLoader loader) {
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, fbo, 0);
 
-        int vertexShader = loadShader(GL_VERTEX_SHADER, Shaders.VS);
+        int vertexShader = loadShader(GL_VERTEX_SHADER, loader.readRaw(R.raw.passthrough_vs));
 
-        mProgramHelperDownscale = createProgram(vertexShader, Shaders.FS_DOWNSCALE);
-        mProgramSensorPreProcess = createProgram(vertexShader, Shaders.FS_PREPROCESS);
-        mProgramSensorGreenDemosaic = createProgram(vertexShader, Shaders.FS_GREENDEMOSAIC);
-        mProgramSensorToIntermediate = createProgram(vertexShader, Shaders.FS_INTERMEDIATE);
-        mProgramIntermediateAnalysis = createProgram(vertexShader, Shaders.FS_ANALYSIS);
-        mProgramIntermediateBlur = createProgram(vertexShader, Shaders.FS_BLUR);
-        mProgramIntermediateHistGen = createProgram(vertexShader, Shaders.FS_HISTGEN);
-        mProgramIntermediateHistBlur = createProgram(vertexShader, Shaders.FS_HISTBLUR);
-        mProgramIntermediateBilateral = createProgram(vertexShader, Shaders.FS_BILATERAL);
-        mProgramIntermediateToSRGB = createProgram(vertexShader, Shaders.FS_OUTPUT);
+        mProgramHelperDownscale = createProgram(vertexShader, loader.readRaw(R.raw.helper_downscale_fs));
+        mProgramSensorPreProcess = createProgram(vertexShader, loader.readRaw(R.raw.stage1_1_fs));
+        mProgramSensorGreenDemosaic = createProgram(vertexShader, loader.readRaw(R.raw.stage1_2_fs));
+        mProgramSensorToIntermediate = createProgram(vertexShader, loader.readRaw(R.raw.stage1_3_fs));
+        mProgramIntermediateAnalysis = createProgram(vertexShader, loader.readRaw(R.raw.stage2_1_fs));
+        mProgramIntermediateBlur = createProgram(vertexShader, loader.readRaw(R.raw.stage2_2_fs));
+        mProgramIntermediateHistGen = createProgram(vertexShader, loader.readRaw(R.raw.stage2_3_fs));
+        mProgramIntermediateHistBlur = createProgram(vertexShader, loader.readRaw(R.raw.stage2_4_fs));
+        mProgramIntermediateBilateral = createProgram(vertexShader, loader.readRaw(R.raw.stage3_0_fs));
+        mProgramIntermediateToSRGB = createProgram(vertexShader, loader.readRaw(R.raw.stage3_1_fs));
 
         // Link first program
         useProgram(mProgramSensorPreProcess);
