@@ -12,13 +12,13 @@ import amirz.dngprocessor.math.BlockDivider;
 import static amirz.dngprocessor.Constants.BLOCK_HEIGHT;
 import static android.opengl.GLES20.*;
 
-public class GLCore extends GLCoreBase {
+public class GLCoreBlockProcessing extends GLCoreBase {
     private final Bitmap mOut;
     private final int mOutWidth, mOutHeight;
     private final IntBuffer mBlockBuffer;
     private final IntBuffer mOutBuffer;
 
-    public GLCore(Bitmap out, ShaderLoader loader) {
+    public GLCoreBlockProcessing(Bitmap out, ShaderLoader loader) {
         super(out.getWidth(), BLOCK_HEIGHT, loader);
 
         mOut = out;
@@ -30,7 +30,7 @@ public class GLCore extends GLCoreBase {
     }
 
     public void intermediateToOutput() {
-        GLProgram program = (GLProgram) getProgram();
+        GLProgramRawConverter program = (GLProgramRawConverter) getProgram();
 
         BlockDivider divider = new BlockDivider(mOutHeight, BLOCK_HEIGHT);
         int[] row = new int[2];
@@ -56,6 +56,6 @@ public class GLCore extends GLCoreBase {
 
     @Override
     protected GLProgramBase createProgram(ShaderLoader loader) {
-        return new GLProgram(loader);
+        return new GLProgramRawConverter(loader);
     }
 }

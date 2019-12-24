@@ -22,7 +22,7 @@ import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_2D;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MAG_FILTER;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MIN_FILTER;
 
-public class GLProgram extends GLProgramBase {
+public class GLProgramRawConverter extends GLProgramBase {
     private static final String TAG = "GLProgram";
 
     private final int mProgramHelperDownscale;
@@ -43,7 +43,7 @@ public class GLProgram extends GLProgramBase {
     private float[] sigma;
     private float[] hist;
 
-    public GLProgram(ShaderLoader loader) {
+    public GLProgramRawConverter(ShaderLoader loader) {
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, fbo, 0);
 
         int vertexShader = loadShader(GL_VERTEX_SHADER, loader.readRaw(R.raw.passthrough_vs));

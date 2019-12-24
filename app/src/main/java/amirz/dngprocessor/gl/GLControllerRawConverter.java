@@ -126,8 +126,8 @@ public class GLControllerRawConverter implements AutoCloseable {
     private ProcessParams process;
     private float[] XYZtoProPhoto;
     private float[] proPhotoToSRGB;
-    private GLCore core;
-    private GLProgram square;
+    private GLCoreBlockProcessing core;
+    private GLProgramRawConverter square;
 
     /**
      * Convert a RAW16 buffer into an sRGB buffer, and write the result into a bitmap.
@@ -253,8 +253,8 @@ public class GLControllerRawConverter implements AutoCloseable {
         if (DEBUG) Log.d(TAG, "proPhotoToSRGB xform used: " + Arrays.toString(proPhotoToSRGB));
 
         // Write the variables first
-        core = new GLCore(argbOutput, loader);
-        square = (GLProgram) core.getProgram();
+        core = new GLCoreBlockProcessing(argbOutput, loader);
+        square = (GLProgramRawConverter) core.getProgram();
 
         square.setIn(rawImageInput, sensor.inputWidth, sensor.inputHeight, sensor.cfa);
         square.setGainMap(sensor.gainMap, sensor.gainMapSize);
