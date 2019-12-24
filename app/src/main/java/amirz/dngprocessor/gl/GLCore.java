@@ -6,6 +6,7 @@ import java.nio.IntBuffer;
 
 import amirz.dngprocessor.gl.generic.GLCoreBase;
 import amirz.dngprocessor.gl.generic.GLProgramBase;
+import amirz.dngprocessor.gl.generic.ShaderLoader;
 import amirz.dngprocessor.math.BlockDivider;
 
 import static amirz.dngprocessor.Constants.BLOCK_HEIGHT;
@@ -17,8 +18,8 @@ public class GLCore extends GLCoreBase {
     private final IntBuffer mBlockBuffer;
     private final IntBuffer mOutBuffer;
 
-    public GLCore(Bitmap out) {
-        super(out.getWidth(), BLOCK_HEIGHT);
+    public GLCore(Bitmap out, ShaderLoader loader) {
+        super(out.getWidth(), BLOCK_HEIGHT, loader);
 
         mOut = out;
         mOutWidth = out.getWidth();
@@ -54,7 +55,7 @@ public class GLCore extends GLCoreBase {
     }
 
     @Override
-    protected GLProgramBase createProgram() {
-        return new GLProgram();
+    protected GLProgramBase createProgram(ShaderLoader loader) {
+        return new GLProgram(loader);
     }
 }

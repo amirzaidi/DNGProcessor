@@ -1,4 +1,4 @@
-package amirz.dngprocessor.gl;
+package amirz.dngprocessor.gl.generic;
 
 import android.content.res.Resources;
 
@@ -14,7 +14,7 @@ public class ShaderLoader {
         mRes = res;
     }
 
-    String readRaw(int resId) {
+    public String readRaw(int resId) {
         try (InputStream inputStream = mRes.openRawResource(resId)) {
             InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
             BufferedReader bufferedReader = new BufferedReader(inputStreamReader);

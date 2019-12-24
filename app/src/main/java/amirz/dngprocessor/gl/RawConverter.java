@@ -23,6 +23,7 @@ import android.util.SparseIntArray;
 
 import java.util.Arrays;
 
+import amirz.dngprocessor.gl.generic.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 
@@ -132,7 +133,7 @@ public class RawConverter implements AutoCloseable {
      * Convert a RAW16 buffer into an sRGB buffer, and write the result into a bitmap.
      */
     public RawConverter(SensorParams sensor, ProcessParams process,
-                        byte[] rawImageInput, Bitmap argbOutput) {
+                        byte[] rawImageInput, Bitmap argbOutput, ShaderLoader loader) {
         this.sensor = sensor;
         this.process = process;
 
@@ -252,7 +253,7 @@ public class RawConverter implements AutoCloseable {
         if (DEBUG) Log.d(TAG, "proPhotoToSRGB xform used: " + Arrays.toString(proPhotoToSRGB));
 
         // Write the variables first
-        core = new GLCore(argbOutput);
+        core = new GLCore(argbOutput, loader);
         square = (GLProgram) core.getProgram();
 
         square.setIn(rawImageInput, sensor.inputWidth, sensor.inputHeight, sensor.cfa);

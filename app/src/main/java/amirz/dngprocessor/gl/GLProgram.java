@@ -13,6 +13,7 @@ import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.generic.GLProgramBase;
 import amirz.dngprocessor.gl.generic.GLSquare;
 import amirz.dngprocessor.gl.generic.GLTex;
+import amirz.dngprocessor.gl.generic.ShaderLoader;
 import amirz.dngprocessor.math.BlockDivider;
 import amirz.dngprocessor.math.Histogram;
 

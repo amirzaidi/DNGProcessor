@@ -13,7 +13,7 @@ public abstract class GLCoreBase implements AutoCloseable {
     private final EGLSurface mSurface;
     private final GLProgramBase mProgram;
 
-    public GLCoreBase(int surfaceWidth, int surfaceHeight) {
+    public GLCoreBase(int surfaceWidth, int surfaceHeight, ShaderLoader loader) {
         int[] major = new int[2];
         int[] minor = new int[2];
 
@@ -66,10 +66,10 @@ public abstract class GLCoreBase implements AutoCloseable {
         }, 0);
 
         eglMakeCurrent(mDisplay, mSurface, mSurface, mContext);
-        mProgram = createProgram();
+        mProgram = createProgram(loader);
     }
 
-    protected abstract GLProgramBase createProgram();
+    protected abstract GLProgramBase createProgram(ShaderLoader loader);
 
     public GLProgramBase getProgram() {
         return mProgram;
