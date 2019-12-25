@@ -1,9 +1,7 @@
 package amirz.library.settings;
 
-import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.preference.PreferenceFragment;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.TypedValue;
