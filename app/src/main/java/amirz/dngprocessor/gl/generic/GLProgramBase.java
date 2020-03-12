@@ -60,7 +60,7 @@ public class GLProgramBase implements AutoCloseable {
         return shader;
     }
 
-    protected int vPosition() {
+    private int vPosition() {
         return glGetAttribLocation(mProgramActive, "vPosition");
     }
 
