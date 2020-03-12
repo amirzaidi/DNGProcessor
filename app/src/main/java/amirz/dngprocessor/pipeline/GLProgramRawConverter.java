@@ -2,18 +2,13 @@ package amirz.dngprocessor.pipeline;
 
 import android.util.Log;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.Arrays;
 
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLProgramBase;
 import amirz.dngprocessor.gl.GLTex;
-import amirz.dngprocessor.gl.GLTexPool;
 import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.math.BlockDivider;
-import amirz.dngprocessor.math.Histogram;
 
 import static amirz.dngprocessor.util.Constants.BLOCK_HEIGHT;
 import static android.opengl.GLES20.*;
@@ -30,7 +25,6 @@ public class GLProgramRawConverter extends GLProgramBase {
     public final int mProgramIntermediateHistBlur;
     public final int mProgramIntermediateBilateral;
 
-    public final int[] fbo = new int[1];
     public int inWidth, inHeight, cfaPattern;
     public GLTex mSensorUI, mGainMap, mSensor, mSensorG, mIntermediate, mBlurred, mAHEMap, mDownscaled;
     public GLTex mBilateralFiltered;
@@ -40,8 +34,6 @@ public class GLProgramRawConverter extends GLProgramBase {
     public int vertexShader;
 
     public GLProgramRawConverter(ShaderLoader loader) {
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, fbo, 0);
-
         vertexShader = loadShader(GL_VERTEX_SHADER, loader.readRaw(R.raw.passthrough_vs));
 
         mProgramHelperDownscale = createProgram(vertexShader, loader.readRaw(R.raw.helper_downscale_fs));
@@ -49,46 +41,6 @@ public class GLProgramRawConverter extends GLProgramBase {
         mProgramIntermediateHistGen = createProgram(vertexShader, loader.readRaw(R.raw.stage2_3_fs));
         mProgramIntermediateHistBlur = createProgram(vertexShader, loader.readRaw(R.raw.stage2_4_fs));
         mProgramIntermediateBilateral = createProgram(vertexShader, loader.readRaw(R.raw.stage3_0_fs));
-    }
-
-    public void setOutOffset(int offsetX, int offsetY) {
-        seti("outOffset", offsetX, offsetY);
-    }
-
-    public void analyzeIntermediate(int w, int h, int samplingFactor) {
-        // Analyze
-        w /= samplingFactor;
-        h /= samplingFactor;
-
-        GLTex analyzeTex = new GLTex(w, h, 4, GLTex.Format.Float16, null);
-
-        // Load intermediate buffer as texture
-        mIntermediate.bind(GL_TEXTURE0);
-
-        // Configure frame buffer
-        analyzeTex.setFrameBuffer();
-
-        glViewport(0, 0, w, h);
-        seti("samplingFactor", samplingFactor);
-        draw();
-
-        int whPixels = w * h;
-        float[] f = new float[whPixels * 4];
-        FloatBuffer fb = ByteBuffer.allocateDirect(f.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        fb.mark();
-
-        glReadPixels(0, 0, w, h, GL_RGBA, GL_FLOAT, fb.reset());
-        fb.get(f);
-
-        analyzeTex.close();
-
-        // Calculate a histogram on the result
-        Histogram histParser = new Histogram(f, whPixels);
-        sigma = histParser.sigma;
-        hist = histParser.hist;
-
-        Log.d(TAG, "Sigma " + Arrays.toString(sigma));
-        Log.d(TAG, "LogAvg " + histParser.logAvgLuminance);
     }
 
     public void blurIntermediate(boolean lce, boolean ahe) {
@@ -202,8 +154,6 @@ public class GLProgramRawConverter extends GLProgramBase {
     }
 
     public void prepareForOutput(float histFactor, float satLimit) {
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo[0]);
-
         // Load intermediate buffers as textures
         mIntermediate.bind(GL_TEXTURE0);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -240,50 +190,8 @@ public class GLProgramRawConverter extends GLProgramBase {
         setf("satLimit", satLimit);
     }
 
-    public void setLCE(boolean lce) {
-        seti("lce", lce ? 1 : 0);
-    }
-
-    public void setAHE(boolean ahe) {
-        seti("ahe", ahe ? 1 : 0);
-    }
-
-    public void setToneMapCoeffs(float[] toneMapCoeffs) {
-        setf("toneMapCoeffs", toneMapCoeffs);
-    }
-
-    public void setTransforms2(float[] XYZtoProPhoto, float[] proPhotoToSRGB) {
-        setf("XYZtoProPhoto", XYZtoProPhoto);
-        setf("proPhotoToSRGB", proPhotoToSRGB);
-    }
-
-    public void setDenoiseFactor(int denoiseFactor) {
-        denoiseFactor = (int)((float) denoiseFactor * Math.sqrt(sigma[0] + sigma[1]));
-        Log.d(TAG, "Denoise radius " + denoiseFactor);
-        seti("radiusDenoise", denoiseFactor);
-    }
-
-    public void setSharpenFactor(float sharpenFactor) {
-        sharpenFactor -= 7f * Math.hypot(sigma[0], sigma[1]);
-        Log.d(TAG, "Sharpen " + sharpenFactor);
-        setf("sharpenFactor", Math.max(sharpenFactor, -0.25f));
-    }
-
-    public void setSaturation(float[] saturation) {
-        float[] sat = new float[saturation.length + 1];
-        System.arraycopy(saturation, 0, sat, 0, saturation.length);
-        sat[saturation.length] = saturation[0];
-
-        GLTex satTex = new GLTex(sat.length, 1, 1, GLTex.Format.Float16,
-                FloatBuffer.wrap(sat), GL_LINEAR, GL_CLAMP_TO_EDGE);
-        satTex.bind(GL_TEXTURE6);
-        seti("saturation", 6);
-    }
-
-    public void intermediateToOutput(int outWidth, int y, int height) {
-        glViewport(0, 0, outWidth, height);
+    public void setYOffset(int y) {
         seti("yOffset", y);
-        draw();
     }
 
     public void drawBlocks(int w, int h) {

@@ -33,7 +33,7 @@ public class GLProgramBase implements AutoCloseable {
         return program;
     }
 
-    protected void draw() {
+    public void draw() {
         mSquare.draw(vPosition());
         glFlush();
     }

@@ -37,7 +37,11 @@ public class GLCoreBlockProcessing extends GLCoreBase {
         while (divider.nextBlock(row)) {
             int y = row[0];
             int height = row[1];
-            program.intermediateToOutput(mOutWidth, y, height);
+
+            glViewport(0, 0, mOutWidth, height);
+            program.setYOffset(y);
+            program.draw();
+
             mBlockBuffer.position(0);
             glReadPixels(0, 0, mOutWidth, height, GL_RGBA, GL_UNSIGNED_BYTE, mBlockBuffer);
             if (height < BLOCK_HEIGHT) {
