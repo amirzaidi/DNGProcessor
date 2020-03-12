@@ -13,6 +13,7 @@ import amirz.dngprocessor.math.Histogram;
 import amirz.dngprocessor.pipeline.GLProgramRawConverter;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
+import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 
 import static android.opengl.GLES20.GL_FLOAT;
 import static android.opengl.GLES20.GL_RGBA;
@@ -50,7 +51,8 @@ public class SampleHistogram extends Stage {
         GLTex analyzeTex = new GLTex(w, h, 4, GLTex.Format.Float16, null);
 
         // Load intermediate buffer as texture
-        converter.mIntermediate.bind(GL_TEXTURE0);
+        GLTex intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
+        intermediate.bind(GL_TEXTURE0);
 
         // Configure frame buffer
         analyzeTex.setFrameBuffer();

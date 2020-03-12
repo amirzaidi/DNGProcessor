@@ -9,6 +9,12 @@ import amirz.dngprocessor.pipeline.StagePipeline;
 import static android.opengl.GLES20.GL_TEXTURE0;
 
 public class GreenDemosaic extends Stage {
+    private GLTex mSensorG;
+
+    public GLTex getSensorGTex() {
+        return mSensorG;
+    }
+
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
         super.execute(previousStages);
@@ -18,14 +24,15 @@ public class GreenDemosaic extends Stage {
         converter.seti("rawWidth", converter.inWidth);
         converter.seti("rawHeight", converter.inHeight);
 
-        converter.mSensorG = new GLTex(converter.inWidth, converter.inHeight, 1,
+        mSensorG = new GLTex(converter.inWidth, converter.inHeight, 1,
                 GLTex.Format.Float16, null);
 
         // Load old texture
-        converter.mSensor.bind(GL_TEXTURE0);
+        GLTex sensorTex = previousStages.getStage(PreProcess.class).getSensorTex();
+        sensorTex.bind(GL_TEXTURE0);
 
         // Configure frame buffer
-        converter.mSensorG.setFrameBuffer();
+        mSensorG.setFrameBuffer();
 
         converter.seti("cfaPattern", converter.cfaPattern);
         converter.drawBlocks(converter.inWidth, converter.inHeight);

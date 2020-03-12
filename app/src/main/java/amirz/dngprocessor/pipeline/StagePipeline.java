@@ -104,5 +104,15 @@ public class StagePipeline implements AutoCloseable {
         private StageMap(List<Stage> stages) {
             mStages = stages;
         }
+
+        @SuppressWarnings("unchecked")
+        public <T> T getStage(Class<T> cls) {
+            for (Stage stage : mStages) {
+                if (stage.getClass() == cls) {
+                    return (T) stage;
+                }
+            }
+            return null;
+        }
     }
 }

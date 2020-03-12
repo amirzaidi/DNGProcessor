@@ -26,7 +26,7 @@ public class GLProgramRawConverter extends GLProgramBase {
     public final int mProgramIntermediateBilateral;
 
     public int inWidth, inHeight, cfaPattern;
-    public GLTex mSensorUI, mGainMap, mSensor, mSensorG, mIntermediate, mBlurred, mAHEMap, mDownscaled;
+    public GLTex mGainMap, mIntermediate, mBlurred, mAHEMap, mDownscaled;
     public GLTex mBilateralFiltered;
     public float[] sigma;
     public float[] hist;
