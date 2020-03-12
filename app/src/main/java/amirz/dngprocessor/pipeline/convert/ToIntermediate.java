@@ -61,8 +61,8 @@ public class ToIntermediate extends Stage {
         converter.seti("cfaPattern", converter.cfaPattern);
         converter.drawBlocks(converter.inWidth, converter.inHeight);
 
-        converter.mSensor.delete();
-        converter.mSensorG.delete();
+        converter.mSensor.close();
+        converter.mSensorG.close();
     }
 
     @Override

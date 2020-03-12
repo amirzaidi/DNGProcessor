@@ -8,7 +8,7 @@ import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_2D;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MAG_FILTER;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MIN_FILTER;
 
-public class GLTex {
+public class GLTex implements AutoCloseable {
     public enum Format {
         Float16,
         UInt16
@@ -93,7 +93,8 @@ public class GLTex {
         return mHeight;
     }
 
-    public void delete() {
+    @Override
+    public void close() {
         glDeleteTextures(1, new int[] { mTexId }, 0);
     }
 

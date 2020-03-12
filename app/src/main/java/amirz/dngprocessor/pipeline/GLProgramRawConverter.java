@@ -24,8 +24,6 @@ import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MIN_FILTER;
 public class GLProgramRawConverter extends GLProgramBase {
     private static final String TAG = "GLProgram";
 
-    private final GLTexPool mTexPool = new GLTexPool();
-
     public final int mProgramHelperDownscale;
     public final int mProgramIntermediateBlur;
     public final int mProgramIntermediateHistGen;
@@ -51,10 +49,6 @@ public class GLProgramRawConverter extends GLProgramBase {
         mProgramIntermediateHistGen = createProgram(vertexShader, loader.readRaw(R.raw.stage2_3_fs));
         mProgramIntermediateHistBlur = createProgram(vertexShader, loader.readRaw(R.raw.stage2_4_fs));
         mProgramIntermediateBilateral = createProgram(vertexShader, loader.readRaw(R.raw.stage3_0_fs));
-    }
-
-    public GLTexPool getTexPool() {
-        return mTexPool;
     }
 
     public void setOutOffset(int offsetX, int offsetY) {
@@ -86,7 +80,7 @@ public class GLProgramRawConverter extends GLProgramBase {
         glReadPixels(0, 0, w, h, GL_RGBA, GL_FLOAT, fb.reset());
         fb.get(f);
 
-        analyzeTex.delete();
+        analyzeTex.close();
 
         // Calculate a histogram on the result
         Histogram histParser = new Histogram(f, whPixels);
@@ -139,7 +133,7 @@ public class GLProgramRawConverter extends GLProgramBase {
             mBlurred.setFrameBuffer();
             drawBlocks(w, h);
 
-            temp.delete();
+            temp.close();
         }
 
         // AHE
@@ -183,7 +177,7 @@ public class GLProgramRawConverter extends GLProgramBase {
             mAHEMap.setFrameBuffer();
             drawBlocks(w / 2, h / 2);
 
-            temp.delete();
+            temp.close();
         }
 
         // Double bilateral filter.

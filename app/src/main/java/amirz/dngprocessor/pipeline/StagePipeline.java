@@ -47,7 +47,7 @@ public class StagePipeline implements AutoCloseable {
         mCore = new GLCoreBlockProcessing(argbOutput, loader);
         mConverter = (GLProgramRawConverter) mCore.getProgram();
 
-        mTexPool = mConverter.getTexPool();
+        mTexPool = new GLTexPool();
         mShaderLoader = loader;
 
         ColorspaceConverter colorspace = new ColorspaceConverter(sensor);
@@ -90,6 +90,7 @@ public class StagePipeline implements AutoCloseable {
 
     @Override
     public void close() {
+        mTexPool.close();
         mCore.close();
     }
 

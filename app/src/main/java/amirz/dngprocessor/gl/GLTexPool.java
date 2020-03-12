@@ -3,7 +3,7 @@ package amirz.dngprocessor.gl;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GLTexPool {
+public class GLTexPool implements AutoCloseable {
     private Map<GLTex.Config, GLTex> mTexPool = new HashMap<>();
 
     public AutoRepoolableTex findOrCreate(GLTex.Config config) {
@@ -18,6 +18,14 @@ public class GLTexPool {
     private static boolean configEqual(GLTex.Config c1, GLTex.Config c2) {
         return c1.w == c2.w && c1.h == c2.h && c1.channels == c2.channels && c1.format == c2.format
                 && c1.texFilter == c2.texFilter && c1.texWrap == c2.texWrap;
+    }
+
+    @Override
+    public void close() {
+        for (GLTex tex : mTexPool.values()) {
+            tex.close();
+        }
+        mTexPool.clear();
     }
 
     public class AutoRepoolableTex implements AutoCloseable {

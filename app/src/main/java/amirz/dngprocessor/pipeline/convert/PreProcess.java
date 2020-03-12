@@ -82,9 +82,9 @@ public class PreProcess extends Stage {
 
         converter.drawBlocks(converter.inWidth, converter.inHeight);
 
-        converter.mSensorUI.delete();
-        converter.mGainMap.delete();
-        hotPx.delete();
+        converter.mSensorUI.close();
+        converter.mGainMap.close();
+        hotPx.close();
     }
 
     @Override
