@@ -14,10 +14,25 @@ public class GLTex {
         UInt16
     }
 
+    public static class Config {
+        public int w, h;
+        public Buffer pixels;
+
+        public int channels = 1;
+        public Format format = Format.Float16;
+        public int texFilter = GL_NEAREST;
+        public int texWrap = GL_CLAMP_TO_EDGE;
+    }
+
     private final int mWidth, mHeight;
     private final int mChannels;
     private final Format mFormat;
     private final int mTexId;
+
+    public GLTex(Config config) {
+        this(config.w, config.h, config.channels, config.format, config.pixels, config.texFilter,
+                config.texWrap);
+    }
 
     public GLTex(int w, int h, int channels, Format format, Buffer pixels) {
         this(w, h, channels, format, pixels, GL_NEAREST);
@@ -52,11 +67,13 @@ public class GLTex {
         glBindTexture(GL_TEXTURE_2D, mTexId);
     }
 
+    /*
     public void enableMipmaps() {
         glGenerateMipmap(GL_TEXTURE_2D);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
     }
+    */
 
     public void setFrameBuffer() {
         // Configure frame buffer
