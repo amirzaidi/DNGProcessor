@@ -235,7 +235,7 @@ public class GLProgramRawConverter extends GLProgramBase {
 
         int scale = 8;
         mIntermediate.bind(GL_TEXTURE0);
-        seti("inBuffer", 0);
+        seti("buf", 0);
         seti("scale", scale);
 
         mDownscaled = new GLTex(w / scale, h / scale, 1, GLTex.Format.Float16, null, GL_LINEAR);

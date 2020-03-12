@@ -2,7 +2,9 @@
 
 precision mediump float;
 
-uniform sampler2D inBuffer;
+uniform sampler2D buf;
+uniform ivec2 bufSize;
+
 uniform int scale;
 
 // Out
