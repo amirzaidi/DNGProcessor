@@ -71,9 +71,6 @@ public class ToIntermediate extends Stage {
 
         sensorTex.close();
         sensorGTex.close();
-
-        // To remove
-        converter.mIntermediate = getIntermediate();
     }
 
     @Override

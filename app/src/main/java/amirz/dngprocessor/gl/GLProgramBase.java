@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import amirz.dngprocessor.math.BlockDivider;
+
+import static amirz.dngprocessor.util.Constants.BLOCK_HEIGHT;
 import static android.opengl.GLES20.*;
 import static android.opengl.GLES30.*;
 
-public class GLProgramBase implements AutoCloseable {
+public abstract class GLProgramBase implements AutoCloseable {
     private final GLSquare mSquare = new GLSquare();
     private final List<Integer> mPrograms = new ArrayList<>();
     private int mProgramActive;
@@ -33,9 +36,20 @@ public class GLProgramBase implements AutoCloseable {
         return program;
     }
 
+    public abstract void setYOffset(int y);
+
     public void draw() {
         mSquare.draw(vPosition());
         glFlush();
+    }
+
+    public void drawBlocks(int w, int h) {
+        BlockDivider divider = new BlockDivider(h, BLOCK_HEIGHT);
+        int[] row = new int[2];
+        while (divider.nextBlock(row)) {
+            glViewport(0, row[0], w, row[1]);
+            draw();
+        }
     }
 
     @Override
