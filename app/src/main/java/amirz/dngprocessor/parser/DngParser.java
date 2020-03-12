@@ -19,7 +19,6 @@ import amirz.dngprocessor.util.NotifHandler;
 import amirz.dngprocessor.util.Path;
 import amirz.dngprocessor.Preferences;
 import amirz.dngprocessor.device.DeviceMap;
-import amirz.dngprocessor.pipeline.GLControllerRawConverter;
 import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;

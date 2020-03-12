@@ -1,10 +1,12 @@
 package amirz.dngprocessor.pipeline;
 
 import android.graphics.Bitmap;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import amirz.dngprocessor.colorspace.ColorspaceConverter;
 import amirz.dngprocessor.gl.GLTexPool;
 import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
@@ -18,34 +20,52 @@ import amirz.dngprocessor.pipeline.intermediate.SplitDetail;
 import amirz.dngprocessor.pipeline.post.ToneMap;
 
 public class StagePipeline implements AutoCloseable {
+    private static final String TAG = "StagePipeline";
+
     private final List<Stage> mStages = new ArrayList<>();
-    private final GLControllerRawConverter mController;
+
+    private final GLCoreBlockProcessing mCore;
     private final GLProgramRawConverter mConverter;
+
     private final GLTexPool mTexPool;
     private final ShaderLoader mShaderLoader;
 
     public StagePipeline(SensorParams sensor, ProcessParams process,
                          byte[] raw, Bitmap argbOutput, ShaderLoader loader) {
-        mController = new GLControllerRawConverter(sensor, process, raw, argbOutput, loader);
+        int outWidth = argbOutput.getWidth();
+        int outHeight = argbOutput.getHeight();
 
-        mConverter = mController.getProgram();
+        if (outWidth + sensor.outputOffsetX > sensor.inputWidth
+                || outHeight + sensor.outputOffsetY > sensor.inputHeight) {
+            throw new IllegalArgumentException("Raw image with dimensions (w=" + sensor.inputWidth
+                    + ", h=" + sensor.inputHeight
+                    + "), cannot converted into sRGB image with dimensions (w="
+                    + outWidth + ", h=" + outHeight + ").");
+        }
+        Log.d(TAG, "Output width,height: " + outWidth + "," + outHeight);
+
+        mCore = new GLCoreBlockProcessing(argbOutput, loader);
+        mConverter = (GLProgramRawConverter) mCore.getProgram();
+
         mTexPool = mConverter.getTexPool();
         mShaderLoader = loader;
+
+        ColorspaceConverter colorspace = new ColorspaceConverter(sensor);
 
         // RAW -> XYZ
         addStage(new PreProcess(sensor, raw));
         addStage(new GreenDemosaic());
-        addStage(new ToIntermediate(sensor, mController.sensorToXYZ_D50));
+        addStage(new ToIntermediate(sensor, colorspace.sensorToXYZ_D50));
 
         // Intermediaries
-        addStage(new SampleHistogram(mController.getOutWidth(), mController.getOutHeight(),
+        addStage(new SampleHistogram(outWidth, outHeight,
                 sensor.outputOffsetX, sensor.outputOffsetY));
         addStage(new BilateralFilter(process));
         addStage(new SplitDetail());
 
         // XYZ -> sRGB
-        addStage(new ToneMap(sensor, process, mController.XYZtoProPhoto,
-                mController.proPhotoToSRGB));
+        addStage(new ToneMap(sensor, process, colorspace.XYZtoProPhoto,
+                colorspace.proPhotoToSRGB));
     }
 
     private void addStage(Stage stage) {
@@ -62,15 +82,15 @@ public class StagePipeline implements AutoCloseable {
             mStages.get(i).execute(mStages.subList(0, i));
         }
 
-        // Replacement for ToneMap doing it.
-        mController.getCore().intermediateToOutput();
+        // Replacement for ToneMap calling it.
+        mCore.intermediateToOutput();
 
         reporter.onProgress(stageCount, stageCount);
     }
 
     @Override
     public void close() {
-        mController.close();
+        mCore.close();
     }
 
     public interface OnProgressReporter {
