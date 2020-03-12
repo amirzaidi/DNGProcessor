@@ -16,7 +16,7 @@ void main() {
 
     for (int i = 0; i < (scale * scale); i++) {
         ivec2 pos = xy + ivec2(i % scale, i / scale);
-        res += texelFetch(inBuffer, pos, 0).z;
+        res += texelFetch(buf, pos, 0).z;
     }
 
     outPixel = res / float(scale * scale);
