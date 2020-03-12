@@ -14,8 +14,8 @@ import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import amirz.dngprocessor.NotifHandler;
-import amirz.dngprocessor.Path;
+import amirz.dngprocessor.util.NotifHandler;
+import amirz.dngprocessor.util.Path;
 import amirz.dngprocessor.Preferences;
 import amirz.dngprocessor.device.DeviceMap;
 import amirz.dngprocessor.gl.GLControllerRawConverter;

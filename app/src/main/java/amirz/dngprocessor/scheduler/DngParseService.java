@@ -11,14 +11,14 @@ import android.widget.Toast;
 
 import java.io.File;
 
-import amirz.dngprocessor.NotifHandler;
-import amirz.dngprocessor.Path;
+import amirz.dngprocessor.util.NotifHandler;
+import amirz.dngprocessor.util.Path;
 import amirz.dngprocessor.Preferences;
 import amirz.dngprocessor.R;
-import amirz.dngprocessor.Utilities;
+import amirz.dngprocessor.util.Utilities;
 import amirz.dngprocessor.parser.DngParser;
 
-import static amirz.dngprocessor.Utilities.ATLEAST_OREO;
+import static amirz.dngprocessor.util.Utilities.ATLEAST_OREO;
 
 public class DngParseService extends IntentService {
     private static final String TAG = "DngParseService";

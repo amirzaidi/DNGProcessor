@@ -9,7 +9,7 @@ import amirz.dngprocessor.gl.generic.GLProgramBase;
 import amirz.dngprocessor.gl.generic.ShaderLoader;
 import amirz.dngprocessor.math.BlockDivider;
 
-import static amirz.dngprocessor.Constants.BLOCK_HEIGHT;
+import static amirz.dngprocessor.util.Constants.BLOCK_HEIGHT;
 import static android.opengl.GLES20.*;
 
 public class GLCoreBlockProcessing extends GLCoreBase {

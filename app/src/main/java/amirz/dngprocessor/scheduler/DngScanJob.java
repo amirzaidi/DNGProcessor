@@ -12,9 +12,9 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 
-import amirz.dngprocessor.Path;
+import amirz.dngprocessor.util.Path;
 import amirz.dngprocessor.Preferences;
-import amirz.dngprocessor.Utilities;
+import amirz.dngprocessor.util.Utilities;
 
 public class DngScanJob extends JobService {
     private static final String TAG = "DngScanJob";

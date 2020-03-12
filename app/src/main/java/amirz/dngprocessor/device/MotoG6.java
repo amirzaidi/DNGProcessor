@@ -7,7 +7,7 @@ import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.parser.TIFF;
 import amirz.dngprocessor.parser.TIFFTag;
 
-import static amirz.dngprocessor.Constants.PLUS;
+import static amirz.dngprocessor.util.Constants.PLUS;
 
 public class MotoG6 extends Generic {
     @Override

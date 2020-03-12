@@ -1,4 +1,4 @@
-package amirz.dngprocessor;
+package amirz.dngprocessor.util;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -9,7 +9,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import static amirz.dngprocessor.Utilities.ATLEAST_OREO;
+import amirz.dngprocessor.R;
+
+import static amirz.dngprocessor.util.Utilities.ATLEAST_OREO;
 
 public class NotifHandler {
     private static final String TAG = "NotifHandler";

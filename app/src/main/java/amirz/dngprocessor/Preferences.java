@@ -6,6 +6,7 @@ import android.preference.PreferenceFragment;
 import android.text.TextUtils;
 
 import amirz.dngprocessor.scheduler.DngParseService;
+import amirz.dngprocessor.util.Utilities;
 import amirz.library.settings.GlobalPreferences;
 
 public class Preferences extends GlobalPreferences {

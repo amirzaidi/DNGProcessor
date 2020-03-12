@@ -1,4 +1,4 @@
-package amirz.dngprocessor;
+package amirz.dngprocessor.util;
 
 import android.content.Context;
 import android.content.SharedPreferences;

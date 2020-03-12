@@ -10,6 +10,8 @@ import android.preference.Preference;
 
 import amirz.dngprocessor.scheduler.DngParseService;
 import amirz.dngprocessor.scheduler.DngScanJob;
+import amirz.dngprocessor.util.NotifHandler;
+import amirz.dngprocessor.util.Path;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 

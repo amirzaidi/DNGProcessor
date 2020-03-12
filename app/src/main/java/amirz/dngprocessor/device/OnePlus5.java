@@ -5,9 +5,9 @@ import android.util.SparseArray;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.parser.TIFFTag;
 
-import static amirz.dngprocessor.Constants.HORZ;
-import static amirz.dngprocessor.Constants.PLUS;
-import static amirz.dngprocessor.Constants.VERT;
+import static amirz.dngprocessor.util.Constants.HORZ;
+import static amirz.dngprocessor.util.Constants.PLUS;
+import static amirz.dngprocessor.util.Constants.VERT;
 
 public class OnePlus5 extends OnePlus {
     @Override

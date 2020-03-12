@@ -1,4 +1,4 @@
-package amirz.dngprocessor;
+package amirz.dngprocessor.util;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;

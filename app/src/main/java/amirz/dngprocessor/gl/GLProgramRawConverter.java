@@ -16,7 +16,7 @@ import amirz.dngprocessor.gl.generic.ShaderLoader;
 import amirz.dngprocessor.math.BlockDivider;
 import amirz.dngprocessor.math.Histogram;
 
-import static amirz.dngprocessor.Constants.BLOCK_HEIGHT;
+import static amirz.dngprocessor.util.Constants.BLOCK_HEIGHT;
 import static android.opengl.GLES20.*;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_2D;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MAG_FILTER;
