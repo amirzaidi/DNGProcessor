@@ -7,7 +7,7 @@ import java.util.List;
 import static android.opengl.GLES20.*;
 import static android.opengl.GLES30.*;
 
-public class GLProgramBase {
+public class GLProgramBase implements AutoCloseable {
     private final GLSquare mSquare = new GLSquare();
     private final List<Integer> mPrograms = new ArrayList<>();
     private int mProgramActive;
@@ -38,6 +38,7 @@ public class GLProgramBase {
         glFlush();
     }
 
+    @Override
     public void close() {
         // Clean everything up
         for (int program : mPrograms) {
