@@ -3,7 +3,6 @@ package amirz.dngprocessor.pipeline.post;
 import android.util.Log;
 
 import java.nio.FloatBuffer;
-import java.util.List;
 
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLTex;
@@ -13,6 +12,7 @@ import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.GLProgramRawConverter;
 import amirz.dngprocessor.pipeline.Stage;
+import amirz.dngprocessor.pipeline.StagePipeline;
 
 import static amirz.dngprocessor.colorspace.ColorspaceConstants.CUSTOM_ACR3_TONEMAP_CURVE_COEFFS;
 import static android.opengl.GLES20.GL_CLAMP_TO_EDGE;
@@ -47,7 +47,7 @@ public class ToneMap extends Stage {
     }
 
     @Override
-    protected void execute(List<Stage> previousStages) {
+    protected void execute(StagePipeline.StageMap previousStages) {
         super.execute(previousStages);
         GLProgramRawConverter converter = getConverter();
 

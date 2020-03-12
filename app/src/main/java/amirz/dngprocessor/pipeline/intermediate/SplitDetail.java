@@ -1,14 +1,13 @@
 package amirz.dngprocessor.pipeline.intermediate;
 
-import java.util.List;
-
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.pipeline.GLProgramRawConverter;
 import amirz.dngprocessor.pipeline.Stage;
+import amirz.dngprocessor.pipeline.StagePipeline;
 
 public class SplitDetail extends Stage {
     @Override
-    protected void execute(List<Stage> previousStages) {
+    protected void execute(StagePipeline.StageMap previousStages) {
         super.execute(previousStages);
         GLProgramRawConverter converter = getConverter();
     }

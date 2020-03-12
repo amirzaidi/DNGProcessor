@@ -1,7 +1,5 @@
 package amirz.dngprocessor.pipeline;
 
-import java.util.List;
-
 import amirz.dngprocessor.gl.GLTexPool;
 import amirz.dngprocessor.gl.ShaderLoader;
 
@@ -29,7 +27,7 @@ public abstract class Stage {
         return true;
     }
 
-    protected void execute(List<Stage> previousStages) {
+    protected void execute(StagePipeline.StageMap previousStages) {
         mConverter.useProgram(mProgram);
     }
 

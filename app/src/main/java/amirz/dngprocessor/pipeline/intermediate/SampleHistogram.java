@@ -6,13 +6,13 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.Arrays;
-import java.util.List;
 
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLTex;
 import amirz.dngprocessor.math.Histogram;
 import amirz.dngprocessor.pipeline.GLProgramRawConverter;
 import amirz.dngprocessor.pipeline.Stage;
+import amirz.dngprocessor.pipeline.StagePipeline;
 
 import static android.opengl.GLES20.GL_FLOAT;
 import static android.opengl.GLES20.GL_RGBA;
@@ -33,7 +33,7 @@ public class SampleHistogram extends Stage {
     }
 
     @Override
-    protected void execute(List<Stage> previousStages) {
+    protected void execute(StagePipeline.StageMap previousStages) {
         super.execute(previousStages);
         GLProgramRawConverter converter = getConverter();
 
