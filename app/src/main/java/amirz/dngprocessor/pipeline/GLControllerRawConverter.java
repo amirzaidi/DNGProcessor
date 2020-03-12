@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package amirz.dngprocessor.gl;
+package amirz.dngprocessor.pipeline;
 
 import android.graphics.Bitmap;
 import android.util.Log;
 
-import amirz.dngprocessor.gl.generic.ShaderLoader;
+import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.colorspace.ColorspaceConverter;
@@ -80,6 +80,10 @@ public class GLControllerRawConverter extends ColorspaceConverter implements Aut
         mGlSquare.prepareToIntermediate();
         mGlSquare.setNeutralPoint(sensor.neutralColorPoint, sensor.cfaVal);
         mGlSquare.setTransforms1(sensorToXYZ_D50);
+    }
+
+    public GLProgramRawConverter getProgram() {
+        return mGlSquare;
     }
 
     public void sensorToIntermediate() {

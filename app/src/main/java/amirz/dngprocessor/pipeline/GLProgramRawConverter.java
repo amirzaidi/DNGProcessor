@@ -1,4 +1,4 @@
-package amirz.dngprocessor.gl;
+package amirz.dngprocessor.pipeline;
 
 import android.util.Log;
 import android.util.Rational;
@@ -10,9 +10,10 @@ import java.nio.ShortBuffer;
 import java.util.Arrays;
 
 import amirz.dngprocessor.R;
-import amirz.dngprocessor.gl.generic.GLProgramBase;
-import amirz.dngprocessor.gl.generic.GLTex;
-import amirz.dngprocessor.gl.generic.ShaderLoader;
+import amirz.dngprocessor.gl.GLProgramBase;
+import amirz.dngprocessor.gl.GLTex;
+import amirz.dngprocessor.gl.GLTexPool;
+import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.math.BlockDivider;
 import amirz.dngprocessor.math.Histogram;
 
@@ -24,6 +25,8 @@ import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MIN_FILTER;
 
 public class GLProgramRawConverter extends GLProgramBase {
     private static final String TAG = "GLProgram";
+
+    private final GLTexPool mTexPool = new GLTexPool();
 
     private final int mProgramHelperDownscale;
     private final int mProgramSensorPreProcess;
@@ -61,6 +64,10 @@ public class GLProgramRawConverter extends GLProgramBase {
 
         // Link first program
         useProgram(mProgramSensorPreProcess);
+    }
+
+    public GLTexPool getTexPool() {
+        return mTexPool;
     }
 
     public void setIn(byte[] in, int inWidth, int inHeight, int cfaPattern) {

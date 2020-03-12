@@ -14,12 +14,13 @@ import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.util.NotifHandler;
 import amirz.dngprocessor.util.Path;
 import amirz.dngprocessor.Preferences;
 import amirz.dngprocessor.device.DeviceMap;
-import amirz.dngprocessor.gl.GLControllerRawConverter;
-import amirz.dngprocessor.gl.generic.ShaderLoader;
+import amirz.dngprocessor.pipeline.GLControllerRawConverter;
+import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 
@@ -30,7 +31,7 @@ public class DngParser {
     private static int STEPS = 0;
     private static final int STEP_READ = STEPS++;
     private static final int STEP_PROCESS_INIT = STEPS++;
-    private static final int STEP_PROCESS_SENSOR = STEPS++;
+    private static final int STEP_PROCESS = STEPS++;
     private static final int STEP_PROCESS_ANALYZE = STEPS++;
     private static final int STEP_PROCESS_BLUR = STEPS++;
     private static final int STEP_PROCESS_XYZ = STEPS++;
@@ -197,9 +198,18 @@ public class DngParser {
 
         NotifHandler.progress(mContext, STEPS, STEP_PROCESS_INIT);
         ShaderLoader loader = new ShaderLoader(mContext.getResources());
+
+        try (StagePipeline pipeline = new StagePipeline(
+                sensor, process, rawImageInput, argbOutput, loader)) {
+            pipeline.execute((completed, total) -> {
+               // NotifHandler.progress(mContext, STEPS, STEP_PROCESS + completed);
+            });
+        }
+
+        /*
         try (GLControllerRawConverter converter = new GLControllerRawConverter(
                 sensor, process, rawImageInput, argbOutput, loader)) {
-            NotifHandler.progress(mContext, STEPS, STEP_PROCESS_SENSOR);
+            NotifHandler.progress(mContext, STEPS, STEP_PROCESS);
             converter.sensorToIntermediate();
 
             NotifHandler.progress(mContext, STEPS, STEP_PROCESS_ANALYZE);
@@ -211,6 +221,7 @@ public class DngParser {
             NotifHandler.progress(mContext, STEPS, STEP_PROCESS_XYZ);
             converter.intermediateToOutput();
         }
+        */
 
         NotifHandler.progress(mContext, STEPS, STEP_SAVE);
         String savePath = Path.processedPath(pref.savePath.get(), mFile);

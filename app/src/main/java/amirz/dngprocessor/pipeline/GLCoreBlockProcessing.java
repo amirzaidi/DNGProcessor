@@ -1,12 +1,12 @@
-package amirz.dngprocessor.gl;
+package amirz.dngprocessor.pipeline;
 
 import android.graphics.Bitmap;
 
 import java.nio.IntBuffer;
 
-import amirz.dngprocessor.gl.generic.GLCoreBase;
-import amirz.dngprocessor.gl.generic.GLProgramBase;
-import amirz.dngprocessor.gl.generic.ShaderLoader;
+import amirz.dngprocessor.gl.GLCoreBase;
+import amirz.dngprocessor.gl.GLProgramBase;
+import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.math.BlockDivider;
 
 import static amirz.dngprocessor.util.Constants.BLOCK_HEIGHT;
