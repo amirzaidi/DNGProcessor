@@ -12,13 +12,13 @@ public class GLProgramBase implements AutoCloseable {
     private final List<Integer> mPrograms = new ArrayList<>();
     private int mProgramActive;
 
-    protected void useProgram(int program) {
+    public void useProgram(int program) {
         glLinkProgram(program);
         glUseProgram(program);
         mProgramActive = program;
     }
 
-    protected int createProgram(int vertex, String fragmentId) {
+    public int createProgram(int vertex, String fragmentId) {
         int fragment;
         try {
             fragment = loadShader(GL_FRAGMENT_SHADER, fragmentId);

@@ -70,24 +70,10 @@ public class GLControllerRawConverter extends ColorspaceConverter implements Aut
         // Write the variables first
         mGlCore = new GLCoreBlockProcessing(argbOutput, loader);
         mGlSquare = (GLProgramRawConverter) mGlCore.getProgram();
-
-        mGlSquare.setIn(rawImageInput, sensor.inputWidth, sensor.inputHeight, sensor.cfa);
-        mGlSquare.setGainMap(sensor.gainMap, sensor.gainMapSize);
-        mGlSquare.setBlackWhiteLevel(sensor.blackLevelPattern, sensor.whiteLevel);
-        mGlSquare.sensorPreProcess(sensor.hotPixels, sensor.hotPixelsSize);
-        mGlSquare.greenDemosaic();
-
-        mGlSquare.prepareToIntermediate();
-        mGlSquare.setNeutralPoint(sensor.neutralColorPoint, sensor.cfaVal);
-        mGlSquare.setTransforms1(sensorToXYZ_D50);
     }
 
     public GLProgramRawConverter getProgram() {
         return mGlSquare;
-    }
-
-    public void sensorToIntermediate() {
-        mGlSquare.sensorToIntermediate();
     }
 
     public void analyzeIntermediate() {

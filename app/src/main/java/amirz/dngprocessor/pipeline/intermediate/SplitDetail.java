@@ -8,6 +8,7 @@ import amirz.dngprocessor.pipeline.Stage;
 public class SplitDetail extends Stage {
     @Override
     protected void execute(List<Stage> previousStages) {
+        super.execute(previousStages);
         GLProgramRawConverter converter = getConverter();
     }
 

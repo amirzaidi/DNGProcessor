@@ -9,7 +9,9 @@ import amirz.dngprocessor.pipeline.Stage;
 public class GreenDemosaic extends Stage {
     @Override
     protected void execute(List<Stage> previousStages) {
+        super.execute(previousStages);
         GLProgramRawConverter converter = getConverter();
+        converter.greenDemosaic();
     }
 
     @Override

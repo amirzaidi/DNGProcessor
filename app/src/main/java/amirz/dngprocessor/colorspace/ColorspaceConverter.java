@@ -18,13 +18,11 @@ public class ColorspaceConverter {
     protected static final String TAG = "ColorspaceConverter";
     protected static final boolean DEBUG = true;
 
-    protected float[] sensorToXYZ_D50 = new float[9];
-    protected float[] XYZtoProPhoto = new float[9];
-    protected float[] proPhotoToSRGB = new float[9];
+    public float[] sensorToXYZ_D50 = new float[9];
+    public float[] XYZtoProPhoto = new float[9];
+    public float[] proPhotoToSRGB = new float[9];
 
     public ColorspaceConverter(SensorParams sensor) {
-
-
         if (sensor.outputOffsetX < 0 || sensor.outputOffsetY < 0) {
             throw new IllegalArgumentException("Negative offset passed to convertToSRGB");
         }

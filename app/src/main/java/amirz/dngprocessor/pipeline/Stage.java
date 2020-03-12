@@ -3,14 +3,18 @@ package amirz.dngprocessor.pipeline;
 import java.util.List;
 
 import amirz.dngprocessor.gl.GLTexPool;
+import amirz.dngprocessor.gl.ShaderLoader;
 
 public abstract class Stage {
     private GLProgramRawConverter mConverter;
     private GLTexPool mTexPool;
+    private int mProgram;
 
-    public void init(GLProgramRawConverter converter, GLTexPool texPool) {
+    public void init(GLProgramRawConverter converter, GLTexPool texPool,
+                     ShaderLoader shaderLoader) {
         mConverter = converter;
         mTexPool = texPool;
+        mProgram = converter.createProgram(converter.vertexShader, shaderLoader.readRaw(getShader()));
     }
 
     protected GLProgramRawConverter getConverter() {
@@ -25,7 +29,9 @@ public abstract class Stage {
         return true;
     }
 
-    protected abstract void execute(List<Stage> previousStages);
+    protected void execute(List<Stage> previousStages) {
+        mConverter.useProgram(mProgram);
+    }
 
     public abstract int getShader();
 }

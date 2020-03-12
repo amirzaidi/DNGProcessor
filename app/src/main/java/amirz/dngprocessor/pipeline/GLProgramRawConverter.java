@@ -16,6 +16,8 @@ import amirz.dngprocessor.gl.GLTexPool;
 import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.math.BlockDivider;
 import amirz.dngprocessor.math.Histogram;
+import amirz.dngprocessor.params.ProcessParams;
+import amirz.dngprocessor.params.SensorParams;
 
 import static amirz.dngprocessor.util.Constants.BLOCK_HEIGHT;
 import static android.opengl.GLES20.*;
@@ -29,9 +31,6 @@ public class GLProgramRawConverter extends GLProgramBase {
     private final GLTexPool mTexPool = new GLTexPool();
 
     private final int mProgramHelperDownscale;
-    private final int mProgramSensorPreProcess;
-    private final int mProgramSensorGreenDemosaic;
-    private final int mProgramSensorToIntermediate;
     private final int mProgramIntermediateAnalysis;
     private final int mProgramIntermediateBlur;
     private final int mProgramIntermediateHistGen;
@@ -46,24 +45,20 @@ public class GLProgramRawConverter extends GLProgramBase {
     private float[] sigma;
     private float[] hist;
 
+    public int vertexShader;
+
     public GLProgramRawConverter(ShaderLoader loader) {
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, fbo, 0);
 
-        int vertexShader = loadShader(GL_VERTEX_SHADER, loader.readRaw(R.raw.passthrough_vs));
+        vertexShader = loadShader(GL_VERTEX_SHADER, loader.readRaw(R.raw.passthrough_vs));
 
         mProgramHelperDownscale = createProgram(vertexShader, loader.readRaw(R.raw.helper_downscale_fs));
-        mProgramSensorPreProcess = createProgram(vertexShader, loader.readRaw(R.raw.stage1_1_fs));
-        mProgramSensorGreenDemosaic = createProgram(vertexShader, loader.readRaw(R.raw.stage1_2_fs));
-        mProgramSensorToIntermediate = createProgram(vertexShader, loader.readRaw(R.raw.stage1_3_fs));
         mProgramIntermediateAnalysis = createProgram(vertexShader, loader.readRaw(R.raw.stage2_1_fs));
         mProgramIntermediateBlur = createProgram(vertexShader, loader.readRaw(R.raw.stage2_2_fs));
         mProgramIntermediateHistGen = createProgram(vertexShader, loader.readRaw(R.raw.stage2_3_fs));
         mProgramIntermediateHistBlur = createProgram(vertexShader, loader.readRaw(R.raw.stage2_4_fs));
         mProgramIntermediateBilateral = createProgram(vertexShader, loader.readRaw(R.raw.stage3_0_fs));
         mProgramIntermediateToSRGB = createProgram(vertexShader, loader.readRaw(R.raw.stage3_1_fs));
-
-        // Link first program
-        useProgram(mProgramSensorPreProcess);
     }
 
     public GLTexPool getTexPool() {
@@ -127,8 +122,6 @@ public class GLProgramRawConverter extends GLProgramBase {
     }
 
     public void greenDemosaic() {
-        useProgram(mProgramSensorGreenDemosaic);
-
         seti("rawBuffer", 0);
         seti("rawWidth", inWidth);
         seti("rawHeight", inHeight);
@@ -146,8 +139,6 @@ public class GLProgramRawConverter extends GLProgramBase {
     }
 
     public void prepareToIntermediate() {
-        useProgram(mProgramSensorToIntermediate);
-
         seti("rawBuffer", 0);
         seti("greenBuffer", 2);
         seti("rawWidth", inWidth);
