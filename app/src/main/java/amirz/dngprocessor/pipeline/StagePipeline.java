@@ -12,6 +12,10 @@ import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.convert.GreenDemosaic;
 import amirz.dngprocessor.pipeline.convert.PreProcess;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
+import amirz.dngprocessor.pipeline.intermediate.BilateralFilter;
+import amirz.dngprocessor.pipeline.intermediate.SampleHistogram;
+import amirz.dngprocessor.pipeline.intermediate.SplitDetail;
+import amirz.dngprocessor.pipeline.post.ToneMap;
 
 public class StagePipeline implements AutoCloseable {
     private final List<Stage> mStages = new ArrayList<>();
@@ -32,13 +36,12 @@ public class StagePipeline implements AutoCloseable {
         addStage(new GreenDemosaic());
         addStage(new ToIntermediate(sensor, mController.sensorToXYZ_D50));
 
-        /*
-        addStage(new SampleHistogram());
-        addStage(new BilateralFilter());
+        addStage(new SampleHistogram(mController.getOutWidth(), mController.getOutHeight(),
+                sensor.outputOffsetX, sensor.outputOffsetY));
+        addStage(new BilateralFilter(process));
         addStage(new SplitDetail());
 
         addStage(new ToneMap());
-         */
     }
 
     private void addStage(Stage stage) {
@@ -55,8 +58,6 @@ public class StagePipeline implements AutoCloseable {
             mStages.get(i).execute(mStages.subList(0, i));
         }
 
-        mController.analyzeIntermediate();
-        mController.blurIntermediate();
         mController.intermediateToOutput();
 
         reporter.onProgress(stageCount, stageCount);

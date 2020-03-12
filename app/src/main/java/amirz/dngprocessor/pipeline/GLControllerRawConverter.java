@@ -72,17 +72,16 @@ public class GLControllerRawConverter extends ColorspaceConverter implements Aut
         mGlSquare = (GLProgramRawConverter) mGlCore.getProgram();
     }
 
+    public int getOutWidth() {
+        return mOutWidth;
+    }
+
+    public int getOutHeight() {
+        return mOutHeight;
+    }
+
     public GLProgramRawConverter getProgram() {
         return mGlSquare;
-    }
-
-    public void analyzeIntermediate() {
-        mGlSquare.setOutOffset(mSensorParams.outputOffsetX, mSensorParams.outputOffsetY);
-        mGlSquare.analyzeIntermediate(mOutWidth, mOutHeight, 32);
-    }
-
-    public void blurIntermediate() {
-        mGlSquare.blurIntermediate(mProcessParams.lce, mProcessParams.ahe);
     }
 
     public void intermediateToOutput() {

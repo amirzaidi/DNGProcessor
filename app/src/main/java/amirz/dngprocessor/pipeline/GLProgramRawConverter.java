@@ -16,8 +16,6 @@ import amirz.dngprocessor.gl.GLTexPool;
 import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.math.BlockDivider;
 import amirz.dngprocessor.math.Histogram;
-import amirz.dngprocessor.params.ProcessParams;
-import amirz.dngprocessor.params.SensorParams;
 
 import static amirz.dngprocessor.util.Constants.BLOCK_HEIGHT;
 import static android.opengl.GLES20.*;
@@ -31,7 +29,6 @@ public class GLProgramRawConverter extends GLProgramBase {
     private final GLTexPool mTexPool = new GLTexPool();
 
     private final int mProgramHelperDownscale;
-    private final int mProgramIntermediateAnalysis;
     private final int mProgramIntermediateBlur;
     private final int mProgramIntermediateHistGen;
     private final int mProgramIntermediateHistBlur;
@@ -53,7 +50,6 @@ public class GLProgramRawConverter extends GLProgramBase {
         vertexShader = loadShader(GL_VERTEX_SHADER, loader.readRaw(R.raw.passthrough_vs));
 
         mProgramHelperDownscale = createProgram(vertexShader, loader.readRaw(R.raw.helper_downscale_fs));
-        mProgramIntermediateAnalysis = createProgram(vertexShader, loader.readRaw(R.raw.stage2_1_fs));
         mProgramIntermediateBlur = createProgram(vertexShader, loader.readRaw(R.raw.stage2_2_fs));
         mProgramIntermediateHistGen = createProgram(vertexShader, loader.readRaw(R.raw.stage2_3_fs));
         mProgramIntermediateHistBlur = createProgram(vertexShader, loader.readRaw(R.raw.stage2_4_fs));
@@ -186,8 +182,6 @@ public class GLProgramRawConverter extends GLProgramBase {
 
     public void analyzeIntermediate(int w, int h, int samplingFactor) {
         // Analyze
-        useProgram(mProgramIntermediateAnalysis);
-
         w /= samplingFactor;
         h /= samplingFactor;
 

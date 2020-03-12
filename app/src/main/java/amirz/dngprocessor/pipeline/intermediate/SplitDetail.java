@@ -2,6 +2,7 @@ package amirz.dngprocessor.pipeline.intermediate;
 
 import java.util.List;
 
+import amirz.dngprocessor.R;
 import amirz.dngprocessor.pipeline.GLProgramRawConverter;
 import amirz.dngprocessor.pipeline.Stage;
 
@@ -14,6 +15,6 @@ public class SplitDetail extends Stage {
 
     @Override
     public int getShader() {
-        return 0;
+        return R.raw.stage2_3_fs;
     }
 }
