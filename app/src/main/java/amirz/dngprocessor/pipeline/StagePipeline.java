@@ -32,16 +32,20 @@ public class StagePipeline implements AutoCloseable {
         mTexPool = mConverter.getTexPool();
         mShaderLoader = loader;
 
+        // RAW -> XYZ
         addStage(new PreProcess(sensor, raw));
         addStage(new GreenDemosaic());
         addStage(new ToIntermediate(sensor, mController.sensorToXYZ_D50));
 
+        // Intermediaries
         addStage(new SampleHistogram(mController.getOutWidth(), mController.getOutHeight(),
                 sensor.outputOffsetX, sensor.outputOffsetY));
         addStage(new BilateralFilter(process));
         addStage(new SplitDetail());
 
-        addStage(new ToneMap());
+        // XYZ -> sRGB
+        addStage(new ToneMap(sensor, process, mController.XYZtoProPhoto,
+                mController.proPhotoToSRGB));
     }
 
     private void addStage(Stage stage) {
@@ -58,7 +62,8 @@ public class StagePipeline implements AutoCloseable {
             mStages.get(i).execute(mStages.subList(0, i));
         }
 
-        mController.intermediateToOutput();
+        // Replacement for ToneMap doing it.
+        mController.getCore().intermediateToOutput();
 
         reporter.onProgress(stageCount, stageCount);
     }

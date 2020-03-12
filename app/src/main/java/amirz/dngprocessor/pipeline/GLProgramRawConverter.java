@@ -1,12 +1,10 @@
 package amirz.dngprocessor.pipeline;
 
 import android.util.Log;
-import android.util.Rational;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
 import java.util.Arrays;
 
 import amirz.dngprocessor.R;
@@ -28,19 +26,18 @@ public class GLProgramRawConverter extends GLProgramBase {
 
     private final GLTexPool mTexPool = new GLTexPool();
 
-    private final int mProgramHelperDownscale;
-    private final int mProgramIntermediateBlur;
-    private final int mProgramIntermediateHistGen;
-    private final int mProgramIntermediateHistBlur;
-    private final int mProgramIntermediateBilateral;
-    private final int mProgramIntermediateToSRGB;
+    public final int mProgramHelperDownscale;
+    public final int mProgramIntermediateBlur;
+    public final int mProgramIntermediateHistGen;
+    public final int mProgramIntermediateHistBlur;
+    public final int mProgramIntermediateBilateral;
 
-    private final int[] fbo = new int[1];
-    private int inWidth, inHeight, cfaPattern;
-    private GLTex mSensorUI, mGainMap, mSensor, mSensorG, mIntermediate, mBlurred, mAHEMap, mDownscaled;
-    private GLTex mBilateralFiltered;
-    private float[] sigma;
-    private float[] hist;
+    public final int[] fbo = new int[1];
+    public int inWidth, inHeight, cfaPattern;
+    public GLTex mSensorUI, mGainMap, mSensor, mSensorG, mIntermediate, mBlurred, mAHEMap, mDownscaled;
+    public GLTex mBilateralFiltered;
+    public float[] sigma;
+    public float[] hist;
 
     public int vertexShader;
 
@@ -54,126 +51,10 @@ public class GLProgramRawConverter extends GLProgramBase {
         mProgramIntermediateHistGen = createProgram(vertexShader, loader.readRaw(R.raw.stage2_3_fs));
         mProgramIntermediateHistBlur = createProgram(vertexShader, loader.readRaw(R.raw.stage2_4_fs));
         mProgramIntermediateBilateral = createProgram(vertexShader, loader.readRaw(R.raw.stage3_0_fs));
-        mProgramIntermediateToSRGB = createProgram(vertexShader, loader.readRaw(R.raw.stage3_1_fs));
     }
 
     public GLTexPool getTexPool() {
         return mTexPool;
-    }
-
-    public void setIn(byte[] in, int inWidth, int inHeight, int cfaPattern) {
-        this.inWidth = inWidth;
-        this.inHeight = inHeight;
-        this.cfaPattern = cfaPattern;
-
-        // First texture is just for normalization
-        mSensor = new GLTex(inWidth, inHeight, 1, GLTex.Format.Float16, null);
-
-        // Now create the input texture and bind it to TEXTURE0
-        ByteBuffer buffer = ByteBuffer.allocateDirect(in.length);
-        buffer.put(in);
-        buffer.flip();
-
-        mSensorUI = new GLTex(inWidth, inHeight, 1, GLTex.Format.UInt16, buffer);
-        mSensorUI.bind(GL_TEXTURE0);
-
-        seti("rawBuffer", 0);
-        seti("rawWidth", inWidth);
-        seti("rawHeight", inHeight);
-
-        mSensor.setFrameBuffer();
-    }
-
-    public void setGainMap(float[] gainMap, int[] gainMapSize) {
-        seti("gainMap", 2);
-        if (gainMap == null) {
-            gainMap = new float[] { 1.f, 1.f, 1.f, 1.f };
-            gainMapSize = new int[] { 1, 1 };
-        }
-
-        mGainMap = new GLTex(gainMapSize[0], gainMapSize[1], 4, GLTex.Format.Float16,
-                FloatBuffer.wrap(gainMap), GL_LINEAR, GL_CLAMP_TO_EDGE);
-        mGainMap.bind(GL_TEXTURE2);
-    }
-
-    public void setBlackWhiteLevel(int[] blackLevel, int whiteLevel) {
-        setf("blackLevel", blackLevel[0], blackLevel[1], blackLevel[2], blackLevel[3]);
-        setf("whiteLevel", whiteLevel);
-    }
-
-    public void sensorPreProcess(short[] hotPixels, int[] hotPixelsSize) {
-        seti("cfaPattern", cfaPattern);
-        seti("hotPixels", 4);
-        seti("hotPixelsSize", hotPixelsSize);
-
-        GLTex hotPx = new GLTex(hotPixelsSize[0], hotPixelsSize[1], 1, GLTex.Format.UInt16,
-                ShortBuffer.wrap(hotPixels), GL_NEAREST, GL_REPEAT);
-        hotPx.bind(GL_TEXTURE4);
-
-        drawBlocks(inWidth, inHeight);
-
-        mSensorUI.delete();
-        mGainMap.delete();
-        hotPx.delete();
-    }
-
-    public void greenDemosaic() {
-        seti("rawBuffer", 0);
-        seti("rawWidth", inWidth);
-        seti("rawHeight", inHeight);
-
-        mSensorG = new GLTex(inWidth, inHeight, 1, GLTex.Format.Float16, null);
-
-        // Load old texture
-        mSensor.bind(GL_TEXTURE0);
-
-        // Configure frame buffer
-        mSensorG.setFrameBuffer();
-
-        seti("cfaPattern", cfaPattern);
-        drawBlocks(inWidth, inHeight);
-    }
-
-    public void prepareToIntermediate() {
-        seti("rawBuffer", 0);
-        seti("greenBuffer", 2);
-        seti("rawWidth", inWidth);
-        seti("rawHeight", inHeight);
-
-        // Second texture for per-CFA pixel data
-        mIntermediate = new GLTex(inWidth, inHeight, 3, GLTex.Format.Float16, null);
-
-        // Load mosaic and green raw texture
-        mSensor.bind(GL_TEXTURE0);
-        mSensorG.bind(GL_TEXTURE2);
-
-        // Configure frame buffer
-        mIntermediate.setFrameBuffer();
-    }
-
-    public void setNeutralPoint(Rational[] neutralPoint, byte[] cfaVal) {
-        setf("neutralLevel",
-                neutralPoint[cfaVal[0]].floatValue(),
-                neutralPoint[cfaVal[1]].floatValue(),
-                neutralPoint[cfaVal[2]].floatValue(),
-                neutralPoint[cfaVal[3]].floatValue());
-
-        setf("neutralPoint",
-                neutralPoint[0].floatValue(),
-                neutralPoint[1].floatValue(),
-                neutralPoint[2].floatValue());
-    }
-
-    public void setTransforms1(float[] sensorToXYZ) {
-        setf("sensorToXYZ", sensorToXYZ);
-    }
-
-    public void sensorToIntermediate() {
-        seti("cfaPattern", cfaPattern);
-        drawBlocks(inWidth, inHeight);
-
-        mSensor.delete();
-        mSensorG.delete();
     }
 
     public void setOutOffset(int offsetX, int offsetY) {
@@ -327,9 +208,6 @@ public class GLProgramRawConverter extends GLProgramBase {
     }
 
     public void prepareForOutput(float histFactor, float satLimit) {
-        // Now switch to the last program
-        useProgram(mProgramIntermediateToSRGB);
-
         glBindFramebuffer(GL_FRAMEBUFFER, fbo[0]);
 
         // Load intermediate buffers as textures
@@ -414,7 +292,7 @@ public class GLProgramRawConverter extends GLProgramBase {
         draw();
     }
 
-    private void drawBlocks(int w, int h) {
+    public void drawBlocks(int w, int h) {
         BlockDivider divider = new BlockDivider(h, BLOCK_HEIGHT);
         int[] row = new int[2];
         while (divider.nextBlock(row)) {

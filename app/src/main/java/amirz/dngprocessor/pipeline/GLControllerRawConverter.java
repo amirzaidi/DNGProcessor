@@ -84,19 +84,8 @@ public class GLControllerRawConverter extends ColorspaceConverter implements Aut
         return mGlSquare;
     }
 
-    public void intermediateToOutput() {
-        mGlSquare.prepareForOutput(mProcessParams.histFactor, mProcessParams.satLimit);
-        mGlSquare.setf("noiseProfile", mSensorParams.noiseProfile[2], mSensorParams.noiseProfile[3]);
-        mGlSquare.setLCE(mProcessParams.lce);
-        mGlSquare.setAHE(mProcessParams.ahe);
-        mGlSquare.setToneMapCoeffs(CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
-        mGlSquare.setTransforms2(XYZtoProPhoto, proPhotoToSRGB);
-        mGlSquare.setDenoiseFactor(mProcessParams.denoiseFactor);
-        mGlSquare.setSharpenFactor(mProcessParams.sharpenFactor);
-        mGlSquare.setSaturation(mProcessParams.saturationMap);
-        mGlSquare.setOutOffset(mSensorParams.outputOffsetX, mSensorParams.outputOffsetY);
-
-        mGlCore.intermediateToOutput();
+    public GLCoreBlockProcessing getCore() {
+        return mGlCore;
     }
 
     @Override
