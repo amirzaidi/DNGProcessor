@@ -1,4 +1,4 @@
-package amirz.dngprocessor.math;
+package amirz.dngprocessor.colorspace;
 
 import android.hardware.camera2.CameraMetadata;
 import android.util.SparseIntArray;
