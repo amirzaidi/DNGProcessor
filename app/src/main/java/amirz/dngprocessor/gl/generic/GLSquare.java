@@ -8,7 +8,7 @@ import static android.opengl.GLES20.*;
 
 class GLSquare {
     private static final int COORDS_PER_VERTEX = 3;
-    private static final float COORDS[] = {
+    private static final float[] COORDS = {
             -1, 1, 0,
             -1, -1, 0,
             1, 1, 0,
