@@ -122,13 +122,13 @@
             android:summary="@string/pref_noise_reduce_desc"
             android:defaultValue="@bool/pref_noise_reduce_default" />
 
-        <!--
         <SwitchPreference
             android:key="@string/pref_lce"
             android:title="@string/pref_lce_title"
             android:summary="@string/pref_lce_desc"
             android:defaultValue="@bool/pref_lce_default" />
 
+        <!--
         <SwitchPreference
             android:key="@string/pref_ahe"
             android:title="@string/pref_ahe_title"

@@ -13,10 +13,10 @@ import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 import static android.opengl.GLES20.*;
 
 public class MergeDetail extends Stage {
-    private Texture mDetail;
+    private Texture mIntermediate;
 
-    public Texture getDetail() {
-        return mDetail;
+    public Texture getIntermediate() {
+        return mIntermediate;
     }
 
     @Override
@@ -24,10 +24,19 @@ public class MergeDetail extends Stage {
         super.execute(previousStages);
         GLPrograms converter = getConverter();
 
-        PreProcess preProcess = previousStages.getStage(PreProcess.class);
-        ToIntermediate intermediate = previousStages.getStage(ToIntermediate.class);
         BilateralFilter bilateral = previousStages.getStage(BilateralFilter.class);
+        Texture bilateralTex = bilateral.getBilateral();
 
+        ToIntermediate intermediate = previousStages.getStage(ToIntermediate.class);
+        Texture intermediateTex = intermediate.getIntermediate();
+
+        // If there is no bilateral filtered texture, skip this step.
+        if (bilateralTex == null) {
+            mIntermediate = intermediateTex;
+            return;
+        }
+
+        PreProcess preProcess = previousStages.getStage(PreProcess.class);
         int w = preProcess.getInWidth();
         int h = preProcess.getInHeight();
 
@@ -39,16 +48,16 @@ public class MergeDetail extends Stage {
         histTex.bind(GL_TEXTURE6);
         converter.seti("hist", 6);
 
-        intermediate.getIntermediate().bind(GL_TEXTURE0);
-        bilateral.getBilateral().bind(GL_TEXTURE2);
+        intermediateTex.bind(GL_TEXTURE0);
+        bilateralTex.bind(GL_TEXTURE2);
         converter.seti("intermediate", 0);
         converter.seti("bilateral", 2);
-        mDetail = new Texture(w, h, 3, Texture.Format.Float16, null);
-        mDetail.setFrameBuffer();
+        mIntermediate = new Texture(w, h, 3, Texture.Format.Float16, null);
+        mIntermediate.setFrameBuffer();
         converter.drawBlocks(w, h);
 
-        intermediate.getIntermediate().close();
-        bilateral.getBilateral().close();
+        intermediateTex.close();
+        bilateralTex.close();
     }
 
     @Override

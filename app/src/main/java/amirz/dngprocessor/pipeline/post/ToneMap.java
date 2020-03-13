@@ -14,7 +14,6 @@ import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.PreProcess;
-import amirz.dngprocessor.pipeline.intermediate.BilateralFilter;
 import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
 import amirz.dngprocessor.pipeline.intermediate.SampleHistogram;
 
@@ -60,8 +59,8 @@ public class ToneMap extends Stage {
         PreProcess preProcess = previousStages.getStage(PreProcess.class);
 
         // Load intermediate buffers as textures
-        Texture detail = previousStages.getStage(MergeDetail.class).getDetail();
-        detail.bind(GL_TEXTURE0);
+        Texture intermediate = previousStages.getStage(MergeDetail.class).getIntermediate();
+        intermediate.bind(GL_TEXTURE0);
 
         glGenerateMipmap(GL_TEXTURE_2D);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
@@ -74,18 +73,6 @@ public class ToneMap extends Stage {
         float[] sigma = sampleHistogram.getSigma();
 
         converter.setf("sigma", sigma);
-
-        BilateralFilter bilateralFilter = previousStages.getStage(BilateralFilter.class);
-
-        if (bilateralFilter.getBlurred() != null) {
-            converter.seti("blurred", 2);
-            bilateralFilter.getBlurred().bind(GL_TEXTURE2);
-        }
-
-        if (bilateralFilter.getAHEMap() != null) {
-            converter.seti("ahemap", 4);
-            bilateralFilter.getAHEMap().bind(GL_TEXTURE4);
-        }
 
         Log.d(TAG, "Hist factor " + histFactor);
         converter.setf("histFactor", Math.max(histFactor, 0f));

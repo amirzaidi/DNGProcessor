@@ -53,40 +53,41 @@ public class SampleHistogram extends Stage {
         w /= samplingFactor;
         h /= samplingFactor;
 
-        Texture analyzeTex = new Texture(w, h, 4, Texture.Format.Float16, null);
+        try (Texture analyzeTex = new Texture(w, h, 4, Texture.Format.Float16, null)) {
+            // Load intermediate buffer as texture
+            Texture intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
+            intermediate.bind(GL_TEXTURE0);
 
-        // Load intermediate buffer as texture
-        Texture intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
-        Texture bilateral = previousStages.getStage(BilateralFilter.class).getBilateral();
-        intermediate.bind(GL_TEXTURE0);
-        bilateral.bind(GL_TEXTURE2);
+            Texture bilateral = previousStages.getStage(BilateralFilter.class).getBilateral();
+            if (bilateral != null) {
+                bilateral.bind(GL_TEXTURE2);
+            }
 
-        // Configure frame buffer
-        analyzeTex.setFrameBuffer();
+            // Configure frame buffer
+            analyzeTex.setFrameBuffer();
 
-        glViewport(0, 0, w, h);
-        converter.seti("intermediate", 0);
-        converter.seti("bilateral", 2);
-        converter.seti("samplingFactor", samplingFactor);
-        converter.draw();
+            glViewport(0, 0, w, h);
+            converter.seti("intermediate", 0);
+            converter.seti("bilateral", 2);
+            converter.seti("samplingFactor", samplingFactor);
+            converter.draw();
 
-        int whPixels = w * h;
-        float[] f = new float[whPixels * 4];
-        FloatBuffer fb = ByteBuffer.allocateDirect(f.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        fb.mark();
+            int whPixels = w * h;
+            float[] f = new float[whPixels * 4];
+            FloatBuffer fb = ByteBuffer.allocateDirect(f.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+            fb.mark();
 
-        glReadPixels(0, 0, w, h, GL_RGBA, GL_FLOAT, fb.reset());
-        fb.get(f);
+            glReadPixels(0, 0, w, h, GL_RGBA, GL_FLOAT, fb.reset());
+            fb.get(f);
 
-        analyzeTex.close();
+            // Calculate a histogram on the result
+            Histogram histParser = new Histogram(f, whPixels);
+            mSigma = histParser.sigma;
+            mHist = histParser.hist;
 
-        // Calculate a histogram on the result
-        Histogram histParser = new Histogram(f, whPixels);
-        mSigma = histParser.sigma;
-        mHist = histParser.hist;
-
-        Log.d(TAG, "Sigma " + Arrays.toString(mSigma));
-        Log.d(TAG, "LogAvg " + histParser.logAvgLuminance);
+            Log.d(TAG, "Sigma " + Arrays.toString(mSigma));
+            Log.d(TAG, "LogAvg " + histParser.logAvgLuminance);
+        }
     }
 
     @Override
