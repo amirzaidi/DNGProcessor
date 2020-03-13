@@ -85,7 +85,7 @@ public class BilateralFilter extends Stage {
 
         mDownscaled = new Texture(w / scale, h / scale, 1, Texture.Format.Float16, null, GL_LINEAR);
         mDownscaled.setFrameBuffer();
-        converter.draw();
+        //converter.draw();
 
         // LCE
         if (lce) {
@@ -173,12 +173,12 @@ public class BilateralFilter extends Stage {
             intermediate.bind(GL_TEXTURE0);
             mBilateralFiltered.setFrameBuffer();
 
-            converter.drawBlocks(w, h);
+            //converter.drawBlocks(w, h);
 
             mBilateralFiltered.bind(GL_TEXTURE0);
             intermediate.setFrameBuffer();
 
-            converter.drawBlocks(w, h);
+            //converter.drawBlocks(w, h);
         }
     }
 

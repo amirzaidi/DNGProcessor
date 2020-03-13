@@ -78,7 +78,7 @@ vec3 processPatch(ivec2 xyPos) {
     float z = mid.z;
 
     // Calculate stddev for patch
-    vec3 mean;
+    /*vec3 mean;
     for (int i = 0; i < 9; i++) {
         mean += impatch[i];
     }
@@ -96,7 +96,7 @@ vec3 processPatch(ivec2 xyPos) {
         maxxyz = max(maxxyz, impatch[i]);
     }
     float distxy = distance(minxyz.xy, maxxyz.xy);
-    float distz = distance(minxyz.z, maxxyz.z);
+    float distz = distance(minxyz.z, maxxyz.z);*/
 
     /**
     CHROMA NOISE REDUCE
@@ -105,7 +105,7 @@ vec3 processPatch(ivec2 xyPos) {
     //float Npx = pow(noiseProfile.x * z + noiseProfile.y, 2.f);
 
     // Thresholds
-    float thExclude = 1.5f;
+    /*float thExclude = 1.5f;
     float thStop = 2.25f;
 
     // Expand in a plus
@@ -152,15 +152,15 @@ vec3 processPatch(ivec2 xyPos) {
         }
         // Keep track of the best angle
         lastMinAngle = minAngle;
-    }
+    }*/
 
-    xy = sum.xy / float(totalCount);
-    z = sum.z / float(totalCount);
+    //xy = sum.xy / float(totalCount);
+    //z = sum.z / float(totalCount);
 
     /**
     LUMA DENOISE AND SHARPEN
     **/
-    float zDiff;
+    /*float zDiff;
     if (sharpenFactor > 0.f) {
         float[9] impz = load3x3z(xyPos);
         float lx = impz[0] - impz[2] + (impz[3] - impz[5]) * 2.f + impz[6] - impz[8];
@@ -181,7 +181,7 @@ vec3 processPatch(ivec2 xyPos) {
         zDiff += min(sqrt(l) * 3.f, 1.f) * sharpenFactor * dz;
     } else if (sharpenFactor < 0.f) {
         zDiff += sharpenFactor * (z - sum.z / float(totalCount));
-    }
+    }*/
 
     /*
     if (lce) {
@@ -226,7 +226,7 @@ vec3 processPatch(ivec2 xyPos) {
     /**
     DENOISE BY DESATURATION
     **/
-    if (radiusDenoise > 0) {
+    /*if (radiusDenoise > 0) {
         // Grayshift xy based on noise level
         float shiftFactor = clamp((distxy - 0.15f) * 1.75f, 0.f, 1.f);
 
@@ -235,10 +235,10 @@ vec3 processPatch(ivec2 xyPos) {
 
         // Reduce z by at most a third
         z *= clamp(1.1f - shiftFactor, 0.67f, 1.f);
-    }
+    }*/
 
     //z = texture(downscaledBuffer, vec2(xyPos) / vec2(intermediateWidth, intermediateHeight)).x;
-    z = texelFetch(downscaledBuffer, xyPos / 8, 0).x;
+    //z = texelFetch(downscaledBuffer, xyPos / 8, 0).x;
     return clamp(vec3(mid.xy, sigmoid(z, 0.25f)), 0.f, 1.f);
     //return clamp(vec3(vec2(0.345703f, 0.358539f), z), 0.f, 1.f);
     //return clamp(vec3(xy, z), 0.f, 1.f);

@@ -58,7 +58,7 @@ public class StagePipeline implements AutoCloseable {
         addStage(new GreenDemosaic());
         addStage(new ToIntermediate(sensor, colorspace.sensorToXYZ_D50));
 
-        // Intermediaries
+        // Intermediates
         addStage(new SampleHistogram(outWidth, outHeight,
                 sensor.outputOffsetX, sensor.outputOffsetY));
         addStage(new BilateralFilter(process));
