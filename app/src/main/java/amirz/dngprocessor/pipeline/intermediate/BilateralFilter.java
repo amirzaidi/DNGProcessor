@@ -8,7 +8,6 @@ import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
-import amirz.dngprocessor.pipeline.convert.PreProcess;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 
 import static android.opengl.GLES20.GL_LINEAR;
@@ -17,12 +16,14 @@ import static android.opengl.GLES20.GL_TEXTURE0;
 public class BilateralFilter extends Stage {
     private final ProcessParams mProcess;
     private int mProgramHelperDownscale,
+            mProgramHelperExtractChannel,
+            mProgramMedian,
             mProgramIntermediateBlur,
             mProgramIntermediateHistGen,
             mProgramIntermediateHistBlur,
             mProgramIntermediateBilateral;
 
-    private Texture mBlurred, mAHEMap, mDownscaled, mBilateralFiltered;
+    private Texture mBlurred, mAHEMap, mDownscaled, mBilateral1, mBilateral2;
 
     public BilateralFilter(ProcessParams process) {
         mProcess = process;
@@ -36,12 +37,8 @@ public class BilateralFilter extends Stage {
         return mAHEMap;
     }
 
-    public Texture getDownscaled() {
-        return mDownscaled;
-    }
-
-    public Texture getBilateralFiltered() {
-        return mBilateralFiltered;
+    public Texture getBilateral() {
+        return mBilateral2;
     }
 
     @Override
@@ -50,6 +47,10 @@ public class BilateralFilter extends Stage {
         super.init(converter, texPool, shaderLoader);
         mProgramHelperDownscale = converter.createProgram(converter.vertexShader,
                 shaderLoader.readRaw(R.raw.helper_downscale_fs));
+        mProgramHelperExtractChannel = converter.createProgram(converter.vertexShader,
+                shaderLoader.readRaw(R.raw.helper_extract_channel_fs));
+        mProgramMedian = converter.createProgram(converter.vertexShader,
+                shaderLoader.readRaw(R.raw.stage2_2_median_fs));
         mProgramIntermediateBlur = converter.createProgram(converter.vertexShader,
                 shaderLoader.readRaw(R.raw.stage2_2_fs));
         mProgramIntermediateHistGen = converter.createProgram(converter.vertexShader,
@@ -72,13 +73,52 @@ public class BilateralFilter extends Stage {
         ahe = false;
 
         Texture intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
-
         int w = intermediate.getWidth();
         int h = intermediate.getHeight();
 
+        converter.useProgram(mProgramHelperExtractChannel);
+        mBilateral1 = new Texture(w, h, 1, Texture.Format.Float16, null);
+        mBilateral2 = new Texture(w, h, 1, Texture.Format.Float16, null);
+        intermediate.bind(GL_TEXTURE0);
+        converter.seti("buf", 0);
+        converter.setf("mult", 0, 0, 1, 0);
+        mBilateral1.setFrameBuffer();
+        converter.drawBlocks(w, h);
+
+        converter.useProgram(mProgramMedian);
+        mBilateral1.bind(GL_TEXTURE0);
+        converter.seti("buf", 0);
+        converter.seti("bufSize", w, h);
+        mBilateral2.setFrameBuffer();
+        converter.drawBlocks(w, h);
+
+        // Double bilateral filter.
+        converter.useProgram(mProgramIntermediateBilateral);
+
+        /*
+        PreProcess preProcess = previousStages.getStage(PreProcess.class);
+
+        converter.seti("buf", 0);
+        converter.seti("bufSize", w, h);
+        mBilateralFiltered = new Texture(preProcess.getInWidth(), preProcess.getInHeight(),
+                3, Texture.Format.Float16, null);
+
+        // Two iterations means four total filters.
+        for (int i = 0; i < 2; i++) {
+            intermediate.bind(GL_TEXTURE0);
+            mBilateralFiltered.setFrameBuffer();
+
+            //converter.drawBlocks(w, h);
+
+            mBilateralFiltered.bind(GL_TEXTURE0);
+            intermediate.setFrameBuffer();
+
+            //converter.drawBlocks(w, h);
+        }*/
+
         converter.useProgram(mProgramHelperDownscale);
 
-        int scale = 8;
+        int scale = 2;
         intermediate.bind(GL_TEXTURE0);
         converter.seti("buf", 0);
         converter.seti("scale", scale);
@@ -156,29 +196,6 @@ public class BilateralFilter extends Stage {
             converter.drawBlocks(w / 2, h / 2);
 
             temp.close();
-        }
-
-        // Double bilateral filter.
-        converter.useProgram(mProgramIntermediateBilateral);
-
-        PreProcess preProcess = previousStages.getStage(PreProcess.class);
-
-        converter.seti("buf", 0);
-        converter.seti("bufSize", w, h);
-        mBilateralFiltered = new Texture(preProcess.getInWidth(), preProcess.getInHeight(),
-                3, Texture.Format.Float16, null);
-
-        // Two iterations means four total filters.
-        for (int i = 0; i < 2; i++) {
-            intermediate.bind(GL_TEXTURE0);
-            mBilateralFiltered.setFrameBuffer();
-
-            //converter.drawBlocks(w, h);
-
-            mBilateralFiltered.bind(GL_TEXTURE0);
-            intermediate.setFrameBuffer();
-
-            //converter.drawBlocks(w, h);
         }
     }
 

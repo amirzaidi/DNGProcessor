@@ -106,8 +106,8 @@ public class ToneMap extends Stage {
         histTex.bind(GL_TEXTURE6);
         converter.seti("hist", 6);
 
-        bilateralFilter.getDownscaled().bind(GL_TEXTURE8);
-        converter.seti("downscaledBuffer", 8);
+        bilateralFilter.getBilateral().bind(GL_TEXTURE8);
+        converter.seti("bilateralBuffer", 8);
 
         Log.d(TAG, "Hist factor " + histFactor);
         converter.setf("histFactor", Math.max(histFactor, 0f));
