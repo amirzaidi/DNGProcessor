@@ -17,22 +17,10 @@ import amirz.dngprocessor.pipeline.convert.PreProcess;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 import amirz.dngprocessor.pipeline.intermediate.BilateralFilter;
 import amirz.dngprocessor.pipeline.intermediate.SampleHistogram;
+import amirz.dngprocessor.pipeline.intermediate.SplitDetail;
 
 import static amirz.dngprocessor.colorspace.ColorspaceConstants.CUSTOM_ACR3_TONEMAP_CURVE_COEFFS;
-import static android.opengl.GLES20.GL_CLAMP_TO_EDGE;
-import static android.opengl.GLES20.GL_FRAMEBUFFER;
-import static android.opengl.GLES20.GL_FRAMEBUFFER_BINDING;
-import static android.opengl.GLES20.GL_LINEAR;
-import static android.opengl.GLES20.GL_NEAREST_MIPMAP_NEAREST;
-import static android.opengl.GLES20.GL_TEXTURE0;
-import static android.opengl.GLES20.GL_TEXTURE2;
-import static android.opengl.GLES20.GL_TEXTURE4;
-import static android.opengl.GLES20.GL_TEXTURE6;
-import static android.opengl.GLES20.GL_TEXTURE8;
-import static android.opengl.GLES20.glBindFramebuffer;
-import static android.opengl.GLES20.glGenerateMipmap;
-import static android.opengl.GLES20.glGetIntegerv;
-import static android.opengl.GLES20.glTexParameteri;
+import static android.opengl.GLES20.*;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_2D;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MAG_FILTER;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MIN_FILTER;
@@ -108,6 +96,10 @@ public class ToneMap extends Stage {
 
         bilateralFilter.getBilateral().bind(GL_TEXTURE8);
         converter.seti("bilateralBuffer", 8);
+
+        SplitDetail detail = previousStages.getStage(SplitDetail.class);
+        detail.getDetail().bind(GL_TEXTURE10);
+        converter.seti("detailBuffer", 10);
 
         Log.d(TAG, "Hist factor " + histFactor);
         converter.setf("histFactor", Math.max(histFactor, 0f));

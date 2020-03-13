@@ -28,7 +28,7 @@ public class BilateralFilter extends Stage {
     }
 
     public Texture getBilateral() {
-        return mBilateral2;
+        return mBilateral1;
     }
 
     @Override

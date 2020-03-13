@@ -2,7 +2,8 @@
 
 precision mediump float;
 
-uniform sampler2D intermediateBuffer;
+uniform sampler2D intermediate;
+uniform sampler2D bilateral;
 uniform ivec2 outOffset;
 uniform int samplingFactor;
 
@@ -12,7 +13,7 @@ out vec4 analysis;
 vec3[9] load3x3(ivec2 xy, int n) {
     vec3 outputArray[9];
     for (int i = 0; i < 9; i++) {
-        outputArray[i] = texelFetch(intermediateBuffer, xy + n * ivec2((i % 3) - 1, (i / 3) - 1), 0).xyz;
+        outputArray[i] = texelFetch(intermediate, xy + n * ivec2((i % 3) - 1, (i / 3) - 1), 0).xyz;
     }
     return outputArray;
 }
@@ -36,5 +37,6 @@ void main() {
         sigma += diff * diff;
     }
 
-    analysis = vec4(sqrt(sigma / 9.f), impatch[4].z);
+    float z = texelFetch(bilateral, xy, 0).x;
+    analysis = vec4(sqrt(sigma / 9.f), z);
 }

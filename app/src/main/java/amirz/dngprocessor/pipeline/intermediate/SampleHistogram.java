@@ -15,11 +15,7 @@ import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 
-import static android.opengl.GLES20.GL_FLOAT;
-import static android.opengl.GLES20.GL_RGBA;
-import static android.opengl.GLES20.GL_TEXTURE0;
-import static android.opengl.GLES20.glReadPixels;
-import static android.opengl.GLES20.glViewport;
+import static android.opengl.GLES20.*;
 
 public class SampleHistogram extends Stage {
     private static final String TAG = "SampleHistogram";
@@ -61,12 +57,16 @@ public class SampleHistogram extends Stage {
 
         // Load intermediate buffer as texture
         Texture intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
+        Texture bilateral = previousStages.getStage(BilateralFilter.class).getBilateral();
         intermediate.bind(GL_TEXTURE0);
+        bilateral.bind(GL_TEXTURE2);
 
         // Configure frame buffer
         analyzeTex.setFrameBuffer();
 
         glViewport(0, 0, w, h);
+        converter.seti("intermediate", 0);
+        converter.seti("bilateral", 2);
         converter.seti("samplingFactor", samplingFactor);
         converter.draw();
 

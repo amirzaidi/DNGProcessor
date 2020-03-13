@@ -59,9 +59,9 @@ public class StagePipeline implements AutoCloseable {
         addStage(new ToIntermediate(sensor, colorspace.sensorToXYZ_D50));
 
         // Intermediates
+        addStage(new BilateralFilter(process));
         addStage(new SampleHistogram(outWidth, outHeight,
                 sensor.outputOffsetX, sensor.outputOffsetY));
-        addStage(new BilateralFilter(process));
         addStage(new SplitDetail());
 
         // XYZ -> sRGB

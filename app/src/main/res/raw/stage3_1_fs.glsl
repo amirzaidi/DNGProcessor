@@ -12,6 +12,7 @@ uniform int intermediateHeight;
 uniform sampler2D blurred;
 uniform sampler2D ahemap;
 uniform sampler2D bilateralBuffer;
+uniform sampler2D detailBuffer;
 
 uniform int yOffset;
 
@@ -239,7 +240,19 @@ vec3 processPatch(ivec2 xyPos) {
 
     //z = texture(downscaledBuffer, vec2(xyPos) / vec2(intermediateWidth, intermediateHeight)).x;
     //z = texelFetch(downscaledBuffer, xyPos / 8, 0).x;
-    z = texelFetch(bilateralBuffer, xyPos, 0).x;
+
+    float bg = texelFetch(bilateralBuffer, xyPos, 0).x;
+    bg = sigmoid(bg, 0.25f);
+
+    float detail = texelFetch(detailBuffer, xyPos, 0).x;
+
+    // Histogram equalization
+    float zEq = texture(hist, vec2(bg, 0.5f)).x;
+    float zEqDiff = zEq - bg;
+
+    z = bg + zEqDiff * pow(bg, 0.8f) + 3.f * detail;
+    //z = bg + detail;
+
     return clamp(vec3(mid.xy, sigmoid(z, 0.25f)), 0.f, 1.f);
     //return clamp(vec3(vec2(0.345703f, 0.358539f), z), 0.f, 1.f);
     //return clamp(vec3(xy, z), 0.f, 1.f);
