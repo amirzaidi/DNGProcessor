@@ -20,6 +20,7 @@ public class DeviceMap {
 
     private static final List<Device> sDevices = new ArrayList<>();
     static {
+        sDevices.add(new OnePlus7());
         sDevices.add(new OnePlus6());
         sDevices.add(new OnePlus5());
         sDevices.add(new OnePlus3());
