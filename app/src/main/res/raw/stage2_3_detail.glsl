@@ -40,7 +40,7 @@ void main() {
 
     // Background + Correction + Detail
     float z = bilateralVal
-        + (0.5f * zEqDiff * pow(intermediateVal, 0.25f))
+        + (zEqDiff * pow(intermediateVal, 0.5f))
         + 2.f * detailVal;
 
     // Copy chroma from background.
