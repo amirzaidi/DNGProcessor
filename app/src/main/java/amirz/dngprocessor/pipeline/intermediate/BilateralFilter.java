@@ -8,8 +8,7 @@ import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 
-import static android.opengl.GLES20.GL_LINEAR;
-import static android.opengl.GLES20.GL_TEXTURE0;
+import static android.opengl.GLES20.*;
 
 public class BilateralFilter extends Stage {
     private final ProcessParams mProcess;
@@ -48,7 +47,6 @@ public class BilateralFilter extends Stage {
         int h = intermediate.getHeight();
 
         converter.useProgram(R.raw.helper_extract_channel_fs);
-
         mBilateral1 = new Texture(w, h, 1, Texture.Format.Float16, null);
         mBilateral2 = new Texture(w, h, 1, Texture.Format.Float16, null);
         intermediate.bind(GL_TEXTURE0);
@@ -57,16 +55,40 @@ public class BilateralFilter extends Stage {
         mBilateral1.setFrameBuffer();
         converter.drawBlocks(w, h);
 
+        // Pre-bilateral median filter.
         converter.useProgram(R.raw.stage2_2_median_fs);
-
         mBilateral1.bind(GL_TEXTURE0);
         converter.seti("buf", 0);
-        converter.seti("bufSize", w, h);
         mBilateral2.setFrameBuffer();
         converter.drawBlocks(w, h);
 
-        // Double bilateral filter.
+        // Bilateral filter setup.
         converter.useProgram(R.raw.stage3_0_fs);
+        intermediate.bind(GL_TEXTURE2);
+        converter.seti("buf", 0);
+        converter.seti("bufSize", w, h);
+        converter.seti("intermediate", 2);
+
+        // 1) Small area, strong blur.
+        mBilateral2.bind(GL_TEXTURE0);
+        mBilateral1.setFrameBuffer();
+        converter.setf("sigma", 0.3f, 3.f);
+        converter.seti("radius", 7, 1);
+        converter.drawBlocks(w, h);
+
+        // 2) Medium area, medium blur.
+        mBilateral1.bind(GL_TEXTURE0);
+        mBilateral2.setFrameBuffer();
+        converter.setf("sigma", 0.2f, 9.f);
+        converter.seti("radius", 21, 3);
+        converter.drawBlocks(w, h);
+
+        // 3) Large area, weak blur.
+        mBilateral2.bind(GL_TEXTURE0);
+        mBilateral1.setFrameBuffer();
+        converter.setf("sigma", 0.1f, 27.f);
+        converter.seti("radius", 63, 9);
+        converter.drawBlocks(w, h);
 
         /*
         PreProcess preProcess = previousStages.getStage(PreProcess.class);

@@ -3,7 +3,6 @@
 precision mediump float;
 
 uniform sampler2D buf;
-uniform ivec2 bufSize;
 
 // Out
 out float filtered;
