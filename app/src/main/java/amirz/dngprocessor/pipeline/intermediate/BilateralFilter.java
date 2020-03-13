@@ -1,9 +1,9 @@
 package amirz.dngprocessor.pipeline.intermediate;
 
 import amirz.dngprocessor.R;
-import amirz.dngprocessor.gl.GLProgramBase;
-import amirz.dngprocessor.gl.GLTex;
-import amirz.dngprocessor.gl.GLTexPool;
+import amirz.dngprocessor.gl.GLPrograms;
+import amirz.dngprocessor.gl.Texture;
+import amirz.dngprocessor.gl.TexturePool;
 import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.pipeline.Stage;
@@ -22,30 +22,30 @@ public class BilateralFilter extends Stage {
             mProgramIntermediateHistBlur,
             mProgramIntermediateBilateral;
 
-    private GLTex mBlurred, mAHEMap, mDownscaled, mBilateralFiltered;
+    private Texture mBlurred, mAHEMap, mDownscaled, mBilateralFiltered;
 
     public BilateralFilter(ProcessParams process) {
         mProcess = process;
     }
 
-    public GLTex getBlurred() {
+    public Texture getBlurred() {
         return mBlurred;
     }
 
-    public GLTex getAHEMap() {
+    public Texture getAHEMap() {
         return mAHEMap;
     }
 
-    public GLTex getDownscaled() {
+    public Texture getDownscaled() {
         return mDownscaled;
     }
 
-    public GLTex getBilateralFiltered() {
+    public Texture getBilateralFiltered() {
         return mBilateralFiltered;
     }
 
     @Override
-    public void init(GLProgramBase converter, GLTexPool texPool,
+    public void init(GLPrograms converter, TexturePool texPool,
                      ShaderLoader shaderLoader) {
         super.init(converter, texPool, shaderLoader);
         mProgramHelperDownscale = converter.createProgram(converter.vertexShader,
@@ -63,7 +63,7 @@ public class BilateralFilter extends Stage {
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
         super.execute(previousStages);
-        GLProgramBase converter = getConverter();
+        GLPrograms converter = getConverter();
 
         boolean lce = mProcess.lce;
         boolean ahe = mProcess.ahe;
@@ -71,7 +71,7 @@ public class BilateralFilter extends Stage {
         lce = false;
         ahe = false;
 
-        GLTex intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
+        Texture intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
 
         int w = intermediate.getWidth();
         int h = intermediate.getHeight();
@@ -83,7 +83,7 @@ public class BilateralFilter extends Stage {
         converter.seti("buf", 0);
         converter.seti("scale", scale);
 
-        mDownscaled = new GLTex(w / scale, h / scale, 1, GLTex.Format.Float16, null, GL_LINEAR);
+        mDownscaled = new Texture(w / scale, h / scale, 1, Texture.Format.Float16, null, GL_LINEAR);
         mDownscaled.setFrameBuffer();
         converter.draw();
 
@@ -99,7 +99,7 @@ public class BilateralFilter extends Stage {
             converter.seti("dir", 1, 0); // Right
             converter.setf("ch", 0, 1); // xy[Y]
 
-            GLTex temp = new GLTex(w, h, 1, GLTex.Format.Float16, null);
+            Texture temp = new Texture(w, h, 1, Texture.Format.Float16, null);
             temp.setFrameBuffer();
             converter.drawBlocks(w, h);
 
@@ -107,7 +107,7 @@ public class BilateralFilter extends Stage {
             converter.seti("dir", 0, 1); // Down
             converter.setf("ch", 1, 0); // [Y]00
 
-            mBlurred = new GLTex(w, h, 1, GLTex.Format.Float16, null);
+            mBlurred = new Texture(w, h, 1, Texture.Format.Float16, null);
             mBlurred.setFrameBuffer();
             converter.drawBlocks(w, h);
 
@@ -124,7 +124,7 @@ public class BilateralFilter extends Stage {
             converter.seti("mode", 0);
             converter.seti("dir", 1, 0); // Right
 
-            GLTex temp = new GLTex(w / 2, h / 2, 4, GLTex.Format.Float16, null);
+            Texture temp = new Texture(w / 2, h / 2, 4, Texture.Format.Float16, null);
             temp.setFrameBuffer();
             converter.drawBlocks(w / 2, h / 2);
 
@@ -133,7 +133,7 @@ public class BilateralFilter extends Stage {
             converter.seti("mode", 1);
             converter.seti("dir", 0, 1); // Down
 
-            mAHEMap = new GLTex(w / 2, h / 2, 4, GLTex.Format.Float16, null, GL_LINEAR);
+            mAHEMap = new Texture(w / 2, h / 2, 4, Texture.Format.Float16, null, GL_LINEAR);
             mAHEMap.setFrameBuffer();
             converter.drawBlocks(w / 2, h / 2);
 
@@ -165,8 +165,8 @@ public class BilateralFilter extends Stage {
 
         converter.seti("buf", 0);
         converter.seti("bufSize", w, h);
-        mBilateralFiltered = new GLTex(preProcess.getInWidth(), preProcess.getInHeight(),
-                3, GLTex.Format.Float16, null);
+        mBilateralFiltered = new Texture(preProcess.getInWidth(), preProcess.getInHeight(),
+                3, Texture.Format.Float16, null);
 
         // Two iterations means four total filters.
         for (int i = 0; i < 2; i++) {

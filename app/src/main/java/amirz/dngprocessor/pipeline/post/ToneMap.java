@@ -5,9 +5,9 @@ import android.util.Log;
 import java.nio.FloatBuffer;
 
 import amirz.dngprocessor.R;
-import amirz.dngprocessor.gl.GLProgramBase;
-import amirz.dngprocessor.gl.GLTex;
-import amirz.dngprocessor.gl.GLTexPool;
+import amirz.dngprocessor.gl.GLPrograms;
+import amirz.dngprocessor.gl.Texture;
+import amirz.dngprocessor.gl.TexturePool;
 import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
@@ -54,7 +54,7 @@ public class ToneMap extends Stage {
     }
 
     @Override
-    public void init(GLProgramBase converter, GLTexPool texPool,
+    public void init(GLPrograms converter, TexturePool texPool,
                      ShaderLoader shaderLoader) {
         super.init(converter, texPool, shaderLoader);
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, mFbo, 0);
@@ -63,7 +63,7 @@ public class ToneMap extends Stage {
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
         super.execute(previousStages);
-        GLProgramBase converter = getConverter();
+        GLPrograms converter = getConverter();
 
         glBindFramebuffer(GL_FRAMEBUFFER, mFbo[0]);
 
@@ -73,7 +73,7 @@ public class ToneMap extends Stage {
         PreProcess preProcess = previousStages.getStage(PreProcess.class);
 
         // Load intermediate buffers as textures
-        GLTex intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
+        Texture intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
         intermediate.bind(GL_TEXTURE0);
 
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -101,7 +101,7 @@ public class ToneMap extends Stage {
             bilateralFilter.getAHEMap().bind(GL_TEXTURE4);
         }
 
-        GLTex histTex = new GLTex(hist.length, 1, 1, GLTex.Format.Float16,
+        Texture histTex = new Texture(hist.length, 1, 1, Texture.Format.Float16,
                 FloatBuffer.wrap(hist), GL_LINEAR, GL_CLAMP_TO_EDGE);
         histTex.bind(GL_TEXTURE6);
         converter.seti("hist", 6);
@@ -140,7 +140,7 @@ public class ToneMap extends Stage {
         System.arraycopy(saturation, 0, sat, 0, saturation.length);
         sat[saturation.length] = saturation[0];
 
-        GLTex satTex = new GLTex(sat.length, 1, 1, GLTex.Format.Float16,
+        Texture satTex = new Texture(sat.length, 1, 1, Texture.Format.Float16,
                 FloatBuffer.wrap(sat), GL_LINEAR, GL_CLAMP_TO_EDGE);
         satTex.bind(GL_TEXTURE6);
 

@@ -4,15 +4,15 @@ import android.graphics.Bitmap;
 
 import java.nio.IntBuffer;
 
-import amirz.dngprocessor.gl.GLCoreBase;
-import amirz.dngprocessor.gl.GLProgramBase;
+import amirz.dngprocessor.gl.GLCore;
+import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.math.BlockDivider;
 
 import static amirz.dngprocessor.util.Constants.BLOCK_HEIGHT;
 import static android.opengl.GLES20.*;
 
-public class GLCoreBlockProcessing extends GLCoreBase {
+public class GLCoreBlockProcessing extends GLCore {
     private final Bitmap mOut;
     private final int mOutWidth, mOutHeight;
     private final IntBuffer mBlockBuffer;
@@ -30,7 +30,7 @@ public class GLCoreBlockProcessing extends GLCoreBase {
     }
 
     public void intermediateToOutput() {
-        GLProgramBase program = getProgram();
+        GLPrograms program = getProgram();
 
         BlockDivider divider = new BlockDivider(mOutHeight, BLOCK_HEIGHT);
         int[] row = new int[2];

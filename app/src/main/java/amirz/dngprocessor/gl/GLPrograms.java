@@ -11,14 +11,14 @@ import static amirz.dngprocessor.util.Constants.BLOCK_HEIGHT;
 import static android.opengl.GLES20.*;
 import static android.opengl.GLES30.*;
 
-public class GLProgramBase implements AutoCloseable {
+public class GLPrograms implements AutoCloseable {
     public final int vertexShader;
 
-    private final GLSquare mSquare = new GLSquare();
+    private final SquareModel mSquare = new SquareModel();
     private final List<Integer> mPrograms = new ArrayList<>();
     private int mProgramActive;
 
-    public GLProgramBase(ShaderLoader loader) {
+    public GLPrograms(ShaderLoader loader) {
         vertexShader = loadShader(GL_VERTEX_SHADER, loader.readRaw(R.raw.passthrough_vs));
     }
 

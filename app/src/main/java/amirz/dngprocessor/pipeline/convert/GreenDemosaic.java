@@ -1,24 +1,24 @@
 package amirz.dngprocessor.pipeline.convert;
 
 import amirz.dngprocessor.R;
-import amirz.dngprocessor.gl.GLProgramBase;
-import amirz.dngprocessor.gl.GLTex;
+import amirz.dngprocessor.gl.GLPrograms;
+import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 
 import static android.opengl.GLES20.GL_TEXTURE0;
 
 public class GreenDemosaic extends Stage {
-    private GLTex mSensorG;
+    private Texture mSensorG;
 
-    public GLTex getSensorGTex() {
+    public Texture getSensorGTex() {
         return mSensorG;
     }
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
         super.execute(previousStages);
-        GLProgramBase converter = getConverter();
+        GLPrograms converter = getConverter();
 
         PreProcess preProcess = previousStages.getStage(PreProcess.class);
 
@@ -26,11 +26,11 @@ public class GreenDemosaic extends Stage {
         converter.seti("rawWidth", preProcess.getInWidth());
         converter.seti("rawHeight", preProcess.getInHeight());
 
-        mSensorG = new GLTex(preProcess.getInWidth(), preProcess.getInHeight(), 1,
-                GLTex.Format.Float16, null);
+        mSensorG = new Texture(preProcess.getInWidth(), preProcess.getInHeight(), 1,
+                Texture.Format.Float16, null);
 
         // Load old texture
-        GLTex sensorTex = previousStages.getStage(PreProcess.class).getSensorTex();
+        Texture sensorTex = previousStages.getStage(PreProcess.class).getSensorTex();
         sensorTex.bind(GL_TEXTURE0);
 
         // Configure frame buffer

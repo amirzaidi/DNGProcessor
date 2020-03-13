@@ -7,13 +7,13 @@ import android.opengl.EGLSurface;
 
 import static android.opengl.EGL14.*;
 
-public abstract class GLCoreBase implements AutoCloseable {
+public abstract class GLCore implements AutoCloseable {
     private final EGLDisplay mDisplay;
     private final EGLContext mContext;
     private final EGLSurface mSurface;
-    private final GLProgramBase mProgram;
+    private final GLPrograms mProgram;
 
-    public GLCoreBase(int surfaceWidth, int surfaceHeight, ShaderLoader loader) {
+    public GLCore(int surfaceWidth, int surfaceHeight, ShaderLoader loader) {
         int[] major = new int[2];
         int[] minor = new int[2];
 
@@ -66,10 +66,10 @@ public abstract class GLCoreBase implements AutoCloseable {
         }, 0);
 
         eglMakeCurrent(mDisplay, mSurface, mSurface, mContext);
-        mProgram = new GLProgramBase(loader);
+        mProgram = new GLPrograms(loader);
     }
 
-    public GLProgramBase getProgram() {
+    public GLPrograms getProgram() {
         return mProgram;
     }
 

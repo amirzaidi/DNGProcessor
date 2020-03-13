@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import amirz.dngprocessor.colorspace.ColorspaceConverter;
-import amirz.dngprocessor.gl.GLProgramBase;
-import amirz.dngprocessor.gl.GLTexPool;
+import amirz.dngprocessor.gl.GLPrograms;
+import amirz.dngprocessor.gl.TexturePool;
 import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
@@ -26,9 +26,9 @@ public class StagePipeline implements AutoCloseable {
     private final List<Stage> mStages = new ArrayList<>();
 
     private final GLCoreBlockProcessing mCore;
-    private final GLProgramBase mConverter;
+    private final GLPrograms mConverter;
 
-    private final GLTexPool mTexPool;
+    private final TexturePool mTexPool;
     private final ShaderLoader mShaderLoader;
 
     public StagePipeline(SensorParams sensor, ProcessParams process,
@@ -48,7 +48,7 @@ public class StagePipeline implements AutoCloseable {
         mCore = new GLCoreBlockProcessing(argbOutput, loader);
         mConverter = mCore.getProgram();
 
-        mTexPool = new GLTexPool();
+        mTexPool = new TexturePool();
         mShaderLoader = loader;
 
         ColorspaceConverter colorspace = new ColorspaceConverter(sensor);

@@ -8,7 +8,7 @@ import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_2D;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MAG_FILTER;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MIN_FILTER;
 
-public class GLTex implements AutoCloseable {
+public class Texture implements AutoCloseable {
     public enum Format {
         Float16,
         UInt16
@@ -29,20 +29,20 @@ public class GLTex implements AutoCloseable {
     private final Format mFormat;
     private final int mTexId;
 
-    public GLTex(Config config) {
+    public Texture(Config config) {
         this(config.w, config.h, config.channels, config.format, config.pixels, config.texFilter,
                 config.texWrap);
     }
 
-    public GLTex(int w, int h, int channels, Format format, Buffer pixels) {
+    public Texture(int w, int h, int channels, Format format, Buffer pixels) {
         this(w, h, channels, format, pixels, GL_NEAREST);
     }
 
-    public GLTex(int w, int h, int channels, Format format, Buffer pixels, int texFilter) {
+    public Texture(int w, int h, int channels, Format format, Buffer pixels, int texFilter) {
         this(w, h, channels, format, pixels, texFilter, GL_CLAMP_TO_EDGE);
     }
 
-    public GLTex(int w, int h, int channels, Format format, Buffer pixels, int texFilter, int texWrap) {
+    public Texture(int w, int h, int channels, Format format, Buffer pixels, int texFilter, int texWrap) {
         mWidth = w;
         mHeight = h;
         mChannels = channels;

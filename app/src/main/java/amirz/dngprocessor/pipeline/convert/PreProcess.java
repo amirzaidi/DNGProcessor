@@ -5,8 +5,8 @@ import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
 import amirz.dngprocessor.R;
-import amirz.dngprocessor.gl.GLProgramBase;
-import amirz.dngprocessor.gl.GLTex;
+import amirz.dngprocessor.gl.GLPrograms;
+import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
@@ -23,14 +23,14 @@ public class PreProcess extends Stage {
     private final SensorParams mSensor;
     private final byte[] mRaw;
 
-    private GLTex mSensorTex;
+    private Texture mSensorTex;
 
     public PreProcess(SensorParams sensor, byte[] raw) {
         mSensor = sensor;
         mRaw = raw;
     }
 
-    public GLTex getSensorTex() {
+    public Texture getSensorTex() {
         return mSensorTex;
     }
 
@@ -53,17 +53,17 @@ public class PreProcess extends Stage {
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
         super.execute(previousStages);
-        GLProgramBase converter = getConverter();
+        GLPrograms converter = getConverter();
 
         // First texture is just for normalization
-        mSensorTex = new GLTex(getInWidth(), getInHeight(), 1, GLTex.Format.Float16, null);
+        mSensorTex = new Texture(getInWidth(), getInHeight(), 1, Texture.Format.Float16, null);
 
         // Now create the input texture and bind it to TEXTURE0
         ByteBuffer buffer = ByteBuffer.allocateDirect(mRaw.length);
         buffer.put(mRaw);
         buffer.flip();
 
-        try (GLTex sensorUITex = new GLTex(getInWidth(), getInHeight(), 1, GLTex.Format.UInt16, buffer)) {
+        try (Texture sensorUITex = new Texture(getInWidth(), getInHeight(), 1, Texture.Format.UInt16, buffer)) {
             sensorUITex.bind(GL_TEXTURE0);
 
             converter.seti("rawBuffer", 0);
@@ -80,7 +80,7 @@ public class PreProcess extends Stage {
                 gainMapSize = new int[]{1, 1};
             }
 
-            try (GLTex gainMapTex = new GLTex(gainMapSize[0], gainMapSize[1], 4, GLTex.Format.Float16,
+            try (Texture gainMapTex = new Texture(gainMapSize[0], gainMapSize[1], 4, Texture.Format.Float16,
                     FloatBuffer.wrap(gainMap), GL_LINEAR, GL_CLAMP_TO_EDGE)) {
                 gainMapTex.bind(GL_TEXTURE2);
 
@@ -94,7 +94,7 @@ public class PreProcess extends Stage {
                 converter.seti("hotPixelsSize", mSensor.hotPixelsSize);
 
                 int[] hotPixelsSize = mSensor.hotPixelsSize;
-                try (GLTex hotPx = new GLTex(hotPixelsSize[0], hotPixelsSize[1], 1, GLTex.Format.UInt16,
+                try (Texture hotPx = new Texture(hotPixelsSize[0], hotPixelsSize[1], 1, Texture.Format.UInt16,
                         ShortBuffer.wrap(mSensor.hotPixels), GL_NEAREST, GL_REPEAT)) {
                     hotPx.bind(GL_TEXTURE4);
                     converter.drawBlocks(getInWidth(), getInHeight());

@@ -3,8 +3,8 @@ package amirz.dngprocessor.pipeline.convert;
 import android.util.Rational;
 
 import amirz.dngprocessor.R;
-import amirz.dngprocessor.gl.GLProgramBase;
-import amirz.dngprocessor.gl.GLTex;
+import amirz.dngprocessor.gl.GLPrograms;
+import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
@@ -16,21 +16,21 @@ public class ToIntermediate extends Stage {
     private final SensorParams mSensor;
     private final float[] mSensorToXYZ_D50;
 
-    private GLTex mIntermediate;
+    private Texture mIntermediate;
 
     public ToIntermediate(SensorParams sensor, float[] sensorToXYZ_D50) {
         mSensor = sensor;
         mSensorToXYZ_D50 = sensorToXYZ_D50;
     }
 
-    public GLTex getIntermediate() {
+    public Texture getIntermediate() {
         return mIntermediate;
     }
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
         super.execute(previousStages);
-        GLProgramBase converter = getConverter();
+        GLPrograms converter = getConverter();
 
         PreProcess preProcess = previousStages.getStage(PreProcess.class);
 
@@ -40,12 +40,12 @@ public class ToIntermediate extends Stage {
         converter.seti("rawHeight", preProcess.getInHeight());
 
         // Second texture for per-CFA pixel data
-        mIntermediate = new GLTex(preProcess.getInWidth(), preProcess.getInHeight(), 3,
-                GLTex.Format.Float16, null);
+        mIntermediate = new Texture(preProcess.getInWidth(), preProcess.getInHeight(), 3,
+                Texture.Format.Float16, null);
 
         // Load mosaic and green raw texture
-        GLTex sensorTex = previousStages.getStage(PreProcess.class).getSensorTex();
-        GLTex sensorGTex = previousStages.getStage(GreenDemosaic.class).getSensorGTex();
+        Texture sensorTex = previousStages.getStage(PreProcess.class).getSensorTex();
+        Texture sensorGTex = previousStages.getStage(GreenDemosaic.class).getSensorGTex();
 
         sensorTex.bind(GL_TEXTURE0);
         sensorGTex.bind(GL_TEXTURE2);

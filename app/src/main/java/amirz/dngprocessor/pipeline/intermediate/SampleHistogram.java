@@ -8,8 +8,8 @@ import java.nio.FloatBuffer;
 import java.util.Arrays;
 
 import amirz.dngprocessor.R;
-import amirz.dngprocessor.gl.GLProgramBase;
-import amirz.dngprocessor.gl.GLTex;
+import amirz.dngprocessor.gl.GLPrograms;
+import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.math.Histogram;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
@@ -45,7 +45,7 @@ public class SampleHistogram extends Stage {
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
         super.execute(previousStages);
-        GLProgramBase converter = getConverter();
+        GLPrograms converter = getConverter();
 
         converter.seti("outOffset", mOffsetX, mOffsetY);
 
@@ -57,10 +57,10 @@ public class SampleHistogram extends Stage {
         w /= samplingFactor;
         h /= samplingFactor;
 
-        GLTex analyzeTex = new GLTex(w, h, 4, GLTex.Format.Float16, null);
+        Texture analyzeTex = new Texture(w, h, 4, Texture.Format.Float16, null);
 
         // Load intermediate buffer as texture
-        GLTex intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
+        Texture intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
         intermediate.bind(GL_TEXTURE0);
 
         // Configure frame buffer
