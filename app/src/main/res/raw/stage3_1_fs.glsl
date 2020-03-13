@@ -70,6 +70,10 @@ float sigmoid(float val, float transfer) {
     return val;
 }
 
+float histEq(float inVal) {
+    return texture(hist, vec2(inVal, 0.5f)).x;
+}
+
 vec3 processPatch(ivec2 xyPos) {
     vec3[9] impatch = load3x3(xyPos, 2);
     vec3 mid = impatch[4];
@@ -79,7 +83,7 @@ vec3 processPatch(ivec2 xyPos) {
     float z = mid.z;
 
     // Calculate stddev for patch
-    /*vec3 mean;
+    vec3 mean;
     for (int i = 0; i < 9; i++) {
         mean += impatch[i];
     }
@@ -97,7 +101,7 @@ vec3 processPatch(ivec2 xyPos) {
         maxxyz = max(maxxyz, impatch[i]);
     }
     float distxy = distance(minxyz.xy, maxxyz.xy);
-    float distz = distance(minxyz.z, maxxyz.z);*/
+    float distz = distance(minxyz.z, maxxyz.z);
 
     /**
     CHROMA NOISE REDUCE
@@ -106,7 +110,7 @@ vec3 processPatch(ivec2 xyPos) {
     //float Npx = pow(noiseProfile.x * z + noiseProfile.y, 2.f);
 
     // Thresholds
-    /*float thExclude = 1.5f;
+    float thExclude = 1.5f;
     float thStop = 2.25f;
 
     // Expand in a plus
@@ -153,15 +157,15 @@ vec3 processPatch(ivec2 xyPos) {
         }
         // Keep track of the best angle
         lastMinAngle = minAngle;
-    }*/
+    }
 
-    //xy = sum.xy / float(totalCount);
+    xy = sum.xy / float(totalCount);
     //z = sum.z / float(totalCount);
 
     /**
     LUMA DENOISE AND SHARPEN
     **/
-    /*float zDiff;
+    float zDiff;
     if (sharpenFactor > 0.f) {
         float[9] impz = load3x3z(xyPos);
         float lx = impz[0] - impz[2] + (impz[3] - impz[5]) * 2.f + impz[6] - impz[8];
@@ -182,7 +186,7 @@ vec3 processPatch(ivec2 xyPos) {
         zDiff += min(sqrt(l) * 3.f, 1.f) * sharpenFactor * dz;
     } else if (sharpenFactor < 0.f) {
         zDiff += sharpenFactor * (z - sum.z / float(totalCount));
-    }*/
+    }
 
     /*
     if (lce) {
@@ -241,19 +245,9 @@ vec3 processPatch(ivec2 xyPos) {
     //z = texture(downscaledBuffer, vec2(xyPos) / vec2(intermediateWidth, intermediateHeight)).x;
     //z = texelFetch(downscaledBuffer, xyPos / 8, 0).x;
 
-    float bg = texelFetch(bilateralBuffer, xyPos, 0).x;
-    bg = sigmoid(bg, 0.25f);
+    z = texelFetch(detailBuffer, xyPos, 0).x + zDiff;
+    return clamp(vec3(mid.xy, z), 0.f, 1.f);
 
-    float detail = texelFetch(detailBuffer, xyPos, 0).x;
-
-    // Histogram equalization
-    float zEq = texture(hist, vec2(bg, 0.5f)).x;
-    float zEqDiff = zEq - bg;
-
-    z = bg + zEqDiff * pow(bg, 0.8f) + 3.f * detail;
-    //z = bg + detail;
-
-    return clamp(vec3(mid.xy, sigmoid(z, 0.25f)), 0.f, 1.f);
     //return clamp(vec3(vec2(0.345703f, 0.358539f), z), 0.f, 1.f);
     //return clamp(vec3(xy, z), 0.f, 1.f);
 }

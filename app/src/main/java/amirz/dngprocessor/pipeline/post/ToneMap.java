@@ -17,7 +17,7 @@ import amirz.dngprocessor.pipeline.convert.PreProcess;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 import amirz.dngprocessor.pipeline.intermediate.BilateralFilter;
 import amirz.dngprocessor.pipeline.intermediate.SampleHistogram;
-import amirz.dngprocessor.pipeline.intermediate.SplitDetail;
+import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
 
 import static amirz.dngprocessor.colorspace.ColorspaceConstants.CUSTOM_ACR3_TONEMAP_CURVE_COEFFS;
 import static android.opengl.GLES20.*;
@@ -73,7 +73,6 @@ public class ToneMap extends Stage {
 
         SampleHistogram sampleHistogram = previousStages.getStage(SampleHistogram.class);
         float[] sigma = sampleHistogram.getSigma();
-        float[] hist = sampleHistogram.getHist();
 
         converter.setf("sigma", sigma);
 
@@ -89,15 +88,10 @@ public class ToneMap extends Stage {
             bilateralFilter.getAHEMap().bind(GL_TEXTURE4);
         }
 
-        Texture histTex = new Texture(hist.length, 1, 1, Texture.Format.Float16,
-                FloatBuffer.wrap(hist), GL_LINEAR, GL_CLAMP_TO_EDGE);
-        histTex.bind(GL_TEXTURE6);
-        converter.seti("hist", 6);
-
         bilateralFilter.getBilateral().bind(GL_TEXTURE8);
         converter.seti("bilateralBuffer", 8);
 
-        SplitDetail detail = previousStages.getStage(SplitDetail.class);
+        MergeDetail detail = previousStages.getStage(MergeDetail.class);
         detail.getDetail().bind(GL_TEXTURE10);
         converter.seti("detailBuffer", 10);
 

@@ -1,5 +1,7 @@
 package amirz.dngprocessor.pipeline.intermediate;
 
+import java.nio.FloatBuffer;
+
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
@@ -10,7 +12,7 @@ import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 
 import static android.opengl.GLES20.*;
 
-public class SplitDetail extends Stage {
+public class MergeDetail extends Stage {
     private Texture mDetail;
 
     public Texture getDetail() {
@@ -28,6 +30,14 @@ public class SplitDetail extends Stage {
 
         int w = preProcess.getInWidth();
         int h = preProcess.getInHeight();
+
+        SampleHistogram sampleHistogram = previousStages.getStage(SampleHistogram.class);
+        float[] hist = sampleHistogram.getHist();
+
+        Texture histTex = new Texture(hist.length, 1, 1, Texture.Format.Float16,
+                FloatBuffer.wrap(hist), GL_LINEAR, GL_CLAMP_TO_EDGE);
+        histTex.bind(GL_TEXTURE6);
+        converter.seti("hist", 6);
 
         intermediate.getIntermediate().bind(GL_TEXTURE0);
         bilateral.getBilateral().bind(GL_TEXTURE2);

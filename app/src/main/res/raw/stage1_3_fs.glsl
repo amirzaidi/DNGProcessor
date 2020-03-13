@@ -131,6 +131,17 @@ vec3 XYZtoxyY(vec3 XYZ) {
     return result;
 }
 
+float sigmoid(float val, float transfer) {
+    if (val > transfer) {
+        // This variable maps the cut off point in the linear curve to the sigmoid
+        float a = log((1.f + transfer) / (1.f - transfer)) / transfer;
+
+        // Transform val using the sigmoid curve
+        val = 2.f / (1.f + exp(-a * val)) - 1.f;
+    }
+    return val;
+}
+
 vec3 convertSensorToIntermediate(vec3 sensor) {
     sensor = max(sensor, 0.f);
     vec3 npf = sensor / neutralPoint;
@@ -145,6 +156,8 @@ vec3 convertSensorToIntermediate(vec3 sensor) {
 
     vec3 XYZ = sensorToXYZ * sensor;
     vec3 intermediate = XYZtoxyY(XYZ);
+
+    intermediate.z = sigmoid(intermediate.z, 0.25f);
 
     return intermediate;
 }

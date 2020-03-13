@@ -18,12 +18,14 @@ public class Histogram {
                 sigma[j] += f[i + j];
             }
 
-            int bin = (int) (f[i + 3] * 0.5f * histBins);
+            int bin = (int) (f[i + 3] * histBins);
             if (bin >= histBins) bin = histBins - 1;
             histv[bin]++;
 
             logTotalLuminance += Math.log(f[i + 3] + EPSILON);
         }
+
+        logAvgLuminance = (float) Math.exp(logTotalLuminance * 4 / f.length);
 
         for (int j = 0; j < 3; j++) {
             sigma[j] /= whPixels;
@@ -39,9 +41,8 @@ public class Histogram {
             cumulativeHist[i] /= max;
         }
 
-        float[] gauss = { 0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f };
-        hist = Convolve.conv(cumulativeHist, gauss, true);
-
-        logAvgLuminance = (float) Math.exp(logTotalLuminance * 4 / f.length);
+        //float[] gauss = { 0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f };
+        //hist = Convolve.conv(cumulativeHist, gauss, true);
+        hist = cumulativeHist;
     }
 }
