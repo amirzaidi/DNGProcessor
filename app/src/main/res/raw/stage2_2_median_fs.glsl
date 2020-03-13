@@ -1,7 +1,5 @@
 #version 300 es
 
-// Blurring shader
-
 precision mediump float;
 
 uniform sampler2D buf;
@@ -12,6 +10,19 @@ out float filtered;
 
 void main() {
     ivec2 xy = ivec2(gl_FragCoord.xy);
-    float unfiltered = texelFetch(buf, xy, 0).x;
-    filtered = 1.f - unfiltered;
+    float unfiltered[9];
+    float tmp;
+    int j;
+
+    for (int i = 0; i < 9; i++) {
+        tmp = texelFetch(buf, xy + ivec2((i % 3) - 1, (i / 3) - 1), 0).x;
+        j = i;
+        // Shift larger values forward, starting from the right.
+        while (j > 0 && tmp < unfiltered[j - 1]) {
+            unfiltered[j] = unfiltered[--j];
+        }
+        unfiltered[j] = tmp;
+    }
+
+    filtered = unfiltered[4];
 }
