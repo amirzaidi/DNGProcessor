@@ -82,6 +82,6 @@ public class BilateralFilter extends Stage {
 
     @Override
     public int getShader() {
-        return R.raw.stage2_2_fs;
+        return R.raw.helper_extract_channel_fs;
     }
 }
