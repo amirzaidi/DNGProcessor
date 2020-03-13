@@ -83,8 +83,8 @@ public class StagePipeline implements AutoCloseable {
             mStages.get(i).execute(new StageMap(mStages.subList(0, i)));
         }
 
-        // Replacement for ToneMap calling it.
-        mCore.intermediateToOutput();
+        // Assume that last stage set everything but did not render yet.
+        mCore.drawBlocksToOutput();
 
         reporter.onProgress(stageCount, stageCount);
     }

@@ -29,7 +29,7 @@ public class GLCoreBlockProcessing extends GLCore {
         mOutBuffer = IntBuffer.allocate(mOutWidth * mOutHeight);
     }
 
-    public void intermediateToOutput() {
+    public void drawBlocksToOutput() {
         GLPrograms program = getProgram();
 
         BlockDivider divider = new BlockDivider(mOutHeight, BLOCK_HEIGHT);
