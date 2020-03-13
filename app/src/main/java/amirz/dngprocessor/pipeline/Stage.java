@@ -7,13 +7,11 @@ import amirz.dngprocessor.gl.ShaderLoader;
 public abstract class Stage {
     private GLPrograms mConverter;
     private TexturePool mTexPool;
-    private int mProgram;
 
     public void init(GLPrograms converter, TexturePool texPool,
                      ShaderLoader shaderLoader) {
         mConverter = converter;
         mTexPool = texPool;
-        mProgram = converter.createProgram(converter.vertexShader, shaderLoader.readRaw(getShader()));
     }
 
     protected GLPrograms getConverter() {
@@ -29,7 +27,7 @@ public abstract class Stage {
     }
 
     protected void execute(StagePipeline.StageMap previousStages) {
-        mConverter.useProgram(mProgram);
+        mConverter.useProgram(getShader());
     }
 
     public abstract int getShader();

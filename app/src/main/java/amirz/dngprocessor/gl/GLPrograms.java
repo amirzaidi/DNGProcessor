@@ -14,15 +14,19 @@ import static android.opengl.GLES30.*;
 public class GLPrograms implements AutoCloseable {
     public final int vertexShader;
 
+    private final ShaderLoader mShaderLoader;
     private final SquareModel mSquare = new SquareModel();
     private final List<Integer> mPrograms = new ArrayList<>();
     private int mProgramActive;
 
-    public GLPrograms(ShaderLoader loader) {
-        vertexShader = loadShader(GL_VERTEX_SHADER, loader.readRaw(R.raw.passthrough_vs));
+    public GLPrograms(ShaderLoader shaderLoader) {
+        mShaderLoader = shaderLoader;
+        vertexShader = loadShader(GL_VERTEX_SHADER, shaderLoader.readRaw(R.raw.passthrough_vs));
     }
 
-    public void useProgram(int program) {
+    public void useProgram(int fragmentRes) {
+        int program = createProgram(vertexShader, mShaderLoader.readRaw(fragmentRes));
+
         glLinkProgram(program);
         glUseProgram(program);
         mProgramActive = program;
