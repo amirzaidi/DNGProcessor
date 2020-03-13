@@ -27,12 +27,11 @@ float histEq(float inVal) {
 void main() {
     ivec2 xy = ivec2(gl_FragCoord.xy);
 
-    // Copy chroma.
     vec3 intermediateValXyz = texelFetch(intermediate, xy, 0).xyz;
-    processed.xy = intermediateValXyz.xy;
+    vec3 bilateralValXyz = texelFetch(bilateral, xy, 0).xyz;
 
     float intermediateVal = intermediateValXyz.z;
-    float bilateralVal = texelFetch(bilateral, xy, 0).x;
+    float bilateralVal = bilateralValXyz.z;
     float detailVal = intermediateVal - bilateralVal;
 
     float zEqDiff = bilateralVal < 1.f
@@ -43,6 +42,9 @@ void main() {
     float z = bilateralVal
         + (0.5f * zEqDiff * pow(intermediateVal, 0.25f))
         + 2.f * detailVal;
+
+    // Copy chroma from background.
+    processed.xy = bilateralValXyz.xy;
 
     // Set new luma.
     processed.z = sigmoid(z, 0.25f);

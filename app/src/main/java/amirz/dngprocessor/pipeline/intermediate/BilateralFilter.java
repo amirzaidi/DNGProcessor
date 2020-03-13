@@ -35,28 +35,28 @@ public class BilateralFilter extends Stage {
         int w = intermediate.getWidth();
         int h = intermediate.getHeight();
 
-        converter.useProgram(R.raw.helper_extract_channel_fs);
-        mBilateral1 = new Texture(w, h, 1, Texture.Format.Float16, null);
-        mBilateral2 = new Texture(w, h, 1, Texture.Format.Float16, null);
-        intermediate.bind(GL_TEXTURE0);
-        converter.seti("buf", 0);
-        converter.setf("mult", 0, 0, 1, 0);
-        mBilateral1.setFrameBuffer();
-        converter.drawBlocks(w, h);
+        //converter.useProgram(R.raw.helper_extract_channel_fs);
+        mBilateral1 = new Texture(w, h, 3, Texture.Format.Float16, null);
+        mBilateral2 = new Texture(w, h, 3, Texture.Format.Float16, null);
+
+        //intermediate.bind(GL_TEXTURE0);
+        //converter.seti("buf", 0);
+        //converter.setf("mult", 0, 0, 1, 0);
+        //mBilateral1.setFrameBuffer();
+        //converter.drawBlocks(w, h);
 
         // Pre-bilateral median filter.
         converter.useProgram(R.raw.stage2_2_median_fs);
-        mBilateral1.bind(GL_TEXTURE0);
+        intermediate.bind(GL_TEXTURE0);
         converter.seti("buf", 0);
         mBilateral2.setFrameBuffer();
         converter.drawBlocks(w, h);
 
         // Bilateral filter setup.
-        converter.useProgram(R.raw.stage3_0_fs);
+        converter.useProgram(R.raw.stage2_2_bilateral);
         intermediate.bind(GL_TEXTURE2);
         converter.seti("buf", 0);
         converter.seti("bufSize", w, h);
-        converter.seti("intermediate", 2);
 
         // 1) Small area, strong blur.
         mBilateral2.bind(GL_TEXTURE0);

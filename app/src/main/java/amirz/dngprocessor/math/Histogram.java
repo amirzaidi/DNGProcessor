@@ -41,8 +41,7 @@ public class Histogram {
             cumulativeHist[i] /= max;
         }
 
-        //float[] gauss = { 0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f };
-        //hist = Convolve.conv(cumulativeHist, gauss, true);
-        hist = cumulativeHist;
+        float[] gauss = { 0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f };
+        hist = Convolve.conv(cumulativeHist, gauss, true);
     }
 }

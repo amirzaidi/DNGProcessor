@@ -5,14 +5,13 @@ precision mediump float;
 
 // Use buf to blur luma while keeping chroma.
 uniform sampler2D buf;
-uniform sampler2D intermediate;
 
 uniform vec2 sigma;
 uniform ivec2 radius;
 uniform ivec2 bufSize;
 
 // Out
-out float result;
+out vec3 result;
 
 float unscaledGaussian(float d, float s) {
     return exp(-0.5f * pow(d / s, 2.f));
@@ -38,26 +37,24 @@ float pixDiff(vec3 pix1, vec3 pix2) {
 void main() {
     ivec2 xyCenter = ivec2(gl_FragCoord.xy);
 
-    vec3 XYZCenter = texelFetch(intermediate, xyCenter, 0).xyz;
-    XYZCenter.z = texelFetch(buf, xyCenter, 0).x;
+    vec3 XYZCenter = texelFetch(buf, xyCenter, 0).xyz;
 
     ivec2 minxy = max(ivec2(0, 0), xyCenter - radius.x);
     ivec2 maxxy = min(bufSize - 1, xyCenter + radius.x);
 
-    float I = 0.f;
+    vec3 I = vec3(0.f);
     float W = 0.f;
 
     for (int y = minxy.y; y <= maxxy.y; y += radius.y) {
         for (int x = minxy.x; x <= maxxy.x; x += radius.y) {
             ivec2 xyPixel = ivec2(x, y);
 
-            vec3 XYZPixel = texelFetch(intermediate, xyPixel, 0).xyz;
-            XYZPixel.z = texelFetch(buf, xyPixel, 0).x;
+            vec3 XYZPixel = texelFetch(buf, xyPixel, 0).xyz;
 
             vec2 dxy = vec2(xyPixel - xyCenter);
 
             float scale = fr(pixDiff(XYZPixel, XYZCenter)) * gs(length(dxy));
-            I += XYZPixel.z * scale;
+            I += XYZPixel * scale;
             W += scale;
         }
     }

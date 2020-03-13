@@ -62,6 +62,6 @@ public class MergeDetail extends Stage {
 
     @Override
     public int getShader() {
-        return R.raw.stage2_3_detail_fs;
+        return R.raw.stage2_3_detail;
     }
 }
