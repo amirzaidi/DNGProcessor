@@ -27,15 +27,9 @@ public class DngParser {
     private static final String TAG = "DngParser";
     private static final int JPEG_QUALITY = 95;
 
-    private static int STEPS = 0;
-    private static final int STEP_READ = STEPS++;
-    private static final int STEP_PROCESS_INIT = STEPS++;
-    private static final int STEP_PROCESS = STEPS++;
-    private static final int STEP_PROCESS_ANALYZE = STEPS++;
-    private static final int STEP_PROCESS_BLUR = STEPS++;
-    private static final int STEP_PROCESS_XYZ = STEPS++;
-    private static final int STEP_SAVE = STEPS++;
-    private static final int STEP_META = STEPS++;
+    private static int ADD_STEPS = 0;
+    private static int STEP_SAVE = ADD_STEPS++;
+    private static int STEP_META = ADD_STEPS++;
 
     private final Context mContext;
     private final Uri mUri;
@@ -48,7 +42,7 @@ public class DngParser {
     }
 
     public void run() {
-        NotifHandler.progress(mContext, STEPS, STEP_READ);
+        NotifHandler.progress(mContext, 1, 0);
 
         Preferences pref = Preferences.global();
 
@@ -195,34 +189,17 @@ public class DngParser {
             sensor.gainMapSize = null;
         }
 
-        NotifHandler.progress(mContext, STEPS, STEP_PROCESS_INIT);
         ShaderLoader loader = new ShaderLoader(mContext.getResources());
-
+        final int[] steps = { 0 };
         try (StagePipeline pipeline = new StagePipeline(
                 sensor, process, rawImageInput, argbOutput, loader)) {
             pipeline.execute((completed, total) -> {
-               // NotifHandler.progress(mContext, STEPS, STEP_PROCESS + completed);
+                steps[0] = total;
+                NotifHandler.progress(mContext, total + ADD_STEPS, completed);
             });
         }
 
-        /*
-        try (GLControllerRawConverter converter = new GLControllerRawConverter(
-                sensor, process, rawImageInput, argbOutput, loader)) {
-            NotifHandler.progress(mContext, STEPS, STEP_PROCESS);
-            converter.sensorToIntermediate();
-
-            NotifHandler.progress(mContext, STEPS, STEP_PROCESS_ANALYZE);
-            converter.analyzeIntermediate();
-
-            NotifHandler.progress(mContext, STEPS, STEP_PROCESS_BLUR);
-            converter.blurIntermediate();
-
-            NotifHandler.progress(mContext, STEPS, STEP_PROCESS_XYZ);
-            converter.intermediateToOutput();
-        }
-        */
-
-        NotifHandler.progress(mContext, STEPS, STEP_SAVE);
+        NotifHandler.progress(mContext, steps[0] + ADD_STEPS, steps[0] + STEP_SAVE);
         String savePath = Path.processedPath(pref.savePath.get(), mFile);
         try (FileOutputStream out = new FileOutputStream(savePath)) {
             argbOutput.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out);
@@ -231,7 +208,7 @@ public class DngParser {
         }
         argbOutput.recycle();
 
-        NotifHandler.progress(mContext, STEPS, STEP_META);
+        NotifHandler.progress(mContext, steps[0] + ADD_STEPS, steps[0] + STEP_META);
         try {
             ExifInterface newExif = new ExifInterface(savePath);
             copyAttributes(reader.exif, newExif);
@@ -264,7 +241,7 @@ public class DngParser {
         mContext.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
                 Uri.fromFile(new File(savePath))));
 
-        NotifHandler.progress(mContext, STEPS, STEPS);
+        NotifHandler.progress(mContext, steps[0] + ADD_STEPS, steps[0] + ADD_STEPS);
     }
 
     @SuppressWarnings("deprecation")
