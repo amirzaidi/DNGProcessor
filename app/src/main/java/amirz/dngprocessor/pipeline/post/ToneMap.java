@@ -14,10 +14,9 @@ import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.PreProcess;
-import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 import amirz.dngprocessor.pipeline.intermediate.BilateralFilter;
-import amirz.dngprocessor.pipeline.intermediate.SampleHistogram;
 import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
+import amirz.dngprocessor.pipeline.intermediate.SampleHistogram;
 
 import static amirz.dngprocessor.colorspace.ColorspaceConstants.CUSTOM_ACR3_TONEMAP_CURVE_COEFFS;
 import static android.opengl.GLES20.*;
@@ -61,8 +60,8 @@ public class ToneMap extends Stage {
         PreProcess preProcess = previousStages.getStage(PreProcess.class);
 
         // Load intermediate buffers as textures
-        Texture intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
-        intermediate.bind(GL_TEXTURE0);
+        Texture detail = previousStages.getStage(MergeDetail.class).getDetail();
+        detail.bind(GL_TEXTURE0);
 
         glGenerateMipmap(GL_TEXTURE_2D);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
@@ -88,13 +87,6 @@ public class ToneMap extends Stage {
             bilateralFilter.getAHEMap().bind(GL_TEXTURE4);
         }
 
-        bilateralFilter.getBilateral().bind(GL_TEXTURE8);
-        converter.seti("bilateralBuffer", 8);
-
-        MergeDetail detail = previousStages.getStage(MergeDetail.class);
-        detail.getDetail().bind(GL_TEXTURE10);
-        converter.seti("detailBuffer", 10);
-
         Log.d(TAG, "Hist factor " + histFactor);
         converter.setf("histFactor", Math.max(histFactor, 0f));
 
@@ -112,7 +104,7 @@ public class ToneMap extends Stage {
         int denoiseFactor = (int)((float) mProcessParams.denoiseFactor
                 * Math.sqrt(sigma[0] + sigma[1]));
 
-        float sharpenFactor = mProcessParams.sharpenFactor - 7f
+        float sharpenFactor = mProcessParams.sharpenFactor - 6f
                 * (float) Math.hypot(sigma[0], sigma[1]);
 
         Log.d(TAG, "Denoise radius " + denoiseFactor);

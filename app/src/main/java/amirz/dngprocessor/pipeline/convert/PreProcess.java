@@ -46,10 +46,6 @@ public class PreProcess extends Stage {
         return mSensor.cfa;
     }
 
-    public byte[] getCfaValues() {
-        return mSensor.cfaVal;
-    }
-
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
         super.execute(previousStages);

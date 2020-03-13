@@ -7,7 +7,7 @@ uniform sampler2D intermediate;
 uniform sampler2D hist;
 
 // Out
-out float processed;
+out vec3 processed;
 
 float sigmoid(float val, float transfer) {
     if (val > transfer) {
@@ -27,13 +27,22 @@ float histEq(float inVal) {
 void main() {
     ivec2 xy = ivec2(gl_FragCoord.xy);
 
-    float intermediateVal = texelFetch(intermediate, xy, 0).z;
+    // Copy chroma.
+    vec3 intermediateValXyz = texelFetch(intermediate, xy, 0).xyz;
+    processed.xy = intermediateValXyz.xy;
+
+    float intermediateVal = intermediateValXyz.z;
     float bilateralVal = texelFetch(bilateral, xy, 0).x;
     float detailVal = intermediateVal - bilateralVal;
 
     float bg = sigmoid(bilateralVal, 0.25f);
     float zEqDiff = histEq(bg) - bg;
-    float z = bg + (0.5f * zEqDiff * pow(intermediateVal, 0.25f)) + (3.f * detailVal);
 
-    processed = sigmoid(z, 0.25f);
+    // Background + Correction + Detail
+    float z = bg
+        + (0.5f * zEqDiff * pow(intermediateVal, 0.25f))
+        + 2.f * detailVal;
+
+    // Set new luma.
+    processed.z = sigmoid(z, 0.25f);
 }

@@ -11,8 +11,6 @@ uniform int intermediateHeight;
 
 uniform sampler2D blurred;
 uniform sampler2D ahemap;
-uniform sampler2D bilateralBuffer;
-uniform sampler2D detailBuffer;
 
 uniform int yOffset;
 
@@ -160,7 +158,7 @@ vec3 processPatch(ivec2 xyPos) {
     }
 
     xy = sum.xy / float(totalCount);
-    //z = sum.z / float(totalCount);
+    z = sum.z / float(totalCount);
 
     /**
     LUMA DENOISE AND SHARPEN
@@ -188,50 +186,12 @@ vec3 processPatch(ivec2 xyPos) {
         zDiff += sharpenFactor * (z - sum.z / float(totalCount));
     }
 
-    /*
-    if (lce) {
-        // Local contrast enhancement
-        float zBlurred = texelFetch(blurred, xyPos, 0).x;
-        float zBlurDiff = z - zBlurred;
-        zDiff += zBlurDiff * max(0.f, 0.35f + min(0.f, sharpenFactor));
-    }
-
-    if (ahe) {
-        // Adaptive histogram equalization
-        float aheStrength = 0.3f * max(0.f, 0.35f + min(0.f, sharpenFactor));
-
-        vec4 histDistribution = texture(ahemap, vec2(xyPos) / vec2(intermediateWidth, intermediateHeight));
-        const float c1 = 0.2f, c2 = 0.4f, c3 = 0.6f, c4 = 0.8f;
-
-        float z1 = sigmoid(z, 0.75f), z2;
-        if (z1 <= histDistribution.x) {
-            z2 = c1 * z1 / histDistribution.x;
-        } else if (z1 <= histDistribution.y) {
-            z2 = c1 + (c2 - c1) * (z1 - histDistribution.x) / (histDistribution.y - histDistribution.x);
-        } else if (z1 <= histDistribution.z) {
-            z2 = c2 + (c3 - c2) * (z1 - histDistribution.y) / (histDistribution.z - histDistribution.y);
-        } else if (z1 <= histDistribution.w) {
-            z2 = c3 + (c4 - c3) * (z1 - histDistribution.z) / (histDistribution.w - histDistribution.z);
-        } else {
-            z2 = c4 + (1.f - c4) * (z1 - histDistribution.w) / (1.f - histDistribution.w);
-        }
-
-        zDiff += aheStrength * pow(z, 0.33f) * (z2 - z);
-    }
-
-    // Histogram equalization
-    float zFactor = texture(hist, vec2(z * 0.5f, 0.5f)).x;
-    float zFactorDiff = z * zFactor - z;
-    zDiff += zFactorDiff * pow(z, 0.5f) * histFactor;
-
-    // Apply sharpening and local contrast increase after hist eq
-    z += zDiff;
-    */
+    z += sign(zDiff) * sigmoid(abs(zDiff) * 10.f, 0.25f) * 0.1f;
 
     /**
     DENOISE BY DESATURATION
     **/
-    /*if (radiusDenoise > 0) {
+    if (radiusDenoise > 0) {
         // Grayshift xy based on noise level
         float shiftFactor = clamp((distxy - 0.15f) * 1.75f, 0.f, 1.f);
 
@@ -240,16 +200,9 @@ vec3 processPatch(ivec2 xyPos) {
 
         // Reduce z by at most a third
         z *= clamp(1.1f - shiftFactor, 0.67f, 1.f);
-    }*/
+    }
 
-    //z = texture(downscaledBuffer, vec2(xyPos) / vec2(intermediateWidth, intermediateHeight)).x;
-    //z = texelFetch(downscaledBuffer, xyPos / 8, 0).x;
-
-    z = texelFetch(detailBuffer, xyPos, 0).x + zDiff;
-    return clamp(vec3(mid.xy, z), 0.f, 1.f);
-
-    //return clamp(vec3(vec2(0.345703f, 0.358539f), z), 0.f, 1.f);
-    //return clamp(vec3(xy, z), 0.f, 1.f);
+    return clamp(vec3(xy, z), 0.f, 1.f);
 }
 
 vec3 xyYtoXYZ(vec3 xyY) {
