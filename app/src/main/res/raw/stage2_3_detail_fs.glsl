@@ -33,7 +33,7 @@ void main() {
 
     float bg = sigmoid(bilateralVal, 0.25f);
     float zEqDiff = histEq(bg) - bg;
-    float z = bg + (zEqDiff * pow(bg, 0.45f)) + (2.75f * detailVal);
+    float z = bg + (0.5f * zEqDiff * pow(intermediateVal, 0.25f)) + (3.f * detailVal);
 
     processed = sigmoid(z, 0.25f);
 }
