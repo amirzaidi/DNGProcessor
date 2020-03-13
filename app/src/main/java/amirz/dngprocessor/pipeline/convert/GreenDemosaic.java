@@ -1,8 +1,8 @@
 package amirz.dngprocessor.pipeline.convert;
 
 import amirz.dngprocessor.R;
+import amirz.dngprocessor.gl.GLProgramBase;
 import amirz.dngprocessor.gl.GLTex;
-import amirz.dngprocessor.pipeline.GLProgramRawConverter;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 
@@ -18,13 +18,15 @@ public class GreenDemosaic extends Stage {
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
         super.execute(previousStages);
-        GLProgramRawConverter converter = getConverter();
+        GLProgramBase converter = getConverter();
+
+        PreProcess preProcess = previousStages.getStage(PreProcess.class);
 
         converter.seti("rawBuffer", 0);
-        converter.seti("rawWidth", converter.inWidth);
-        converter.seti("rawHeight", converter.inHeight);
+        converter.seti("rawWidth", preProcess.getInWidth());
+        converter.seti("rawHeight", preProcess.getInHeight());
 
-        mSensorG = new GLTex(converter.inWidth, converter.inHeight, 1,
+        mSensorG = new GLTex(preProcess.getInWidth(), preProcess.getInHeight(), 1,
                 GLTex.Format.Float16, null);
 
         // Load old texture
@@ -34,8 +36,8 @@ public class GreenDemosaic extends Stage {
         // Configure frame buffer
         mSensorG.setFrameBuffer();
 
-        converter.seti("cfaPattern", converter.cfaPattern);
-        converter.drawBlocks(converter.inWidth, converter.inHeight);
+        converter.seti("cfaPattern", preProcess.getCfaPattern());
+        converter.drawBlocks(preProcess.getInWidth(), preProcess.getInHeight());
     }
 
     @Override

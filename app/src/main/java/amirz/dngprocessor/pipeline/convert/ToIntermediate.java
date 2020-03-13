@@ -3,9 +3,9 @@ package amirz.dngprocessor.pipeline.convert;
 import android.util.Rational;
 
 import amirz.dngprocessor.R;
+import amirz.dngprocessor.gl.GLProgramBase;
 import amirz.dngprocessor.gl.GLTex;
 import amirz.dngprocessor.params.SensorParams;
-import amirz.dngprocessor.pipeline.GLProgramRawConverter;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 
@@ -30,15 +30,17 @@ public class ToIntermediate extends Stage {
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
         super.execute(previousStages);
-        GLProgramRawConverter converter = getConverter();
+        GLProgramBase converter = getConverter();
+
+        PreProcess preProcess = previousStages.getStage(PreProcess.class);
 
         converter.seti("rawBuffer", 0);
         converter.seti("greenBuffer", 2);
-        converter.seti("rawWidth", converter.inWidth);
-        converter.seti("rawHeight", converter.inHeight);
+        converter.seti("rawWidth", preProcess.getInWidth());
+        converter.seti("rawHeight", preProcess.getInHeight());
 
         // Second texture for per-CFA pixel data
-        mIntermediate = new GLTex(converter.inWidth, converter.inHeight, 3,
+        mIntermediate = new GLTex(preProcess.getInWidth(), preProcess.getInHeight(), 3,
                 GLTex.Format.Float16, null);
 
         // Load mosaic and green raw texture
@@ -66,8 +68,8 @@ public class ToIntermediate extends Stage {
 
         converter.setf("sensorToXYZ", mSensorToXYZ_D50);
 
-        converter.seti("cfaPattern", converter.cfaPattern);
-        converter.drawBlocks(converter.inWidth, converter.inHeight);
+        converter.seti("cfaPattern", preProcess.getCfaPattern());
+        converter.drawBlocks(preProcess.getInWidth(), preProcess.getInHeight());
 
         sensorTex.close();
         sensorGTex.close();

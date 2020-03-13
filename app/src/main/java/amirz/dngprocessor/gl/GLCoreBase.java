@@ -66,10 +66,8 @@ public abstract class GLCoreBase implements AutoCloseable {
         }, 0);
 
         eglMakeCurrent(mDisplay, mSurface, mSurface, mContext);
-        mProgram = createProgram(loader);
+        mProgram = new GLProgramBase(loader);
     }
-
-    protected abstract GLProgramBase createProgram(ShaderLoader loader);
 
     public GLProgramBase getProgram() {
         return mProgram;

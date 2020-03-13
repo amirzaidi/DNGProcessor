@@ -30,7 +30,7 @@ public class GLCoreBlockProcessing extends GLCoreBase {
     }
 
     public void intermediateToOutput() {
-        GLProgramRawConverter program = (GLProgramRawConverter) getProgram();
+        GLProgramBase program = getProgram();
 
         BlockDivider divider = new BlockDivider(mOutHeight, BLOCK_HEIGHT);
         int[] row = new int[2];
@@ -39,7 +39,7 @@ public class GLCoreBlockProcessing extends GLCoreBase {
             int height = row[1];
 
             glViewport(0, 0, mOutWidth, height);
-            program.setYOffset(y);
+            program.seti("yOffset", y);
             program.draw();
 
             mBlockBuffer.position(0);
@@ -56,10 +56,5 @@ public class GLCoreBlockProcessing extends GLCoreBase {
 
         mOutBuffer.position(0);
         mOut.copyPixelsFromBuffer(mOutBuffer);
-    }
-
-    @Override
-    protected GLProgramBase createProgram(ShaderLoader loader) {
-        return new GLProgramRawConverter(loader);
     }
 }

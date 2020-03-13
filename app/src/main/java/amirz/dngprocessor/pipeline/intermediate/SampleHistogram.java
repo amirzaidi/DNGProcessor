@@ -8,9 +8,9 @@ import java.nio.FloatBuffer;
 import java.util.Arrays;
 
 import amirz.dngprocessor.R;
+import amirz.dngprocessor.gl.GLProgramBase;
 import amirz.dngprocessor.gl.GLTex;
 import amirz.dngprocessor.math.Histogram;
-import amirz.dngprocessor.pipeline.GLProgramRawConverter;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
@@ -25,6 +25,7 @@ public class SampleHistogram extends Stage {
     private static final String TAG = "SampleHistogram";
 
     private final int mOutWidth, mOutHeight, mOffsetX, mOffsetY;
+    private float[] mSigma, mHist;
 
     public SampleHistogram(int outWidth, int outHeight, int offsetX, int offsetY) {
         mOutWidth = outWidth;
@@ -33,10 +34,18 @@ public class SampleHistogram extends Stage {
         mOffsetY = offsetY;
     }
 
+    public float[] getSigma() {
+        return mSigma;
+    }
+
+    public float[] getHist() {
+        return mHist;
+    }
+
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
         super.execute(previousStages);
-        GLProgramRawConverter converter = getConverter();
+        GLProgramBase converter = getConverter();
 
         converter.seti("outOffset", mOffsetX, mOffsetY);
 
@@ -73,10 +82,10 @@ public class SampleHistogram extends Stage {
 
         // Calculate a histogram on the result
         Histogram histParser = new Histogram(f, whPixels);
-        converter.sigma = histParser.sigma;
-        converter.hist = histParser.hist;
+        mSigma = histParser.sigma;
+        mHist = histParser.hist;
 
-        Log.d(TAG, "Sigma " + Arrays.toString(converter.sigma));
+        Log.d(TAG, "Sigma " + Arrays.toString(mSigma));
         Log.d(TAG, "LogAvg " + histParser.logAvgLuminance);
     }
 

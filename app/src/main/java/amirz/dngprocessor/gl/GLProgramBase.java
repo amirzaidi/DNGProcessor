@@ -4,16 +4,23 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import amirz.dngprocessor.R;
 import amirz.dngprocessor.math.BlockDivider;
 
 import static amirz.dngprocessor.util.Constants.BLOCK_HEIGHT;
 import static android.opengl.GLES20.*;
 import static android.opengl.GLES30.*;
 
-public abstract class GLProgramBase implements AutoCloseable {
+public class GLProgramBase implements AutoCloseable {
+    public final int vertexShader;
+
     private final GLSquare mSquare = new GLSquare();
     private final List<Integer> mPrograms = new ArrayList<>();
     private int mProgramActive;
+
+    public GLProgramBase(ShaderLoader loader) {
+        vertexShader = loadShader(GL_VERTEX_SHADER, loader.readRaw(R.raw.passthrough_vs));
+    }
 
     public void useProgram(int program) {
         glLinkProgram(program);
@@ -35,8 +42,6 @@ public abstract class GLProgramBase implements AutoCloseable {
         mPrograms.add(program);
         return program;
     }
-
-    public abstract void setYOffset(int y);
 
     public void draw() {
         mSquare.draw(vPosition());

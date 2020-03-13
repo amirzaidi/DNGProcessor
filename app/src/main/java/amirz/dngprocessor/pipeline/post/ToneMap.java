@@ -5,15 +5,18 @@ import android.util.Log;
 import java.nio.FloatBuffer;
 
 import amirz.dngprocessor.R;
+import amirz.dngprocessor.gl.GLProgramBase;
 import amirz.dngprocessor.gl.GLTex;
 import amirz.dngprocessor.gl.GLTexPool;
 import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
-import amirz.dngprocessor.pipeline.GLProgramRawConverter;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
+import amirz.dngprocessor.pipeline.convert.PreProcess;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
+import amirz.dngprocessor.pipeline.intermediate.BilateralFilter;
+import amirz.dngprocessor.pipeline.intermediate.SampleHistogram;
 
 import static amirz.dngprocessor.colorspace.ColorspaceConstants.CUSTOM_ACR3_TONEMAP_CURVE_COEFFS;
 import static android.opengl.GLES20.GL_CLAMP_TO_EDGE;
@@ -51,7 +54,7 @@ public class ToneMap extends Stage {
     }
 
     @Override
-    public void init(GLProgramRawConverter converter, GLTexPool texPool,
+    public void init(GLProgramBase converter, GLTexPool texPool,
                      ShaderLoader shaderLoader) {
         super.init(converter, texPool, shaderLoader);
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, mFbo, 0);
@@ -60,12 +63,14 @@ public class ToneMap extends Stage {
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
         super.execute(previousStages);
-        GLProgramRawConverter converter = getConverter();
+        GLProgramBase converter = getConverter();
 
         glBindFramebuffer(GL_FRAMEBUFFER, mFbo[0]);
 
         float histFactor = mProcessParams.histFactor;
         float satLimit = mProcessParams.satLimit;
+
+        PreProcess preProcess = previousStages.getStage(PreProcess.class);
 
         // Load intermediate buffers as textures
         GLTex intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
@@ -75,26 +80,33 @@ public class ToneMap extends Stage {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
         converter.seti("intermediateBuffer", 0);
-        converter.seti("intermediateWidth", converter.inWidth);
-        converter.seti("intermediateHeight", converter.inHeight);
-        converter.setf("sigma", converter.sigma);
+        converter.seti("intermediateWidth", preProcess.getInWidth());
+        converter.seti("intermediateHeight", preProcess.getInHeight());
 
-        if (converter.mBlurred != null) {
+        SampleHistogram sampleHistogram = previousStages.getStage(SampleHistogram.class);
+        float[] sigma = sampleHistogram.getSigma();
+        float[] hist = sampleHistogram.getHist();
+
+        converter.setf("sigma", sigma);
+
+        BilateralFilter bilateralFilter = previousStages.getStage(BilateralFilter.class);
+
+        if (bilateralFilter.getBlurred() != null) {
             converter.seti("blurred", 2);
-            converter.mBlurred.bind(GL_TEXTURE2);
+            bilateralFilter.getBlurred().bind(GL_TEXTURE2);
         }
 
-        if (converter.mAHEMap != null) {
+        if (bilateralFilter.getAHEMap() != null) {
             converter.seti("ahemap", 4);
-            converter.mAHEMap.bind(GL_TEXTURE4);
+            bilateralFilter.getAHEMap().bind(GL_TEXTURE4);
         }
 
-        GLTex histTex = new GLTex(converter.hist.length, 1, 1, GLTex.Format.Float16,
-                FloatBuffer.wrap(converter.hist), GL_LINEAR, GL_CLAMP_TO_EDGE);
+        GLTex histTex = new GLTex(hist.length, 1, 1, GLTex.Format.Float16,
+                FloatBuffer.wrap(hist), GL_LINEAR, GL_CLAMP_TO_EDGE);
         histTex.bind(GL_TEXTURE6);
         converter.seti("hist", 6);
 
-        converter.mDownscaled.bind(GL_TEXTURE8);
+        bilateralFilter.getDownscaled().bind(GL_TEXTURE8);
         converter.seti("downscaledBuffer", 8);
 
         Log.d(TAG, "Hist factor " + histFactor);
@@ -112,9 +124,10 @@ public class ToneMap extends Stage {
         converter.seti("outOffset", mSensorParams.outputOffsetX, mSensorParams.outputOffsetY);
 
         int denoiseFactor = (int)((float) mProcessParams.denoiseFactor
-                * Math.sqrt(converter.sigma[0] + converter.sigma[1]));
+                * Math.sqrt(sigma[0] + sigma[1]));
+
         float sharpenFactor = mProcessParams.sharpenFactor - 7f
-                * (float) Math.hypot(converter.sigma[0], converter.sigma[1]);
+                * (float) Math.hypot(sigma[0], sigma[1]);
 
         Log.d(TAG, "Denoise radius " + denoiseFactor);
         Log.d(TAG, "Sharpen " + sharpenFactor);
