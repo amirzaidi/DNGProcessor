@@ -35,11 +35,12 @@ void main() {
     float bilateralVal = texelFetch(bilateral, xy, 0).x;
     float detailVal = intermediateVal - bilateralVal;
 
-    float bg = sigmoid(bilateralVal, 0.25f);
-    float zEqDiff = histEq(bg) - bg;
+    float zEqDiff = bilateralVal < 1.f
+        ? histEq(bilateralVal) - bilateralVal
+        : 0.f;
 
     // Background + Correction + Detail
-    float z = bg
+    float z = bilateralVal
         + (0.5f * zEqDiff * pow(intermediateVal, 0.25f))
         + 2.f * detailVal;
 
