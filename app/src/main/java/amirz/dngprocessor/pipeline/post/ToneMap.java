@@ -7,7 +7,6 @@ import java.nio.FloatBuffer;
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
-import amirz.dngprocessor.gl.TexturePool;
 import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
@@ -40,9 +39,8 @@ public class ToneMap extends Stage {
     }
 
     @Override
-    public void init(GLPrograms converter, TexturePool texPool,
-                     ShaderLoader shaderLoader) {
-        super.init(converter, texPool, shaderLoader);
+    public void init(GLPrograms converter) {
+        super.init(converter);
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, mFbo, 0);
     }
 

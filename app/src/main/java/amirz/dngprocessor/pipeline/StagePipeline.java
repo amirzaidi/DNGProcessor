@@ -8,7 +8,6 @@ import java.util.List;
 
 import amirz.dngprocessor.colorspace.ColorspaceConverter;
 import amirz.dngprocessor.gl.GLPrograms;
-import amirz.dngprocessor.gl.TexturePool;
 import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
@@ -28,9 +27,6 @@ public class StagePipeline implements AutoCloseable {
     private final GLCoreBlockProcessing mCore;
     private final GLPrograms mConverter;
 
-    private final TexturePool mTexPool;
-    private final ShaderLoader mShaderLoader;
-
     public StagePipeline(SensorParams sensor, ProcessParams process,
                          byte[] raw, Bitmap argbOutput, ShaderLoader loader) {
         int outWidth = argbOutput.getWidth();
@@ -47,9 +43,6 @@ public class StagePipeline implements AutoCloseable {
 
         mCore = new GLCoreBlockProcessing(argbOutput, loader);
         mConverter = mCore.getProgram();
-
-        mTexPool = new TexturePool();
-        mShaderLoader = loader;
 
         ColorspaceConverter colorspace = new ColorspaceConverter(sensor);
 
@@ -71,7 +64,7 @@ public class StagePipeline implements AutoCloseable {
 
     private void addStage(Stage stage) {
         if (stage.isEnabled()) {
-            stage.init(mConverter, mTexPool, mShaderLoader);
+            stage.init(mConverter);
             mStages.add(stage);
         }
     }
@@ -91,7 +84,6 @@ public class StagePipeline implements AutoCloseable {
 
     @Override
     public void close() {
-        mTexPool.close();
         mCore.close();
     }
 

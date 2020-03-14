@@ -1,25 +1,16 @@
 package amirz.dngprocessor.pipeline;
 
 import amirz.dngprocessor.gl.GLPrograms;
-import amirz.dngprocessor.gl.TexturePool;
-import amirz.dngprocessor.gl.ShaderLoader;
 
 public abstract class Stage {
     private GLPrograms mConverter;
-    private TexturePool mTexPool;
 
-    public void init(GLPrograms converter, TexturePool texPool,
-                     ShaderLoader shaderLoader) {
+    public void init(GLPrograms converter) {
         mConverter = converter;
-        mTexPool = texPool;
     }
 
     protected GLPrograms getConverter() {
         return mConverter;
-    }
-
-    protected TexturePool getTexPool() {
-        return mTexPool;
     }
 
     protected boolean isEnabled() {
