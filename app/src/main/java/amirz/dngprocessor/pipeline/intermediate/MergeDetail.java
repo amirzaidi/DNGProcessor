@@ -52,6 +52,7 @@ public class MergeDetail extends Stage {
         bilateralTex.bind(GL_TEXTURE2);
         converter.seti("intermediate", 0);
         converter.seti("bilateral", 2);
+        converter.setf("boost", 1f, 1f);
         mIntermediate = new Texture(w, h, 3, Texture.Format.Float16, null);
         mIntermediate.setFrameBuffer();
         converter.drawBlocks(w, h);

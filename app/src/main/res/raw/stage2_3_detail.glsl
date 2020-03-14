@@ -6,6 +6,8 @@ uniform sampler2D bilateral;
 uniform sampler2D intermediate;
 uniform sampler2D hist;
 
+uniform vec2 boost;
+
 // Out
 out vec3 processed;
 
@@ -40,8 +42,8 @@ void main() {
 
     // Background + Correction + Detail
     float z = bilateralVal
-        + (zEqDiff * pow(intermediateVal, 0.5f))
-        + 2.f * detailVal;
+        + boost.x * (zEqDiff * pow(intermediateVal, 0.5f))
+        + (1.f + boost.y) * detailVal;
 
     // Copy chroma from background.
     processed.xy = bilateralValXyz.xy;
