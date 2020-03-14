@@ -32,8 +32,6 @@ uniform vec3 sigma;
 uniform float sharpenFactor;
 uniform sampler2D saturation;
 uniform float satLimit;
-uniform sampler2D hist;
-uniform float histFactor;
 
 // Size
 uniform ivec2 outOffset;
@@ -66,10 +64,6 @@ float sigmoid(float val, float transfer) {
         val = 2.f / (1.f + exp(-a * val)) - 1.f;
     }
     return val;
-}
-
-float histEq(float inVal) {
-    return texture(hist, vec2(inVal, 0.5f)).x;
 }
 
 vec3 processPatch(ivec2 xyPos) {

@@ -7,7 +7,6 @@ import java.nio.FloatBuffer;
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
-import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
@@ -51,7 +50,6 @@ public class ToneMap extends Stage {
 
         glBindFramebuffer(GL_FRAMEBUFFER, mFbo[0]);
 
-        float histFactor = mProcessParams.histFactor;
         float satLimit = mProcessParams.satLimit;
 
         PreProcess preProcess = previousStages.getStage(PreProcess.class);
@@ -71,9 +69,6 @@ public class ToneMap extends Stage {
         float[] sigma = sampleHistogram.getSigma();
 
         converter.setf("sigma", sigma);
-
-        Log.d(TAG, "Hist factor " + histFactor);
-        converter.setf("histFactor", Math.max(histFactor, 0f));
 
         Log.d(TAG, "Saturation limit " + satLimit);
         converter.setf("satLimit", satLimit);

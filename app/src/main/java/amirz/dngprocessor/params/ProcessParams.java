@@ -11,12 +11,12 @@ public class ProcessParams {
                 process.histFactor = 0f;
                 break;
             case Natural:
-                process.sharpenFactor = 0.3f;
-                process.histFactor = 0.25f;
+                process.sharpenFactor = 0.25f;
+                process.histFactor = 1.f;
                 break;
             case Boosted:
                 process.sharpenFactor = 0.45f;
-                process.histFactor = 0.5f;
+                process.histFactor = 1.5f;
                 break;
         }
         return process;

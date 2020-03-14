@@ -5,6 +5,7 @@ import java.nio.FloatBuffer;
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
+import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.PreProcess;
@@ -13,7 +14,12 @@ import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 import static android.opengl.GLES20.*;
 
 public class MergeDetail extends Stage {
+    private final float mHistFactor;
     private Texture mIntermediate;
+
+    public MergeDetail(ProcessParams processParams) {
+        mHistFactor = processParams.histFactor;
+    }
 
     public Texture getIntermediate() {
         return mIntermediate;
@@ -52,7 +58,7 @@ public class MergeDetail extends Stage {
         // To ensure that we do not boost that too much, reduce with color noise.
         float[] sigma = sampleHistogram.getSigma();
         float boost = Math.max(0f, 1f - 10f * (float) Math.hypot(sigma[0], sigma[1]));
-        converter.setf("boost", boost);
+        converter.setf("boost", boost * mHistFactor);
 
         intermediateTex.bind(GL_TEXTURE0);
         bilateralTex.bind(GL_TEXTURE2);
