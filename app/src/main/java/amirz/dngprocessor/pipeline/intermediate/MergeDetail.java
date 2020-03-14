@@ -48,11 +48,16 @@ public class MergeDetail extends Stage {
         histTex.bind(GL_TEXTURE6);
         converter.seti("hist", 6);
 
+        // If there are many dark patches, the color noise goes up.
+        // To ensure that we do not boost that too much, reduce with color noise.
+        float[] sigma = sampleHistogram.getSigma();
+        float boost = Math.max(0f, 1f - 10f * (float) Math.hypot(sigma[0], sigma[1]));
+        converter.setf("boost", boost);
+
         intermediateTex.bind(GL_TEXTURE0);
         bilateralTex.bind(GL_TEXTURE2);
         converter.seti("intermediate", 0);
         converter.seti("bilateral", 2);
-        converter.setf("boost", 1f, 1f);
         mIntermediate = new Texture(w, h, 3, Texture.Format.Float16, null);
         mIntermediate.setFrameBuffer();
         converter.drawBlocks(w, h);
