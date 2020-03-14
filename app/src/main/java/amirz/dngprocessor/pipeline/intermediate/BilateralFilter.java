@@ -12,14 +12,14 @@ import static android.opengl.GLES20.*;
 
 public class BilateralFilter extends Stage {
     private final ProcessParams mProcess;
-    private Texture mBilateral1, mBilateral2;
+    private Texture mBilateral;
 
     public BilateralFilter(ProcessParams process) {
         mProcess = process;
     }
 
     public Texture getBilateral() {
-        return mBilateral1;
+        return mBilateral;
     }
 
     @Override
@@ -35,53 +35,46 @@ public class BilateralFilter extends Stage {
         int w = intermediate.getWidth();
         int h = intermediate.getHeight();
 
-        //converter.useProgram(R.raw.helper_extract_channel_fs);
-        mBilateral1 = new Texture(w, h, 3, Texture.Format.Float16, null);
-        mBilateral2 = new Texture(w, h, 3, Texture.Format.Float16, null);
+        mBilateral = new Texture(w, h, 3, Texture.Format.Float16, null);
+        try (Texture bilateralTmp = new Texture(w, h, 3, Texture.Format.Float16, null)) {
+            // Pre-bilateral median filter.
+            converter.useProgram(R.raw.stage2_2_median_fs);
+            intermediate.bind(GL_TEXTURE0);
+            converter.seti("buf", 0);
+            bilateralTmp.setFrameBuffer();
+            converter.drawBlocks(w, h);
 
-        //intermediate.bind(GL_TEXTURE0);
-        //converter.seti("buf", 0);
-        //converter.setf("mult", 0, 0, 1, 0);
-        //mBilateral1.setFrameBuffer();
-        //converter.drawBlocks(w, h);
+            // Bilateral filter setup.
+            converter.useProgram(R.raw.stage2_2_bilateral);
+            intermediate.bind(GL_TEXTURE2);
+            converter.seti("buf", 0);
+            converter.seti("bufSize", w, h);
 
-        // Pre-bilateral median filter.
-        converter.useProgram(R.raw.stage2_2_median_fs);
-        intermediate.bind(GL_TEXTURE0);
-        converter.seti("buf", 0);
-        mBilateral2.setFrameBuffer();
-        converter.drawBlocks(w, h);
+            // 1) Small area, strong blur.
+            bilateralTmp.bind(GL_TEXTURE0);
+            mBilateral.setFrameBuffer();
+            converter.setf("sigma", 0.3f, 1.f);
+            converter.seti("radius", 6, 1);
+            converter.drawBlocks(w, h);
 
-        // Bilateral filter setup.
-        converter.useProgram(R.raw.stage2_2_bilateral);
-        intermediate.bind(GL_TEXTURE2);
-        converter.seti("buf", 0);
-        converter.seti("bufSize", w, h);
+            // 2) Medium area, medium blur.
+            mBilateral.bind(GL_TEXTURE0);
+            bilateralTmp.setFrameBuffer();
+            converter.setf("sigma", 0.1f, 3.f);
+            converter.seti("radius", 18, 3);
+            converter.drawBlocks(w, h);
 
-        // 1) Small area, strong blur.
-        mBilateral2.bind(GL_TEXTURE0);
-        mBilateral1.setFrameBuffer();
-        converter.setf("sigma", 0.3f, 1.f);
-        converter.seti("radius", 6, 1);
-        converter.drawBlocks(w, h);
-
-        // 2) Medium area, medium blur.
-        mBilateral1.bind(GL_TEXTURE0);
-        mBilateral2.setFrameBuffer();
-        converter.setf("sigma", 0.1f, 3.f);
-        converter.seti("radius", 18, 3);
-        converter.drawBlocks(w, h);
-
-        // 3) Large area, weak blur.
-        mBilateral2.bind(GL_TEXTURE0);
-        mBilateral1.setFrameBuffer();
-        converter.setf("sigma", 0.05f, 9.f);
-        converter.seti("radius", 54, 9);
-        converter.drawBlocks(w, h);
+            // 3) Large area, weak blur.
+            bilateralTmp.bind(GL_TEXTURE0);
+            mBilateral.setFrameBuffer();
+            converter.setf("sigma", 0.05f, 9.f);
+            converter.seti("radius", 54, 9);
+            converter.drawBlocks(w, h);
+        }
     }
 
     @Override
     public int getShader() {
-        return R.raw.helper_extract_channel_fs;
+        return R.raw.stage2_2_median_fs;
     }
 }
