@@ -9,15 +9,14 @@ uniform sampler2D intermediateBuffer;
 uniform int intermediateWidth;
 uniform int intermediateHeight;
 
-uniform sampler2D blurred;
-uniform sampler2D ahemap;
+uniform sampler2D weakBlur;
+uniform sampler2D strongBlur;
 
 uniform int yOffset;
 
 uniform int radiusDenoise;
 uniform vec2 noiseProfile;
 uniform bool lce;
-uniform bool ahe;
 
 // Sensor and picture variables
 uniform vec4 toneMapCoeffs; // Coefficients for a polynomial tonemapping curve
@@ -157,7 +156,7 @@ vec3 processPatch(ivec2 xyPos) {
     /**
     LUMA DENOISE AND SHARPEN
     **/
-    float zDiff;
+    float sharpen = 0.f;
     if (sharpenFactor > 0.f) {
         float[9] impz = load3x3z(xyPos);
         float lx = impz[0] - impz[2] + (impz[3] - impz[5]) * 2.f + impz[6] - impz[8];
@@ -174,13 +173,21 @@ vec3 processPatch(ivec2 xyPos) {
             }
         }
 
+        if (lce) {
+            // Local contrast enhancement
+            float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
+            float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
+            dz += (zWeakBlur - zStrongBlur) * 10.f;
+        }
+
         // Use this difference to boost pixel sharpness
-        zDiff += min(sqrt(l) * 3.f, 1.f) * sharpenFactor * dz;
+        sharpen = min(sqrt(l) * 3.f, 1.f) * sharpenFactor * dz;
     } else if (sharpenFactor < 0.f) {
-        zDiff += sharpenFactor * (z - sum.z / float(totalCount));
+        sharpen = sharpenFactor * (z - sum.z / float(totalCount));
     }
 
-    z += sign(zDiff) * sigmoid(abs(zDiff) * 10.f, 0.25f) * 0.1f;
+    float maxSharpen = 0.15f;
+    z += sign(sharpen) * sigmoid(abs(sharpen) / maxSharpen, 0.25f) * maxSharpen;
 
     /**
     DENOISE BY DESATURATION

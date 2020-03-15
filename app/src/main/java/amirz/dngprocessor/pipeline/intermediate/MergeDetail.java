@@ -67,7 +67,6 @@ public class MergeDetail extends Stage {
         mIntermediate.setFrameBuffer();
         converter.drawBlocks(w, h);
 
-        intermediateTex.close();
         bilateralTex.close();
     }
 

@@ -17,9 +17,6 @@ import amirz.dngprocessor.pipeline.intermediate.SampleHistogram;
 
 import static amirz.dngprocessor.colorspace.ColorspaceConstants.CUSTOM_ACR3_TONEMAP_CURVE_COEFFS;
 import static android.opengl.GLES20.*;
-import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_2D;
-import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MAG_FILTER;
-import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MIN_FILTER;
 
 public class ToneMap extends Stage {
     private static final String TAG = "ToneMap";
@@ -56,13 +53,17 @@ public class ToneMap extends Stage {
         // Load intermediate buffers as textures
         Texture intermediate = previousStages.getStage(MergeDetail.class).getIntermediate();
         intermediate.bind(GL_TEXTURE0);
-
-        glGenerateMipmap(GL_TEXTURE_2D);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
         converter.seti("intermediateBuffer", 0);
         converter.seti("intermediateWidth", preProcess.getInWidth());
         converter.seti("intermediateHeight", preProcess.getInHeight());
+
+        if (mProcessParams.lce) {
+            BlurLCE blur = previousStages.getStage(BlurLCE.class);
+            blur.getWeakBlur().bind(GL_TEXTURE2);
+            converter.seti("weakBlur", 2);
+            blur.getStrongBlur().bind(GL_TEXTURE4);
+            converter.seti("strongBlur", 4);
+        }
 
         SampleHistogram sampleHistogram = previousStages.getStage(SampleHistogram.class);
         float[] sigma = sampleHistogram.getSigma();
@@ -74,7 +75,6 @@ public class ToneMap extends Stage {
 
         converter.setf("noiseProfile", mSensorParams.noiseProfile[2], mSensorParams.noiseProfile[3]);
         converter.seti("lce", mProcessParams.lce ? 1 : 0);
-        converter.seti("ahe", mProcessParams.ahe ? 1 : 0);
         converter.setf("toneMapCoeffs", CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         converter.setf("XYZtoProPhoto", mXYZtoProPhoto);
         converter.setf("proPhotoToSRGB", mProPhotoToSRGB);
