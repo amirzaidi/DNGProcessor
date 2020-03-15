@@ -37,7 +37,6 @@ public class BilateralFilter extends Stage {
         mBilateral = new Texture(w, h, 3, Texture.Format.Float16, null);
         try (Texture bilateralTmp = new Texture(w, h, 3, Texture.Format.Float16, null)) {
             // Pre-bilateral median filter.
-            converter.useProgram(R.raw.stage2_2_median_fs);
             intermediate.bind(GL_TEXTURE0);
             converter.seti("buf", 0);
             bilateralTmp.setFrameBuffer();
