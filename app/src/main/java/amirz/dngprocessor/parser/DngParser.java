@@ -256,7 +256,7 @@ public class DngParser {
                 ExifInterface.TAG_Y_RESOLUTION,
         };
 
-        for (String tag : tags) {
+        for (.lString tag : tags) {
             String value = oldExif.getAttribute(tag);
             if (value != null) {
                 newExif.setAttribute(tag, value);
