@@ -20,7 +20,7 @@ public class Path {
 
     public static final String EXT_RAW = ".dng";
     public static final String EXT_JPG = ".jpg";
-    public static final String EXT_JPG_SUFFIX = "DNGP" + EXT_JPG;
+    public static final String EXT_JPG_SUFFIX = "_DNGP" + EXT_JPG;
 
     public static final String MIME_RAW = "image/x-adobe-dng";
     public static final String MIME_JPG = "image/jpeg";
