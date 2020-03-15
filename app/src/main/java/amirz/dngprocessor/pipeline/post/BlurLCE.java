@@ -6,7 +6,6 @@ import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
-import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
 
 import static android.opengl.GLES20.GL_TEXTURE0;
@@ -30,12 +29,11 @@ public class BlurLCE extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
-        Texture intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
         if (!mProcessParams.lce) {
-            intermediate.close();
             return;
         }
 
+        Texture intermediate = previousStages.getStage(MergeDetail.class).getIntermediate();
         GLPrograms converter = getConverter();
 
         int w = intermediate.getWidth();
@@ -83,8 +81,6 @@ public class BlurLCE extends Stage {
             mStrongBlur.setFrameBuffer();
             converter.drawBlocks(w, h);
         }
-
-        intermediate.close();
     }
 
     @Override
