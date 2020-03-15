@@ -5,6 +5,7 @@
 
     <string name="pref_background_process">pref_background_process</string>
     <string name="pref_delete_original">pref_delete_original</string>
+    <string name="pref_suffix">pref_suffix</string>
     <string name="pref_save_path">pref_save_path</string>
 
     <string name="pref_saturation_mult">pref_saturation_mult</string>

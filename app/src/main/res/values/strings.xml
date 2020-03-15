@@ -12,6 +12,8 @@
     <string name="pref_background_process_desc">Automatically detect new files</string>
     <string name="pref_delete_original_title">Delete original</string>
     <string name="pref_delete_original_desc">Remove files that were successfully processed</string>
+    <string name="pref_suffix_title">Add suffix</string>
+    <string name="pref_suffix_desc">Append DNGP to the new file name</string>
     <string name="pref_save_path_title">Save directory</string>
 
     <string name="category_saturation_map">Saturation map</string>

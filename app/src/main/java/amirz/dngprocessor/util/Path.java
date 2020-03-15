@@ -13,11 +13,14 @@ import android.util.Log;
 
 import java.io.File;
 
+import amirz.dngprocessor.Preferences;
+
 public class Path {
     private static final String TAG = "Path";
 
     public static final String EXT_RAW = ".dng";
     public static final String EXT_JPG = ".jpg";
+    public static final String EXT_JPG_SUFFIX = "DNGP" + EXT_JPG;
 
     public static final String MIME_RAW = "image/x-adobe-dng";
     public static final String MIME_JPG = "image/jpeg";
@@ -35,7 +38,8 @@ public class Path {
         if (!folder.exists() && !folder.mkdir()) {
             throw new RuntimeException("Cannot create " + dir);
         }
-        return dir + File.separator + name.replace(EXT_RAW, EXT_JPG);
+        name = name.replace(EXT_RAW, Preferences.global().suffix.get() ? EXT_JPG_SUFFIX : EXT_JPG);
+        return dir + File.separator + name;
     }
 
     public static String getFileFromUri(Context context, Uri uri) {

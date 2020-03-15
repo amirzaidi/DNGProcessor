@@ -16,6 +16,7 @@
 
     <bool name="pref_background_process_default">true</bool>
     <bool name="pref_delete_original_default">false</bool>
+    <bool name="pref_suffix_default">false</bool>
     <string name="pref_save_path_default">DCIM/Processed</string>
 
     <item name="pref_saturation_default" type="integer" format="float">1</item>

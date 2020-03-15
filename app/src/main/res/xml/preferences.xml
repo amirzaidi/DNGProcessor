@@ -31,6 +31,12 @@
             android:summary="@string/pref_delete_original_desc"
             android:defaultValue="@bool/pref_delete_original_default" />
 
+        <SwitchPreference
+            android:key="@string/pref_suffix"
+            android:title="@string/pref_suffix_title"
+            android:summary="@string/pref_suffix_desc"
+            android:defaultValue="@bool/pref_suffix_default" />
+
         <amirz.library.settings.TextPreference
             android:key="@string/pref_save_path"
             android:title="@string/pref_save_path_title"

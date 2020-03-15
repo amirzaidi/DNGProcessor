@@ -28,6 +28,10 @@ public class Preferences extends GlobalPreferences {
             new BooleanRef(R.string.pref_delete_original,
                     R.bool.pref_delete_original_default);
 
+    public final BooleanRef suffix =
+            new BooleanRef(R.string.pref_suffix,
+                    R.bool.pref_suffix_default);
+
     public final StringRef savePath =
             new StringRef(R.string.pref_save_path,
                     R.string.pref_save_path_default);
