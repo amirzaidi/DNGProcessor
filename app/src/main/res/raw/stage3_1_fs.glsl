@@ -15,7 +15,6 @@ uniform sampler2D strongBlur;
 uniform int yOffset;
 
 uniform int radiusDenoise;
-uniform vec2 noiseProfile;
 uniform bool lce;
 
 // Sensor and picture variables
@@ -97,8 +96,6 @@ vec3 processPatch(ivec2 xyPos) {
     /**
     CHROMA NOISE REDUCE
     **/
-
-    //float Npx = pow(noiseProfile.x * z + noiseProfile.y, 2.f);
 
     // Thresholds
     float thExclude = 1.5f;

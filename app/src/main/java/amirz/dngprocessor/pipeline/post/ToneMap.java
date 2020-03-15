@@ -73,7 +73,6 @@ public class ToneMap extends Stage {
         Log.d(TAG, "Saturation limit " + satLimit);
         converter.setf("satLimit", satLimit);
 
-        converter.setf("noiseProfile", mSensorParams.noiseProfile[2], mSensorParams.noiseProfile[3]);
         converter.seti("lce", mProcessParams.lce ? 1 : 0);
         converter.setf("toneMapCoeffs", CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         converter.setf("XYZtoProPhoto", mXYZtoProPhoto);
