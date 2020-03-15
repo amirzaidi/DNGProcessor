@@ -9,14 +9,17 @@ public class ProcessParams {
             case Disabled:
                 process.sharpenFactor = 0f;
                 process.histFactor = 0f;
+                process.histCurve = 0f;
                 break;
             case Natural:
                 process.sharpenFactor = 0.25f;
                 process.histFactor = 1.f;
+                process.histCurve = 1.25f;
                 break;
             case Boosted:
                 process.sharpenFactor = 0.45f;
                 process.histFactor = 1.5f;
+                process.histCurve = 1.15f;
                 break;
         }
         return process;
@@ -24,6 +27,7 @@ public class ProcessParams {
 
     public float sharpenFactor;
     public float histFactor;
+    public float histCurve;
 
     public int denoiseFactor;
     public float[] saturationMap;

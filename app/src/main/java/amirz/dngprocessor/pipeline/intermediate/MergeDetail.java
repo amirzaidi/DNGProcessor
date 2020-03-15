@@ -15,10 +15,12 @@ import static android.opengl.GLES20.*;
 
 public class MergeDetail extends Stage {
     private final float mHistFactor;
+    private final float mHistCurve;
     private Texture mIntermediate;
 
     public MergeDetail(ProcessParams processParams) {
         mHistFactor = processParams.histFactor;
+        mHistCurve = processParams.histCurve;
     }
 
     public Texture getIntermediate() {
@@ -46,7 +48,10 @@ public class MergeDetail extends Stage {
         int h = preProcess.getInHeight();
 
         SampleHistogram sampleHistogram = previousStages.getStage(SampleHistogram.class);
-        float[] hist = sampleHistogram.getHist();
+        float[] hist = sampleHistogram.getHist().clone();
+        for (int i = 0; i < hist.length; i++) {
+            hist[i] = (float) Math.pow(hist[i], mHistCurve);
+        }
 
         Texture histTex = new Texture(hist.length, 1, 1, Texture.Format.Float16,
                 FloatBuffer.wrap(hist), GL_LINEAR, GL_CLAMP_TO_EDGE);
