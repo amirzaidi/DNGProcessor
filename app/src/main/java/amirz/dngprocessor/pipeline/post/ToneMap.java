@@ -45,7 +45,6 @@ public class ToneMap extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
-        super.execute(previousStages);
         GLPrograms converter = getConverter();
 
         glBindFramebuffer(GL_FRAMEBUFFER, mFbo[0]);

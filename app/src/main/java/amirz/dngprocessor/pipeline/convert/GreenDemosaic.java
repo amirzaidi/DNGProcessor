@@ -17,7 +17,6 @@ public class GreenDemosaic extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
-        super.execute(previousStages);
         GLPrograms converter = getConverter();
 
         PreProcess preProcess = previousStages.getStage(PreProcess.class);

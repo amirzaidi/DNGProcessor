@@ -17,9 +17,7 @@ public abstract class Stage {
         return true;
     }
 
-    protected void execute(StagePipeline.StageMap previousStages) {
-        mConverter.useProgram(getShader());
-    }
+    protected abstract void execute(StagePipeline.StageMap previousStages);
 
     public abstract int getShader();
 }

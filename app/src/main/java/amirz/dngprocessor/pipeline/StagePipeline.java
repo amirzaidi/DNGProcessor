@@ -73,7 +73,9 @@ public class StagePipeline implements AutoCloseable {
         int stageCount = mStages.size();
         for (int i = 0; i < stageCount; i++) {
             reporter.onProgress(i, stageCount);
-            mStages.get(i).execute(new StageMap(mStages.subList(0, i)));
+            Stage stage = mStages.get(i);
+            mConverter.useProgram(stage.getShader());
+            stage.execute(new StageMap(mStages.subList(0, i)));
         }
 
         // Assume that last stage set everything but did not render yet.

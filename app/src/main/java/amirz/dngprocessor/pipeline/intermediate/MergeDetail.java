@@ -27,7 +27,6 @@ public class MergeDetail extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
-        super.execute(previousStages);
         GLPrograms converter = getConverter();
 
         BilateralFilter bilateral = previousStages.getStage(BilateralFilter.class);

@@ -29,7 +29,6 @@ public class ToIntermediate extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
-        super.execute(previousStages);
         GLPrograms converter = getConverter();
 
         PreProcess preProcess = previousStages.getStage(PreProcess.class);

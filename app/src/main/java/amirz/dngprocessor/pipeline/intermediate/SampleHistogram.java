@@ -40,7 +40,6 @@ public class SampleHistogram extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
-        super.execute(previousStages);
         GLPrograms converter = getConverter();
 
         converter.seti("outOffset", mOffsetX, mOffsetY);
