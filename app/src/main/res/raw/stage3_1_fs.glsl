@@ -153,7 +153,6 @@ vec3 processPatch(ivec2 xyPos) {
     /**
     LUMA DENOISE AND SHARPEN
     **/
-    float sharpen = 0.f;
     if (sharpenFactor > 0.f) {
         float[9] impz = load3x3z(xyPos);
         float lx = impz[0] - impz[2] + (impz[3] - impz[5]) * 2.f + impz[6] - impz[8];
@@ -170,21 +169,19 @@ vec3 processPatch(ivec2 xyPos) {
             }
         }
 
+        float DoG = 0.f;
         if (lce) {
             // Local contrast enhancement
             float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
             float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
-            dz += (zWeakBlur - zStrongBlur) * 10.f;
+            DoG = zWeakBlur - zStrongBlur;
         }
 
-        // Use this difference to boost pixel sharpness
-        sharpen = min(sqrt(l) * 3.f, 1.f) * sharpenFactor * dz;
+        z += sharpenFactor * (0.25f + 1.25f * l + 1.5f * abs(DoG)) * dz;
+        z += sharpenFactor * 9.f * DoG;
     } else if (sharpenFactor < 0.f) {
-        sharpen = sharpenFactor * (z - sum.z / float(totalCount));
+        z += sharpenFactor * (z - sum.z / float(totalCount));
     }
-
-    float maxSharpen = 0.15f;
-    z += sign(sharpen) * sigmoid(abs(sharpen) / maxSharpen, 0.25f) * maxSharpen;
 
     /**
     DENOISE BY DESATURATION
