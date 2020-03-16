@@ -26,10 +26,11 @@ public class Histogram {
         }
 
         logAvgLuminance = (float) Math.exp(logTotalLuminance * 4 / f.length);
-
         for (int j = 0; j < 3; j++) {
             sigma[j] /= whPixels;
         }
+
+        limitHighlightContrast(histv, f.length / 4);
 
         float[] cumulativeHist = new float[histBins + 1];
         for (int i = 1; i < cumulativeHist.length; i++) {
@@ -43,5 +44,29 @@ public class Histogram {
 
         float[] gauss = { 0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f };
         hist = Convolve.conv(cumulativeHist, gauss, true);
+    }
+
+    // Shift highlights down
+    private void limitHighlightContrast(int[] clippedHist, int valueCount) {
+        for (int i = clippedHist.length - 1; i >= clippedHist.length / 4; i--) {
+            int limit = 4 * valueCount / i;
+
+            if (clippedHist[i] > limit) {
+                int removed = clippedHist[i] - limit;
+                clippedHist[i] = limit;
+
+                for (int j = i - 1; j >= 0; j--) {
+                    int space = limit - clippedHist[j];
+                    if (space > 0) {
+                        int allocate = Math.min(removed, space);
+                        clippedHist[j] += allocate;
+                        removed -= allocate;
+                        if (removed == 0) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
