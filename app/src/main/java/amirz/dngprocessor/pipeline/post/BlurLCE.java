@@ -4,6 +4,7 @@ import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.params.ProcessParams;
+import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
@@ -11,11 +12,13 @@ import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
 import static android.opengl.GLES20.GL_TEXTURE0;
 
 public class BlurLCE extends Stage {
+    private final SensorParams mSensorParams;
     private final ProcessParams mProcessParams;
     private Texture mWeakBlur;
     private Texture mStrongBlur;
 
-    public BlurLCE(ProcessParams process) {
+    public BlurLCE(SensorParams sensor, ProcessParams process) {
+        mSensorParams = sensor;
         mProcessParams = process;
     }
 
@@ -43,7 +46,8 @@ public class BlurLCE extends Stage {
             // First render to the tmp buffer.
             intermediate.bind(GL_TEXTURE0);
             converter.seti("buf", 0);
-            converter.seti("bufSize", w, h);
+            converter.seti("minxy", mSensorParams.outputOffsetX, mSensorParams.outputOffsetY);
+            converter.seti("maxxy", w - mSensorParams.outputOffsetX - 1, h - mSensorParams.outputOffsetY - 1);
             converter.setf("sigma", 1.5f);
             converter.seti("radius", 6);
             converter.seti("dir", 0, 1); // Vertical

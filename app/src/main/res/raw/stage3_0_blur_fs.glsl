@@ -4,7 +4,8 @@ precision mediump float;
 
 // Use buf to blur luma while keeping chroma.
 uniform sampler2D buf;
-uniform ivec2 bufSize;
+uniform ivec2 minxy;
+uniform ivec2 maxxy;
 
 uniform float sigma;
 uniform int radius;
@@ -26,7 +27,7 @@ void main() {
     float W = 0.f;
 
     for (int i = -radius; i <= radius; i++) {
-        float z = dot(ch, texelFetch(buf, xyCenter + i * dir, 0).xz);
+        float z = dot(ch, texelFetch(buf, clamp(xyCenter + i * dir, minxy, maxxy), 0).xz);
         float scale = unscaledGaussian(float(i), sigma);
         I += z * scale;
         W += scale;
