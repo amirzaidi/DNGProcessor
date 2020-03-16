@@ -23,16 +23,16 @@ void main() {
 
     float intermediateVal = intermediateValXyz.z;
     float bilateralVal = bilateralValXyz.z;
-    float detailVal = intermediateVal / bilateralVal;
+    float detailVal = intermediateVal - bilateralVal;
 
     float zEqDiff = bilateralVal < 1.f
         ? histEq(bilateralVal) - bilateralVal
         : 0.f;
 
     // Background + Correction + Detail
-    float z = (bilateralVal
-        + boost * (zEqDiff * pow(intermediateVal, 0.5f)))
-        * sign(detailVal) * pow(abs(detailVal), 1.f + 0.33f * boost);
+    float z = bilateralVal
+        + boost * (zEqDiff * pow(intermediateVal, 0.5f))
+        + (1.f + boost) * detailVal;
 
     // Copy chroma from background.
     processed.xy = bilateralValXyz.xy;
