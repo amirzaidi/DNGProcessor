@@ -3,6 +3,7 @@ package amirz.dngprocessor.device;
 public class Xiaomi extends Generic {
     @Override
     void saturationCorrection(float[] saturationMap) {
+        super.saturationCorrection(saturationMap);
         float genericMult = 1.3f;
         saturationMap[0] *= genericMult;
         saturationMap[1] *= genericMult;
