@@ -17,6 +17,14 @@ public class OnePlus3 extends OnePlus {
         super.sensorCorrection(tags, sensor);
     }
 
+    @Override
+    void saturationCorrection(float[] saturationMap) {
+        super.saturationCorrection(saturationMap);
+        saturationMap[0] *= 1.1f;
+        saturationMap[2] *= 1.1f;
+        saturationMap[7] *= 1.1f;
+    }
+
     private boolean lowLight(SparseArray<TIFFTag> tags) {
         return exposureAtLeast(tags, 0.05f);
     }

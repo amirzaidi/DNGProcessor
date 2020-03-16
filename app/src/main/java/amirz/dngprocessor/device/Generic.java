@@ -22,7 +22,7 @@ class Generic implements DeviceMap.Device {
     }
 
     void saturationCorrection(float[] saturationMap) {
-        float genericMult = 1.1f;
+        float genericMult = 1.125f;
         saturationMap[0] *= genericMult;
         saturationMap[1] *= genericMult;
         saturationMap[2] *= genericMult;

@@ -44,6 +44,7 @@ class OnePlus extends Generic {
 
     @Override
     void saturationCorrection(float[] saturationMap) {
+        super.saturationCorrection(saturationMap);
         saturationMap[0] *= 1.3f;
         saturationMap[1] *= 1.25f;
         saturationMap[2] *= 1.5f;
