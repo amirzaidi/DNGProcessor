@@ -46,8 +46,6 @@ public class BlurLCE extends Stage {
             // First render to the tmp buffer.
             intermediate.bind(GL_TEXTURE0);
             converter.seti("buf", 0);
-            converter.seti("minxy", mSensorParams.outputOffsetX, mSensorParams.outputOffsetY);
-            converter.seti("maxxy", w - mSensorParams.outputOffsetX - 1, h - mSensorParams.outputOffsetY - 1);
             converter.setf("sigma", 1.5f);
             converter.seti("radius", 6);
             converter.seti("dir", 0, 1); // Vertical

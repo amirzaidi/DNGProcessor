@@ -27,7 +27,7 @@ void main() {
     float W = 0.f;
 
     for (int i = -radius; i <= radius; i++) {
-        float z = dot(ch, texelFetch(buf, clamp(xyCenter + i * dir, minxy, maxxy), 0).xz);
+        float z = dot(ch, texelFetch(buf, xyCenter + i * dir, 0).xz);
         float scale = unscaledGaussian(float(i), sigma);
         I += z * scale;
         W += scale;
