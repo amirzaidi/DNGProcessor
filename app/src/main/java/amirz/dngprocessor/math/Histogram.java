@@ -19,6 +19,7 @@ public class Histogram {
             }
 
             int bin = (int) (f[i + 3] * histBins);
+            if (bin < 0) bin = 0;
             if (bin >= histBins) bin = histBins - 1;
             histv[bin]++;
 
