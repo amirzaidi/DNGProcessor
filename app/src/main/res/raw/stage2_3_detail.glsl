@@ -31,7 +31,7 @@ void main() {
 
     // Background + Correction + Detail
     float z = bilateralVal
-        + boost * (zEqDiff * pow(intermediateVal, 0.5f))
+        + boost * (zEqDiff * pow(max(intermediateVal, 0.001f), 0.5f))
         + (1.f + boost) * detailVal;
 
     // Copy chroma from background.
