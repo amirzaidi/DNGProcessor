@@ -39,6 +39,10 @@ public class DngParser {
         mFile = Path.getFileFromUri(mContext, mUri);
     }
 
+    private TIFFTag getTag(SparseArray<TIFFTag> tags, int id) {
+        return tags.get(id, TIFFTag.exceptionWrapper(id));
+    }
+
     public void run() {
         NotifHandler.progress(mContext, 1, 0);
 
@@ -63,8 +67,8 @@ public class DngParser {
 
         SparseArray<TIFFTag> tags = TagParser.parse(wrap);
 
-        TIFFTag subIFD = tags.get(TIFF.TAG_SubIFDs);
-        TIFFTag type = tags.get(TIFF.TAG_NewSubfileType);
+        TIFFTag subIFD = getTag(tags, TIFF.TAG_SubIFDs);
+        TIFFTag type = getTag(tags, TIFF.TAG_NewSubfileType);
         if (subIFD != null && type != null && type.getInt() == 1) {
             wrap.position(subIFD.getInt());
             SparseArray<TIFFTag> subTags = TagParser.parse(wrap);
@@ -80,11 +84,11 @@ public class DngParser {
         SensorParams sensor = new SensorParams();
 
         // Continue image parsing.
-        sensor.inputHeight = tags.get(TIFF.TAG_ImageLength).getInt();
-        sensor.inputWidth = tags.get(TIFF.TAG_ImageWidth).getInt();
+        sensor.inputHeight = getTag(tags, TIFF.TAG_ImageLength).getInt();
+        sensor.inputWidth = getTag(tags, TIFF.TAG_ImageWidth).getInt();
 
-        int[] stripOffsets = tags.get(TIFF.TAG_StripOffsets).getIntArray();
-        int[] stripByteCounts = tags.get(TIFF.TAG_StripByteCounts).getIntArray();
+        int[] stripOffsets = getTag(tags, TIFF.TAG_StripOffsets).getIntArray();
+        int[] stripByteCounts = getTag(tags, TIFF.TAG_StripByteCounts).getIntArray();
 
         if (stripOffsets.length != stripByteCounts.length) {
             throw new RuntimeException("StripOffsets was not equal to StripByteCounts");
@@ -100,23 +104,25 @@ public class DngParser {
             rawImageOffset += stripByteCounts[i];
         }
 
-        sensor.cfaVal = tags.get(TIFF.TAG_CFAPattern).getByteArray();
+        sensor.cfaVal = getTag(tags, TIFF.TAG_CFAPattern).getByteArray();
         sensor.cfa = CFAPattern.get(sensor.cfaVal);
-        sensor.blackLevelPattern = tags.get(TIFF.TAG_BlackLevel).getIntArray();
-        sensor.whiteLevel = tags.get(TIFF.TAG_WhiteLevel).getInt();
-        sensor.referenceIlluminant1 = tags.get(TIFF.TAG_CalibrationIlluminant1).getInt();
-        sensor.referenceIlluminant2 = tags.get(TIFF.TAG_CalibrationIlluminant2).getInt();
-        sensor.calibrationTransform1 = tags.get(TIFF.TAG_CameraCalibration1).getFloatArray();
-        sensor.calibrationTransform2 = tags.get(TIFF.TAG_CameraCalibration2).getFloatArray();
-        sensor.colorMatrix1 = tags.get(TIFF.TAG_ColorMatrix1).getFloatArray();
-        sensor.colorMatrix2 = tags.get(TIFF.TAG_ColorMatrix2).getFloatArray();
-        TIFFTag fm1 = tags.get(TIFF.TAG_ForwardMatrix1);
-        TIFFTag fm2 = tags.get(TIFF.TAG_ForwardMatrix2);
-        if (fm1 != null && fm2 != null) {
-            sensor.forwardTransform1 = fm1.getFloatArray();
-            sensor.forwardTransform2 = fm2.getFloatArray();
+        sensor.blackLevelPattern = getTag(tags, TIFF.TAG_BlackLevel).getIntArray();
+        sensor.whiteLevel = getTag(tags, TIFF.TAG_WhiteLevel).getInt();
+        sensor.referenceIlluminant1 = getTag(tags, TIFF.TAG_CalibrationIlluminant1).getInt();
+        sensor.referenceIlluminant2 = getTag(tags, TIFF.TAG_CalibrationIlluminant2).getInt();
+        sensor.calibrationTransform1 = getTag(tags, TIFF.TAG_CameraCalibration1).getFloatArray();
+        sensor.calibrationTransform2 = getTag(tags, TIFF.TAG_CameraCalibration2).getFloatArray();
+        sensor.colorMatrix1 = getTag(tags, TIFF.TAG_ColorMatrix1).getFloatArray();
+        sensor.colorMatrix2 = getTag(tags, TIFF.TAG_ColorMatrix2).getFloatArray();
+        if (pref.forwardMatrix.get()) {
+            TIFFTag fm1 = tags.get(TIFF.TAG_ForwardMatrix1);
+            TIFFTag fm2 = tags.get(TIFF.TAG_ForwardMatrix2);
+            if (fm1 != null && fm2 != null) {
+                sensor.forwardTransform1 = fm1.getFloatArray();
+                sensor.forwardTransform2 = fm2.getFloatArray();
+            }
         }
-        sensor.neutralColorPoint = tags.get(TIFF.TAG_AsShotNeutral).getRationalArray();
+        sensor.neutralColorPoint = getTag(tags, TIFF.TAG_AsShotNeutral).getRationalArray();
 
         TIFFTag noiseProfile = tags.get(TIFF.TAG_NoiseProfile);
         if (noiseProfile == null) {
@@ -125,11 +131,11 @@ public class DngParser {
             sensor.noiseProfile = noiseProfile.getFloatArray();
         }
 
-        int[] defaultCropOrigin = tags.get(TIFF.TAG_DefaultCropOrigin).getIntArray();
+        int[] defaultCropOrigin = getTag(tags, TIFF.TAG_DefaultCropOrigin).getIntArray();
         sensor.outputOffsetX = defaultCropOrigin[0];
         sensor.outputOffsetY = defaultCropOrigin[1];
 
-        int[] defaultCropSize = tags.get(TIFF.TAG_DefaultCropSize).getIntArray();
+        int[] defaultCropSize = getTag(tags, TIFF.TAG_DefaultCropSize).getIntArray();
         Bitmap argbOutput = Bitmap.createBitmap(defaultCropSize[0], defaultCropSize[1], Bitmap.Config.ARGB_8888);
 
         TIFFTag Op2 = tags.get(TIFF.TAG_OpcodeList2);
@@ -176,11 +182,6 @@ public class DngParser {
         DeviceMap.Device device = DeviceMap.get(modelTag == null ? "" : modelTag.toString());
         device.sensorCorrection(tags, sensor);
         device.processCorrection(tags, process);
-
-        if (!pref.forwardMatrix.get()) {
-            sensor.forwardTransform1 = null;
-            sensor.forwardTransform2 = null;
-        }
 
         if (!pref.gainMap.get()) {
             sensor.gainMap = null;

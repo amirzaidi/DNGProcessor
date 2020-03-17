@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import java.io.File;
 
+import amirz.dngprocessor.parser.TIFFTag;
 import amirz.dngprocessor.util.NotifHandler;
 import amirz.dngprocessor.util.Path;
 import amirz.dngprocessor.Preferences;
@@ -63,17 +64,21 @@ public class DngParseService extends IntentService {
                     sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
                             Uri.fromFile(resolvedFile)));
                 } else {
-                    new Handler(getMainLooper()).post(() ->
-                            Toast.makeText(this, "Could not delete " + file,
-                                    Toast.LENGTH_SHORT).show());
+                    postMsg("Could not delete " + file);
                 }
             }
+        } catch (TIFFTag.TIFFTagException e) {
+            e.printStackTrace();
+            postMsg("Missing metadata in " + file + ": " + e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
-            new Handler(getMainLooper()).post(() ->
-                    Toast.makeText(this, "DNG Processor could not load " + file,
-                            Toast.LENGTH_SHORT).show());
+            postMsg("Could not load " + file);
         }
         NotifHandler.done(this);
+    }
+
+    private void postMsg(String msg) {
+        new Handler(getMainLooper()).post(() ->
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show());
     }
 }
