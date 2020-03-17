@@ -21,6 +21,8 @@ import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 
+import static amirz.dngprocessor.util.Constants.DIAGONAL;
+
 public class DngParser {
     private static final String TAG = "DngParser";
     private static final int JPEG_QUALITY = 95;
@@ -110,8 +112,12 @@ public class DngParser {
         sensor.whiteLevel = getTag(tags, TIFF.TAG_WhiteLevel).getInt();
         sensor.referenceIlluminant1 = getTag(tags, TIFF.TAG_CalibrationIlluminant1).getInt();
         sensor.referenceIlluminant2 = getTag(tags, TIFF.TAG_CalibrationIlluminant2).getInt();
-        sensor.calibrationTransform1 = getTag(tags, TIFF.TAG_CameraCalibration1).getFloatArray();
-        sensor.calibrationTransform2 = getTag(tags, TIFF.TAG_CameraCalibration2).getFloatArray();
+        TIFFTag CC1 = tags.get(TIFF.TAG_CameraCalibration1);
+        TIFFTag CC2 = tags.get(TIFF.TAG_CameraCalibration2);
+        if (CC1 != null && CC2 != null) {
+            sensor.calibrationTransform1 = CC1.getFloatArray();
+            sensor.calibrationTransform2 = CC2.getFloatArray();
+        }
         sensor.colorMatrix1 = getTag(tags, TIFF.TAG_ColorMatrix1).getFloatArray();
         sensor.colorMatrix2 = getTag(tags, TIFF.TAG_ColorMatrix2).getFloatArray();
         if (pref.forwardMatrix.get()) {
@@ -186,6 +192,11 @@ public class DngParser {
         if (!pref.gainMap.get()) {
             sensor.gainMap = null;
             sensor.gainMapSize = null;
+        }
+
+        if (sensor.calibrationTransform1 == null || sensor.calibrationTransform2 == null) {
+            sensor.calibrationTransform1 = DIAGONAL;
+            sensor.calibrationTransform2 = DIAGONAL;
         }
 
         ShaderLoader loader = new ShaderLoader(mContext.getResources());
