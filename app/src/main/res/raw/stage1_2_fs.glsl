@@ -44,22 +44,29 @@ float demosaicG(int x, int y, float[25] inputArray) {
             return p;
     }
 
+    // Laroche and Prescott
     float dxp = p * 2.f - inputArray[ind(-2, 0)] - inputArray[ind(2, 0)];
     float dx = abs(inputArray[ind(-1, 0)] - inputArray[ind(1, 0)]) + abs(dxp);
-    float gx = (inputArray[ind(-1, 0)] + inputArray[ind(1, 0)]) * 0.5f + dxp * 0.25f;
 
     float dyp = p * 2.f - inputArray[ind(0, -2)] - inputArray[ind(0, 2)];
     float dy = abs(inputArray[ind(0, -1)] - inputArray[ind(0, 1)]) + abs(dyp);
+
+    // Su
+    float gx = (inputArray[ind(-1, 0)] + inputArray[ind(1, 0)]) * 0.5f + dxp * 0.25f;
     float gy = (inputArray[ind(0, -1)] + inputArray[ind(0, 1)]) * 0.5f + dyp * 0.25f;
 
-    float w = 0.13f;
+    float w1 = 0.87f;
+    float w2 = 0.13f;
+
     if (dx < dy) {
-        w = 0.5f;
+        p = w1 * gx + w2 * gy;
     } else if (dx > dy) {
-        w = 1.f - w;
+        p = w1 * gy + w2 * gx;
+    } else {
+        p = (gx + gy) * 0.5f;
     }
 
-    return max(mix(gx, gy, w), 0.f);
+    return max(p, 0.f);
 }
 
 void main() {
