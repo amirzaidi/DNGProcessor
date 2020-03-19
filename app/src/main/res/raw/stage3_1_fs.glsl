@@ -16,6 +16,7 @@ uniform int yOffset;
 
 uniform int radiusDenoise;
 uniform bool lce;
+uniform vec2 adaptiveSaturation;
 
 // Sensor and picture variables
 uniform vec4 toneMapCoeffs; // Coefficients for a polynomial tonemapping curve
@@ -316,6 +317,7 @@ vec3 saturate(vec3 rgb) {
         // Assume saturation map is either constant or has 8+1 values, where the last wraps around
         float f = texture(saturation, vec2(hsv.x * (16.f / 18.f) + (1.f / 18.f), 0.5f)).x;
         hsv.y = sigmoid(hsv.y * f, satLimit);
+        hsv.z = mix(hsv.z, 0.5f, adaptiveSaturation.x * hsv.z * pow(hsv.y, adaptiveSaturation.y));
         rgb = hsv2rgb(hsv);
     }
     return rgb;

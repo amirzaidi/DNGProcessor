@@ -10,16 +10,19 @@ public class ProcessParams {
                 process.sharpenFactor = 0f;
                 process.histFactor = 0f;
                 process.histCurve = 0f;
+                process.adaptiveSaturation = new float[] { 0f, 1f };
                 break;
             case Natural:
                 process.sharpenFactor = 0.25f;
                 process.histFactor = 1.f;
                 process.histCurve = 1.25f;
+                process.adaptiveSaturation = new float[] { 1f, 4f };
                 break;
             case Boosted:
                 process.sharpenFactor = 0.45f;
                 process.histFactor = 1.5f;
                 process.histCurve = 1.15f;
+                process.adaptiveSaturation = new float[] { 1f, 2f };
                 break;
         }
         return process;
@@ -32,6 +35,7 @@ public class ProcessParams {
     public int denoiseFactor;
     public float[] saturationMap;
     public float satLimit;
+    public float[] adaptiveSaturation;
     public boolean lce;
     public boolean ahe;
 

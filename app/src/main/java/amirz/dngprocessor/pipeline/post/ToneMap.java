@@ -74,6 +74,7 @@ public class ToneMap extends Stage {
         converter.setf("satLimit", satLimit);
 
         converter.seti("lce", mProcessParams.lce ? 1 : 0);
+        converter.setf("adaptiveSaturation", mProcessParams.adaptiveSaturation);
         converter.setf("toneMapCoeffs", CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         converter.setf("XYZtoProPhoto", mXYZtoProPhoto);
         converter.setf("proPhotoToSRGB", mProPhotoToSRGB);
