@@ -25,15 +25,10 @@ public class OnePlus7 extends Generic {
         sensor.calibrationTransform1 = CC1;
         sensor.calibrationTransform2 = CC2;
 
-        Rational g = sensor.neutralColorPoint[1];
-        Rational b = sensor.neutralColorPoint[2];
-        sensor.neutralColorPoint[1] = new Rational(
-                g.getNumerator() * 22,
-                g.getDenominator() * 21
-        );
-        sensor.neutralColorPoint[2] = new Rational(
-                b.getNumerator() * 21,
-                b.getDenominator() * 20
+        Rational r = sensor.neutralColorPoint[0];
+        sensor.neutralColorPoint[0] = new Rational(
+                r.getNumerator() * 19,
+                r.getDenominator() * 20
         );
 
         /*
@@ -62,13 +57,13 @@ public class OnePlus7 extends Generic {
 
     @Override
     void saturationCorrection(float[] saturationMap) {
-        saturationMap[0] *= 1.25f;
-        saturationMap[1] *= 1.2f;
+        saturationMap[0] *= 1.2f;
+        saturationMap[1] *= 1.15f;
         saturationMap[2] *= 1.15f;
         saturationMap[3] *= 1.1f;
         saturationMap[4] *= 0.8f;
         saturationMap[5] *= 1.1f;
         saturationMap[6] *= 1.15f;
-        saturationMap[7] *= 1.2f;
+        saturationMap[7] *= 1.15f;
     }
 }
