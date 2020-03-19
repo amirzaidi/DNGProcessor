@@ -59,5 +59,9 @@ void main() {
         }
     }
 
-    result = I / W;
+    if (W < 0.0001f) {
+        result = XYZCenter;
+    } else {
+        result = I / W;
+    }
 }
