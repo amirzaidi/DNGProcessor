@@ -15,4 +15,13 @@ public class Utilities {
     public static SharedPreferences prefs(Context context) {
         return context.getSharedPreferences(context.getPackageName(), Context.MODE_PRIVATE);
     }
+
+    public static String logGainMap(float[] gainMap) {
+        StringBuilder log = new StringBuilder();
+        for (float f : gainMap) {
+            log.append(f);
+            log.append("f, ");
+        }
+        return log.toString();
+    }
 }
