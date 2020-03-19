@@ -177,8 +177,8 @@ vec3 processPatch(ivec2 xyPos) {
             DoG = zWeakBlur - zStrongBlur;
         }
 
-        z += sharpenFactor * (0.25f + 1.25f * l + 1.5f * abs(DoG)) * dz;
-        z += sharpenFactor * 9.f * DoG;
+        z += sharpenFactor * (0.25f + 1.5f * l + 2.f * abs(DoG)) * dz;
+        z += sharpenFactor * 7.5f * DoG;
     } else if (sharpenFactor < 0.f) {
         z += sharpenFactor * (z - sum.z / float(totalCount));
     }
