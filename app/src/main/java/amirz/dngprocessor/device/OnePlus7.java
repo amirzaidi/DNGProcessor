@@ -2,15 +2,14 @@ package amirz.dngprocessor.device;
 
 import android.util.SparseArray;
 
-import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.parser.TIFFTag;
 
-public class OnePlus7 implements DeviceMap.Device {
+public class OnePlus7 extends Generic {
     private static final float[] CC1 = new float[] {
-            1f, 0.3f, -0.15f,
-            0f, 1f, 0f,
-            -0.05f, 0.1f, 1f,
+            1f, 0f, 0.2f, // Low=Remove Pink, High=Invert Pink | Low=Remove Red, High=Cyberpunk
+            0.2f, 1f, 0.3f, // Low=Purple/Yellow, High=Magenta/Green | Low=Cyan, High=Violet/Green
+            0.1f, 0f, 1f, // | Low=Blue->Bright, High=Blue->Green
     };
 
     private static final float[] CC2 = CC1;
@@ -50,11 +49,7 @@ public class OnePlus7 implements DeviceMap.Device {
     }
 
     @Override
-    public void processCorrection(SparseArray<TIFFTag> tags, ProcessParams process) {
-        saturationCorrection(process.saturationMap);
-    }
-
-    private void saturationCorrection(float[] saturationMap) {
+    void saturationCorrection(float[] saturationMap) {
         saturationMap[0] *= 1.25f;
         saturationMap[1] *= 1.2f;
         saturationMap[2] *= 1.15f;
