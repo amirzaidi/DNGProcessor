@@ -169,19 +169,15 @@ vec3 processPatch(ivec2 xyPos) {
             }
         }
 
-        float DoG = 0.f;
+        dz = sign(dz) * sigmoid(abs(dz) * 0.5f, 0.25f) * 2.f;
+        z += sharpenFactor * (0.05f + min(l, 0.4f)) * dz;
+
         if (lce) {
             // Local contrast enhancement
             float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
             float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
-            DoG = zWeakBlur - zStrongBlur;
+            z += sharpenFactor * 7.5f * (zWeakBlur - zStrongBlur);
         }
-
-        dz = sign(dz) * sigmoid(abs(dz), 0.25f);
-
-        z += sharpenFactor * min(sqrt(l) * 3.f, 1.f) * dz;
-        z += sharpenFactor * 2.f * abs(DoG) * dz;
-        z += sharpenFactor * 5.f * DoG;
     } else if (sharpenFactor < 0.f) {
         z += sharpenFactor * (z - sum.z / float(totalCount));
     }
