@@ -74,7 +74,6 @@ public class ToneMap extends Stage {
         converter.setf("satLimit", satLimit);
 
         converter.seti("lce", mProcessParams.lce ? 1 : 0);
-        converter.setf("adaptiveSaturation", mProcessParams.adaptiveSaturation);
         converter.setf("toneMapCoeffs", CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         converter.setf("XYZtoProPhoto", mXYZtoProPhoto);
         converter.setf("proPhotoToSRGB", mProPhotoToSRGB);
@@ -86,11 +85,17 @@ public class ToneMap extends Stage {
         float sharpenFactor = mProcessParams.sharpenFactor - 6f
                 * (float) Math.hypot(sigma[0], sigma[1]);
 
+        float adaptiveSaturation = Math.max(0, mProcessParams.adaptiveSaturation[0] - 25f
+                * (float) Math.hypot(sigma[0], sigma[1]));
+        float adaptiveSaturationPow = mProcessParams.adaptiveSaturation[1];
+
         Log.d(TAG, "Denoise radius " + denoiseFactor);
         Log.d(TAG, "Sharpen " + sharpenFactor);
+        Log.d(TAG, "Adaptive saturation " + adaptiveSaturation);
 
         converter.seti("radiusDenoise", denoiseFactor);
         converter.setf("sharpenFactor", Math.max(sharpenFactor, -0.25f));
+        converter.setf("adaptiveSaturation", adaptiveSaturation, adaptiveSaturationPow);
 
         float[] saturation = mProcessParams.saturationMap;
         float[] sat = new float[saturation.length + 1];
