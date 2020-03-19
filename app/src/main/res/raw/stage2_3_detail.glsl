@@ -33,7 +33,7 @@ void main() {
     float z = bilateralVal
         + boost * (zEqDiff * sqrt(max(intermediateVal, 0.f)));
 
-    z *= pow(detailVal, 1.f + 0.25f * boost);
+    z *= pow(detailVal, 1.f + 0.5f * boost);
 
     // Copy chroma from background.
     processed.xy = bilateralValXyz.xy;
