@@ -1,5 +1,6 @@
 package amirz.dngprocessor.device;
 
+import android.util.Rational;
 import android.util.SparseArray;
 
 import amirz.dngprocessor.params.SensorParams;
@@ -23,6 +24,17 @@ public class OnePlus7 extends Generic {
     public void sensorCorrection(SparseArray<TIFFTag> tags, SensorParams sensor) {
         sensor.calibrationTransform1 = CC1;
         sensor.calibrationTransform2 = CC2;
+
+        Rational g = sensor.neutralColorPoint[1];
+        Rational b = sensor.neutralColorPoint[2];
+        sensor.neutralColorPoint[1] = new Rational(
+                g.getNumerator() * 22,
+                g.getDenominator() * 21
+        );
+        sensor.neutralColorPoint[2] = new Rational(
+                b.getNumerator() * 21,
+                b.getDenominator() * 20
+        );
 
         /*
         sensor.colorMatrix1 = new float[] {
