@@ -46,7 +46,8 @@ public class ColorspaceConstants {
      * Adapted to transform from [0,1] to [0,1]
      */
     public static final float[] CUSTOM_ACR3_TONEMAP_CURVE_COEFFS = new float[] {
-            -1.087f, 1.643f, 0.443f, 0f
+            -0.78360f / 1.0063f, 0.84690f / 1.0063f, 0.9430f / 1.0063f, 0f
+            //-1.087f, 1.643f, 0.443f, 0f
     };
 
     /**
