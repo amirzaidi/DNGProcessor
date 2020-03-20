@@ -45,7 +45,7 @@ public class Histogram {
 
         float[] gauss = { 0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f };
         hist = Convolve.conv(cumulativeHist, gauss, true);
-        crushShadows(hist, 0.33f);
+        crushShadows(hist, 0.5f);
     }
 
     // Shift highlights down
@@ -84,7 +84,7 @@ public class Histogram {
         }
 
         for (int i = 0; i < limIndex; i++) {
-            cumulativeHist[i] = (float) Math.pow(cumulativeHist[i] / thres, 2.f) * thres;
+            cumulativeHist[i] = (float) Math.pow(cumulativeHist[i] / thres, 1.75f) * thres;
         }
     }
 }
