@@ -33,7 +33,10 @@ void main() {
 
     // Corrected Background * Detail
     float z = bilateralVal + effectiveBoost * zEqDiff;
-    z *= pow(detailVal, 1.f + effectiveBoost);
+    if (detailVal > 0.001f) {
+        detailVal = pow(detailVal, 1.f + effectiveBoost);
+    }
+    z *= detailVal;
 
     // Copy chroma from background.
     processed.xy = bilateralValXyz.xy;
