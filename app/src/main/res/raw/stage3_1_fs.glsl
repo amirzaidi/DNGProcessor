@@ -349,6 +349,9 @@ void main() {
     // Convert to XYZ space
     vec3 XYZ = xyYtoXYZ(intermediate);
 
+    // Add tonemap
+    XYZ = tonemap(XYZ);
+
     // Convert to ProPhoto space
     vec3 proPhoto = clamp(XYZtoProPhoto * XYZ, 0.f, 1.f);
 
@@ -356,7 +359,6 @@ void main() {
     vec3 sRGB = clamp(proPhotoToSRGB * proPhoto, 0.f, 1.f);
 
     // Add saturation
-    sRGB = tonemap(sRGB);
     sRGB = saturate(sRGB);
 
     // Gamma correct at the end.
