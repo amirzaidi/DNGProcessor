@@ -23,7 +23,7 @@ void main() {
 
     float intermediateVal = intermediateValXyz.z;
     float bilateralVal = bilateralValXyz.z;
-    float detailVal = intermediateVal / max(0.001f, bilateralVal);
+    float detailVal = intermediateVal / max(0.0001f, bilateralVal);
 
     float effectiveBoost = boost * sqrt(max(intermediateVal, 0.f));
 
@@ -33,7 +33,7 @@ void main() {
 
     // Corrected Background * Detail
     float z = bilateralVal + effectiveBoost * zEqDiff;
-    if (detailVal > 0.001f) {
+    if (detailVal > 0.0001f) {
         detailVal = pow(detailVal, 1.f + effectiveBoost);
     }
     z *= detailVal;
