@@ -104,6 +104,12 @@ public class ToneMap extends Stage {
         System.arraycopy(saturation, 0, sat, 0, saturation.length);
         sat[saturation.length] = saturation[0];
 
+        float saturationReduction = Math.max(1.f, 0.9f + 3f * (float) Math.hypot(sigma[0], sigma[1]));
+        Log.d(TAG, "Saturation reduction " + saturationReduction);
+        for (int i = 0; i < sat.length; i++) {
+            sat[i] /= saturationReduction;
+        }
+
         Texture satTex = new Texture(sat.length, 1, 1, Texture.Format.Float16,
                 FloatBuffer.wrap(sat), GL_LINEAR, GL_CLAMP_TO_EDGE);
         satTex.bind(GL_TEXTURE8);
