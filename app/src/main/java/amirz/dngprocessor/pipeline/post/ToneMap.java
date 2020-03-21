@@ -61,8 +61,10 @@ public class ToneMap extends Stage {
             BlurLCE blur = previousStages.getStage(BlurLCE.class);
             blur.getWeakBlur().bind(GL_TEXTURE2);
             converter.seti("weakBlur", 2);
-            blur.getStrongBlur().bind(GL_TEXTURE4);
-            converter.seti("strongBlur", 4);
+            blur.getMediumBlur().bind(GL_TEXTURE4);
+            converter.seti("mediumBlur", 4);
+            blur.getStrongBlur().bind(GL_TEXTURE6);
+            converter.seti("strongBlur", 6);
         }
 
         SampleHistogram sampleHistogram = previousStages.getStage(SampleHistogram.class);
@@ -104,9 +106,9 @@ public class ToneMap extends Stage {
 
         Texture satTex = new Texture(sat.length, 1, 1, Texture.Format.Float16,
                 FloatBuffer.wrap(sat), GL_LINEAR, GL_CLAMP_TO_EDGE);
-        satTex.bind(GL_TEXTURE6);
+        satTex.bind(GL_TEXTURE8);
 
-        converter.seti("saturation", 6);
+        converter.seti("saturation", 8);
     }
 
     @Override

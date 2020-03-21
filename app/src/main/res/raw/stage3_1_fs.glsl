@@ -10,6 +10,7 @@ uniform int intermediateWidth;
 uniform int intermediateHeight;
 
 uniform sampler2D weakBlur;
+uniform sampler2D mediumBlur;
 uniform sampler2D strongBlur;
 
 uniform int yOffset;
@@ -176,8 +177,12 @@ vec3 processPatch(ivec2 xyPos) {
         if (lce) {
             // Local contrast enhancement
             float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
+            float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
             float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
-            z += sharpenFactor * 7.5f * (zWeakBlur - zStrongBlur);
+            float DoG1 = zWeakBlur / zMediumBlur;
+            float DoG2 = zMediumBlur / zStrongBlur;
+            z *= pow(DoG1, sharpenFactor * 8.f * sqrt(l));
+            z *= pow(DoG2, sharpenFactor * 4.f);
         }
     } else if (sharpenFactor < 0.f) {
         z += sharpenFactor * (z - sum.z / float(totalCount));
