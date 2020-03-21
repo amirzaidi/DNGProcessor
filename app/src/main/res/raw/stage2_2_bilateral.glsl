@@ -30,7 +30,8 @@ float gs(float diffx) {
 }
 
 float pixDiff(vec3 pix1, vec3 pix2) {
-    return length((pix2 - pix1) * vec3(0.25f, 0.25f, 1.f));
+    float z = 5.f * min(pix1.z, pix2.z);
+    return length((pix2 - pix1) * vec3(z, z, 1.f));
 }
 
 void main() {
