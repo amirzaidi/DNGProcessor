@@ -66,7 +66,7 @@ public class MergeDetail extends Stage {
         // To ensure that we do not boost that too much, reduce with color noise.
         float[] sigma = sampleHistogram.getSigma();
         float boost = Math.max(0f, 1f - 8f * (float) Math.hypot(sigma[0], sigma[1]));
-        float reduce = Math.max(0f, 6f * (float) Math.hypot(sigma[0], sigma[1]) - 0.2f);
+        float reduce = Math.max(0f, 5f * (float) Math.hypot(sigma[0], sigma[1]) - 0.2f);
         Log.d(TAG, "Boost " + boost);
         Log.d(TAG, "Reduce " + reduce);
         converter.setf("base", Math.max(1f - reduce, 0.25f));

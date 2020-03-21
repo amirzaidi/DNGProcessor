@@ -155,6 +155,13 @@ vec3 processPatch(ivec2 xyPos) {
     /**
     LUMA DENOISE AND SHARPEN
     **/
+    float zMediumBlur, zStrongBlur;
+    if (lce) {
+        // Local contrast enhancement
+        zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
+        zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
+    }
+
     if (sharpenFactor > 0.f) {
         float[9] impz = load3x3z(xyPos);
         float lx = impz[0] - impz[2] + (impz[3] - impz[5]) * 2.f + impz[6] - impz[8];
@@ -175,17 +182,15 @@ vec3 processPatch(ivec2 xyPos) {
         z += sharpenFactor * (0.1f + min(l, 0.4f)) * dz;
 
         if (lce) {
-            // Local contrast enhancement
-            float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
-            float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
-            float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
-            float DoG1 = zWeakBlur / zMediumBlur;
-            float DoG2 = zMediumBlur / zStrongBlur;
-            z *= pow(DoG1, sharpenFactor * 8.f * sqrt(l));
-            z *= pow(DoG2, sharpenFactor * 4.f);
+            float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;;
+            z *= pow(zWeakBlur / zMediumBlur, sharpenFactor * 8.f * sqrt(l));
         }
     } else if (sharpenFactor < 0.f) {
         z += sharpenFactor * (z - sum.z / float(totalCount));
+    }
+
+    if (lce) {
+        z *= pow(zMediumBlur / zStrongBlur, 2.f);
     }
 
     /**
