@@ -6,6 +6,7 @@ uniform sampler2D bilateral;
 uniform sampler2D intermediate;
 uniform sampler2D hist;
 
+uniform float base;
 uniform float boost;
 
 // Out
@@ -34,7 +35,7 @@ void main() {
     // Corrected Background * Detail
     float z = bilateralVal + effectiveBoost * zEqDiff;
     if (detailVal > 0.0001f) {
-        detailVal = pow(detailVal, 1.f + effectiveBoost);
+        detailVal = pow(detailVal, base + effectiveBoost);
     }
     z *= detailVal;
 

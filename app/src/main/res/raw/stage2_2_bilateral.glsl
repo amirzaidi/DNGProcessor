@@ -30,8 +30,7 @@ float gs(float diffx) {
 }
 
 float pixDiff(vec3 pix1, vec3 pix2) {
-    // 2.f is z bias
-    return length((pix2 - pix1) * vec3(1.f, 1.f, 2.f));
+    return length((pix2 - pix1) * vec3(0.25f, 0.25f, 1.f));
 }
 
 void main() {
