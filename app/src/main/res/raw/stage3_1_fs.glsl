@@ -172,7 +172,7 @@ vec3 processPatch(ivec2 xyPos) {
         }
 
         dz = sign(dz) * sigmoid(abs(dz) * 0.5f, 0.25f) * 2.f;
-        z += sharpenFactor * (0.05f + min(l, 0.4f)) * dz;
+        z += sharpenFactor * (0.1f + min(l, 0.4f)) * dz;
 
         if (lce) {
             // Local contrast enhancement
