@@ -1,5 +1,7 @@
 package amirz.dngprocessor.pipeline.intermediate;
 
+import android.util.Log;
+
 import java.nio.FloatBuffer;
 
 import amirz.dngprocessor.R;
@@ -14,6 +16,8 @@ import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 import static android.opengl.GLES20.*;
 
 public class MergeDetail extends Stage {
+    private static final String TAG = "MergeDetail";
+
     private final float mHistFactor;
     private final float mHistCurve;
     private Texture mIntermediate;
@@ -61,7 +65,8 @@ public class MergeDetail extends Stage {
         // If there are many dark patches, the color noise goes up.
         // To ensure that we do not boost that too much, reduce with color noise.
         float[] sigma = sampleHistogram.getSigma();
-        float boost = Math.max(0f, 1f - 10f * (float) Math.hypot(sigma[0], sigma[1]));
+        float boost = Math.max(0f, 1f - 8f * (float) Math.hypot(sigma[0], sigma[1]));
+        Log.d(TAG, "Boost " + boost);
         converter.setf("boost", boost * mHistFactor);
 
         intermediateTex.bind(GL_TEXTURE0);
