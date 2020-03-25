@@ -37,6 +37,6 @@ void main() {
         sigma += diff * diff;
     }
 
-    float z = texelFetch(bilateral, xy, 0).z;
+    float z = texelFetch(intermediate, xy, 0).z;
     analysis = vec4(sqrt(sigma / 9.f), z);
 }
