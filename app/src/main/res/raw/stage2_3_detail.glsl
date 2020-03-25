@@ -6,8 +6,7 @@ uniform sampler2D bilateral;
 uniform sampler2D intermediate;
 uniform sampler2D hist;
 
-uniform float base;
-uniform float boost;
+uniform vec3 detail;
 
 // Out
 out vec3 processed;
@@ -26,16 +25,11 @@ void main() {
     float bilateralVal = bilateralValXyz.z;
     float detailVal = intermediateVal / max(0.0001f, bilateralVal);
 
-    float effectiveBoost = boost * sqrt(max(intermediateVal, 0.f));
-
-    float zEqDiff = bilateralVal < 1.f
-        ? histEq(bilateralVal) - bilateralVal
-        : 0.f;
-
     // Corrected Background * Detail
-    float z = bilateralVal + effectiveBoost * zEqDiff;
+    float strength = clamp(intermediateVal * detail.x, 0.f, 1.f);
+    float z = mix(bilateralVal, histEq(bilateralVal), strength);
     if (detailVal > 0.0001f) {
-        detailVal = pow(detailVal, base + effectiveBoost);
+        detailVal = pow(detailVal, detail.y + detail.z * strength);
     }
     z *= detailVal;
 
