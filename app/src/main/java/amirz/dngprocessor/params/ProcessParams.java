@@ -14,13 +14,13 @@ public class ProcessParams {
                 break;
             case Natural:
                 process.sharpenFactor = 0.25f;
-                process.histFactor = 1.1f;
+                process.histFactor = 0.9f;
                 process.histCurve = 1.25f;
                 process.adaptiveSaturation = new float[] { 3f, 3f };
                 break;
             case Boosted:
                 process.sharpenFactor = 0.45f;
-                process.histFactor = 1.5f;
+                process.histFactor = 1f;
                 process.histCurve = 1.15f;
                 process.adaptiveSaturation = new float[] { 4f, 2f };
                 break;

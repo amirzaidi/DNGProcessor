@@ -6,14 +6,10 @@ uniform sampler2D bilateral;
 uniform sampler2D intermediate;
 uniform sampler2D hist;
 
-uniform vec3 detail;
+uniform float histFactor;
 
 // Out
 out vec3 processed;
-
-float histEq(float inVal) {
-    return texture(hist, vec2(inVal, 0.5f)).x;
-}
 
 void main() {
     ivec2 xy = ivec2(gl_FragCoord.xy);
@@ -23,15 +19,17 @@ void main() {
 
     float intermediateVal = intermediateValXyz.z;
     float bilateralVal = bilateralValXyz.z;
-    float detailVal = intermediateVal / max(0.0001f, bilateralVal);
 
-    // Corrected Background * Detail
-    float strength = clamp(intermediateVal * detail.x, 0.f, 1.f);
-    float z = mix(bilateralVal, histEq(bilateralVal), strength);
-    if (detailVal > 0.0001f) {
-        detailVal = pow(detailVal, detail.y + detail.z * strength);
+    float z = intermediateVal;
+    if (bilateralVal > 0.0001f && histFactor > 0.0001f) {
+        // (Original Reflectance * Original Luminosity)
+        // * (Corrected Luminosity / Original Luminosity)
+        float bilateralCorrect = texture(hist, vec2(bilateralVal, 0.5f)).x;
+        z *= pow(bilateralCorrect / bilateralVal, histFactor);
+
+        // Boost details
+        z *= pow(intermediateVal / bilateralVal, histFactor);
     }
-    z *= detailVal;
 
     // Copy chroma from background.
     processed.xy = bilateralValXyz.xy;

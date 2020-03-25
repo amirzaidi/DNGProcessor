@@ -91,6 +91,6 @@ public class SampleHistogram extends Stage {
 
     @Override
     public int getShader() {
-        return R.raw.stage2_1_fs;
+        return R.raw.stage2_2_fs;
     }
 }

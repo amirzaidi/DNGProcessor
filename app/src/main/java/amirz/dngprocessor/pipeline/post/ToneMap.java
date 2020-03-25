@@ -87,7 +87,7 @@ public class ToneMap extends Stage {
         float sharpenFactor = mProcessParams.sharpenFactor - 6f
                 * (float) Math.hypot(sigma[0], sigma[1]);
 
-        float adaptiveSaturation = Math.max(0, mProcessParams.adaptiveSaturation[0] - 25f
+        float adaptiveSaturation = Math.max(0, mProcessParams.adaptiveSaturation[0] - 30f
                 * (float) Math.hypot(sigma[0], sigma[1]));
         float adaptiveSaturationPow = mProcessParams.adaptiveSaturation[1];
 
@@ -104,7 +104,7 @@ public class ToneMap extends Stage {
         System.arraycopy(saturation, 0, sat, 0, saturation.length);
         sat[saturation.length] = saturation[0];
 
-        float saturationReduction = Math.max(1.f, 0.9f + (float) Math.hypot(sigma[0], sigma[1]));
+        float saturationReduction = Math.max(1.f, 0.95f + 1.45f * (float) Math.hypot(sigma[0], sigma[1]));
         Log.d(TAG, "Saturation reduction " + saturationReduction);
         for (int i = 0; i < sat.length; i++) {
             sat[i] /= saturationReduction;

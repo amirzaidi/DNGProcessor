@@ -1,7 +1,7 @@
 package amirz.dngprocessor.math;
 
 public class Histogram {
-    private static final double EPSILON = 0.001;
+    private static final double EPSILON = 0.01;
 
     public final float[] sigma = new float[3];
     public final float[] hist;
@@ -43,9 +43,32 @@ public class Histogram {
             cumulativeHist[i] /= max;
         }
 
+        improveHist(cumulativeHist);
+
         float[] gauss = { 0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f };
         hist = Convolve.conv(cumulativeHist, gauss, true);
-        //crushShadows(hist, 0.5f);
+    }
+
+    private static void improveHist(float[] hist) {
+        for (int i = 0; i < hist.length; i++) {
+            float og = (float) i / hist.length;
+            float heq = hist[i];
+            float a = Math.min(0.65f, 20f * og);
+            hist[i] = heq * a + og * (1f - a);
+        }
+
+        // In case we messed up the histogram, flatten it.
+        for (int i = 1; i < hist.length; i++) {
+            if (hist[i] < hist[i - 1]) {
+                hist[i] = hist[i - 1];
+            }
+        }
+
+        // Crush shadows
+        int maxShadow = hist.length / 30;
+        for (int i = 0; i < maxShadow; i++) {
+            hist[i] *= Math.pow((float) i / maxShadow, 0.67f);
+        }
     }
 
     // Shift highlights down
@@ -69,22 +92,6 @@ public class Histogram {
                     }
                 }
             }
-        }
-    }
-
-    // Shifts shadows down
-    private static void crushShadows(float[] cumulativeHist, float thres) {
-        int limIndex = 0;
-        for (int i = 0; i < cumulativeHist.length; i++) {
-            if (cumulativeHist[i] <= thres) {
-                limIndex++;
-            } else {
-                break;
-            }
-        }
-
-        for (int i = 0; i < limIndex; i++) {
-            cumulativeHist[i] = (float) Math.pow(cumulativeHist[i] / thres, 1.75f) * thres;
         }
     }
 }

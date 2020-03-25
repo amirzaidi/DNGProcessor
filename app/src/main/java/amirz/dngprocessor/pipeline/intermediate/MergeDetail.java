@@ -65,11 +65,9 @@ public class MergeDetail extends Stage {
         // If there are many dark patches, the color noise goes up.
         // To ensure that we do not boost that too much, reduce with color noise.
         float[] sigma = sampleHistogram.getSigma();
-        float reduce = Math.max(0f, 2.5f * (float) Math.hypot(sigma[0], sigma[1]) - 0.1f);
-        float base = Math.max(1f - reduce, 0.25f);
-        float boost = Math.max(0f, 1f - 8f * (float) Math.hypot(sigma[0], sigma[1]));
-        Log.d(TAG, "Base " + base + " (Reduce " + reduce + ") - Boost " + boost);
-        converter.setf("detail", 20f, base, boost * mHistFactor);
+        float baseBase = Math.max(1f - 6f * (float) Math.hypot(sigma[0], sigma[1]), 0f);
+        Log.d(TAG, "Bilateral histogram equalization " + baseBase);
+        converter.setf("histFactor", baseBase * mHistFactor);
 
         intermediateTex.bind(GL_TEXTURE0);
         bilateralTex.bind(GL_TEXTURE2);

@@ -43,8 +43,7 @@ public class BilateralFilter extends Stage {
             converter.drawBlocks(w, h);
 
             // Bilateral filter setup.
-            converter.useProgram(R.raw.stage2_2_bilateral);
-            intermediate.bind(GL_TEXTURE2);
+            converter.useProgram(R.raw.stage2_1_bilateral);
             converter.seti("buf", 0);
             converter.seti("bufSize", w, h);
 
@@ -73,6 +72,6 @@ public class BilateralFilter extends Stage {
 
     @Override
     public int getShader() {
-        return R.raw.stage2_2_median_fs;
+        return R.raw.stage2_1_median;
     }
 }
