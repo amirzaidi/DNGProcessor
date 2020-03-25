@@ -352,8 +352,8 @@ void main() {
     vec3 sRGB = clamp(proPhotoToSRGB * proPhoto, 0.f, 1.f);
 
     // Add saturation
-    sRGB = tonemap(sRGB);
     sRGB = saturate(sRGB);
+    sRGB = tonemap(sRGB);
 
     // Gamma correct at the end.
     color = vec4(gammaCorrectPixel(sRGB), 1.f);
