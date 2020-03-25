@@ -190,7 +190,7 @@ vec3 processPatch(ivec2 xyPos) {
     }
 
     if (lce) {
-        z *= pow(zMediumBlur / zStrongBlur, 3.f);
+        z *= pow(zMediumBlur / zStrongBlur, 2.f);
     }
 
     return clamp(vec3(xy, z), 0.f, 1.f);
