@@ -150,7 +150,6 @@ vec3 processPatch(ivec2 xyPos) {
     }
 
     xy = sum.xy / float(totalCount);
-    z = sum.z / float(totalCount);
 
     /**
     LUMA DENOISE AND SHARPEN
