@@ -193,20 +193,6 @@ vec3 processPatch(ivec2 xyPos) {
         z *= pow(zMediumBlur / zStrongBlur, 3.f);
     }
 
-    /**
-    DENOISE BY DESATURATION
-    **/
-    if (radiusDenoise > 0) {
-        // Grayshift xy based on noise level
-        float shiftFactor = clamp((distxy - 0.15f) * 1.75f, 0.f, 1.f);
-
-        // Shift towards D50 white
-        xy = mix(xy, vec2(0.345703f, 0.358539f), shiftFactor);
-
-        // Reduce z by at most a third
-        z *= clamp(1.1f - shiftFactor, 0.67f, 1.f);
-    }
-
     return clamp(vec3(xy, z), 0.f, 1.f);
 }
 
