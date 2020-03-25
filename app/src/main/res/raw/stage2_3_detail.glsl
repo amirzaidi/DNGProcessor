@@ -28,7 +28,10 @@ void main() {
         z *= pow(bilateralCorrect / bilateralVal, histFactor);
 
         // Boost details
-        z *= pow(intermediateVal / bilateralVal, histFactor);
+        float detailFactor = 1.5f * histFactor - 0.5f;
+        if (detailFactor > 0.0001f) {
+            z *= pow(intermediateVal / bilateralVal, detailFactor);
+        }
     }
 
     // Copy chroma from background.

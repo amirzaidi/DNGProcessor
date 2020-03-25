@@ -69,6 +69,8 @@ public class ToneMap extends Stage {
 
         SampleHistogram sampleHistogram = previousStages.getStage(SampleHistogram.class);
         float[] sigma = sampleHistogram.getSigma();
+        float hypot = (float) Math.hypot(sigma[0], sigma[1]);
+        Log.d(TAG, "Chroma noise hypot " + hypot);
 
         converter.setf("sigma", sigma);
 
@@ -84,20 +86,20 @@ public class ToneMap extends Stage {
         int denoiseFactor = (int)((float) mProcessParams.denoiseFactor
                 * Math.sqrt(sigma[0] + sigma[1]));
 
-        float sharpenFactor = mProcessParams.sharpenFactor - 6f
-                * (float) Math.hypot(sigma[0], sigma[1]);
-
-        float adaptiveSaturation = Math.max(0, mProcessParams.adaptiveSaturation[0] - 30f
-                * (float) Math.hypot(sigma[0], sigma[1]));
+        float sharpenFactor = mProcessParams.sharpenFactor - 6f * hypot;
+        float adaptiveSaturation = Math.max(0f, mProcessParams.adaptiveSaturation[0] - 30f * hypot);
         float adaptiveSaturationPow = mProcessParams.adaptiveSaturation[1];
+        float desaturateThres = Math.max(0f, hypot - 0.05f);
 
         Log.d(TAG, "Denoise radius " + denoiseFactor);
         Log.d(TAG, "Sharpen " + sharpenFactor);
         Log.d(TAG, "Adaptive saturation " + adaptiveSaturation);
+        Log.d(TAG, "Desaturate threshold " + desaturateThres);
 
         converter.seti("radiusDenoise", denoiseFactor);
         converter.setf("sharpenFactor", Math.max(sharpenFactor, -0.25f));
         converter.setf("adaptiveSaturation", adaptiveSaturation, adaptiveSaturationPow);
+        converter.setf("desaturateThres", desaturateThres);
 
         float[] saturation = mProcessParams.saturationMap;
         float[] sat = new float[saturation.length + 1];

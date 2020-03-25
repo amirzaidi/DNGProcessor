@@ -30,6 +30,7 @@ uniform vec3 sigma;
 
 // Post processing
 uniform float sharpenFactor;
+uniform float desaturateThres;
 uniform sampler2D saturation;
 uniform float satLimit;
 
@@ -190,6 +191,11 @@ vec3 processPatch(ivec2 xyPos) {
     if (lce) {
         float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
         z *= pow(zMediumBlur / zStrongBlur, 2.f + min(0.f, 2.f * sharpenFactor));
+    }
+
+    if (z < desaturateThres) {
+        // Shift towards D50 white
+        xy = mix(xy, vec2(0.345703f, 0.358539f), 1.f - z / desaturateThres);
     }
 
     return clamp(vec3(xy, z), 0.f, 1.f);
