@@ -182,7 +182,7 @@ vec3 processPatch(ivec2 xyPos) {
         z += sharpenFactor * (0.1f + min(l, 0.4f)) * dz;
 
         if (lce) {
-            float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;;
+            float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
             z *= pow(zWeakBlur / zMediumBlur, sharpenFactor * 8.f * sqrt(l));
         }
     } else if (sharpenFactor < 0.f) {
