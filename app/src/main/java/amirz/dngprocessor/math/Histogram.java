@@ -65,7 +65,7 @@ public class Histogram {
         }
 
         // Crush shadows
-        int maxShadow = hist.length / 30;
+        int maxShadow = hist.length / 40;
         for (int i = 0; i < maxShadow; i++) {
             hist[i] *= Math.pow((float) i / maxShadow, 0.67f);
         }
