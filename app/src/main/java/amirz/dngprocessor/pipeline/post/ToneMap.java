@@ -86,10 +86,10 @@ public class ToneMap extends Stage {
         int denoiseFactor = (int)((float) mProcessParams.denoiseFactor
                 * Math.sqrt(sigma[0] + sigma[1]));
 
-        float sharpenFactor = mProcessParams.sharpenFactor - 6f * hypot;
+        float sharpenFactor = Math.max(mProcessParams.sharpenFactor - 6f * hypot, -0.25f);
         float adaptiveSaturation = Math.max(0f, mProcessParams.adaptiveSaturation[0] - 30f * hypot);
         float adaptiveSaturationPow = mProcessParams.adaptiveSaturation[1];
-        float desaturateThres = Math.max(0f, hypot - 0.05f);
+        float desaturateThres = Math.max(0f, Math.min(0.04f, hypot - 0.05f));
 
         Log.d(TAG, "Denoise radius " + denoiseFactor);
         Log.d(TAG, "Sharpen " + sharpenFactor);
@@ -97,7 +97,7 @@ public class ToneMap extends Stage {
         Log.d(TAG, "Desaturate threshold " + desaturateThres);
 
         converter.seti("radiusDenoise", denoiseFactor);
-        converter.setf("sharpenFactor", Math.max(sharpenFactor, -0.25f));
+        converter.setf("sharpenFactor", sharpenFactor);
         converter.setf("adaptiveSaturation", adaptiveSaturation, adaptiveSaturationPow);
         converter.setf("desaturateThres", desaturateThres);
 
@@ -105,12 +105,6 @@ public class ToneMap extends Stage {
         float[] sat = new float[saturation.length + 1];
         System.arraycopy(saturation, 0, sat, 0, saturation.length);
         sat[saturation.length] = saturation[0];
-
-        float saturationReduction = Math.max(1.f, 0.95f + 1.45f * (float) Math.hypot(sigma[0], sigma[1]));
-        Log.d(TAG, "Saturation reduction " + saturationReduction);
-        for (int i = 0; i < sat.length; i++) {
-            sat[i] /= saturationReduction;
-        }
 
         Texture satTex = new Texture(sat.length, 1, 1, Texture.Format.Float16,
                 FloatBuffer.wrap(sat), GL_LINEAR, GL_CLAMP_TO_EDGE);
