@@ -17,13 +17,13 @@ public class OnePlus7 extends Generic {
 
     @Override
     public boolean isModel(String model) {
-        return model.startsWith("GM19");
+        return model.startsWith("GM19") || model.startsWith("HD19");
     }
 
     @Override
     public void sensorCorrection(SparseArray<TIFFTag> tags, SensorParams sensor) {
-        sensor.calibrationTransform1 = CC1;
-        sensor.calibrationTransform2 = CC2;
+        //sensor.calibrationTransform1 = CC1;
+        //sensor.calibrationTransform2 = CC2;
 
         Rational r = sensor.neutralColorPoint[0];
         sensor.neutralColorPoint[0] = new Rational(
