@@ -180,9 +180,9 @@ vec3 processPatch(ivec2 xyPos) {
         dz = sign(dz) * sigmoid(abs(dz) * 0.5f, 0.25f) * 2.f;
         z += sharpenFactor * (0.1f + min(l, 0.4f)) * dz;
 
-        if (lce) {
+        if (lce && zMediumBlur > 0.0001f) {
             float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
-            z *= pow(zWeakBlur / zMediumBlur, sharpenFactor * 8.f * sqrt(l));
+            z *= pow(zWeakBlur / zMediumBlur, sharpenFactor * 6.f * sqrt(l));
         }
     } else if (sharpenFactor < 0.f) {
         z += min(1.f, -3.f * sharpenFactor) * (sum.z / float(totalCount) - z);
@@ -190,7 +190,9 @@ vec3 processPatch(ivec2 xyPos) {
 
     if (lce) {
         float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
-        z *= pow(zMediumBlur / zStrongBlur, 2.f + min(0.f, 2.f * sharpenFactor));
+        if (zStrongBlur > 0.0001f) {
+            z *= pow(zMediumBlur / zStrongBlur, 1.75f + min(0.f, 2.f * sharpenFactor));
+        }
     }
 
     if (z < desaturateThres) {
