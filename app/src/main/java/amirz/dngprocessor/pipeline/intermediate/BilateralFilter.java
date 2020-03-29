@@ -50,21 +50,21 @@ public class BilateralFilter extends Stage {
             // 1) Small area, strong blur.
             bilateralTmp.bind(GL_TEXTURE0);
             mBilateral.setFrameBuffer();
-            converter.setf("sigma", 0.15f, 1.5f);
+            converter.setf("sigma", 0.04f, 1f);
             converter.seti("radius", 7, 1);
             converter.drawBlocks(w, h);
 
             // 2) Medium area, medium blur.
             mBilateral.bind(GL_TEXTURE0);
             bilateralTmp.setFrameBuffer();
-            converter.setf("sigma", 0.05f, 4.5f);
+            converter.setf("sigma", 0.02f, 3f);
             converter.seti("radius", 14, 2);
             converter.drawBlocks(w, h);
 
             // 3) Large area, weak blur.
             bilateralTmp.bind(GL_TEXTURE0);
             mBilateral.setFrameBuffer();
-            converter.setf("sigma", 0.02f, 13.5f);
+            converter.setf("sigma", 0.01f, 9f);
             converter.seti("radius", 21, 3);
             converter.drawBlocks(w, h);
         }
