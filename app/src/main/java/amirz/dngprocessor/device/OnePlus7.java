@@ -25,6 +25,7 @@ public class OnePlus7 extends Generic {
         //sensor.calibrationTransform1 = CC1;
         //sensor.calibrationTransform2 = CC2;
 
+        /*
         Rational r = sensor.neutralColorPoint[0];
         sensor.neutralColorPoint[0] = new Rational(
                 r.getNumerator() * 19,
@@ -36,6 +37,7 @@ public class OnePlus7 extends Generic {
                 b.getNumerator() * 41,
                 b.getDenominator() * 40
         );
+         */
 
         int[] bl = sensor.blackLevelPattern;
         int maxBlack = Math.max(Math.max(bl[0], bl[1]), Math.max(bl[2], bl[3]));
