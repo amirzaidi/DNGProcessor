@@ -64,6 +64,7 @@ public class PreProcess extends Stage {
             converter.seti("rawBuffer", 0);
             converter.seti("rawWidth", getInWidth());
             converter.seti("rawHeight", getInHeight());
+            converter.seti("cfaPattern", mSensor.cfa);
 
             mSensorTex.setFrameBuffer();
 
