@@ -27,15 +27,19 @@ public class OnePlus7 extends Generic {
 
         Rational r = sensor.neutralColorPoint[0];
         sensor.neutralColorPoint[0] = new Rational(
-                r.getNumerator() * 29,
-                r.getDenominator() * 30
+                r.getNumerator() * 19,
+                r.getDenominator() * 20
         );
 
         Rational b = sensor.neutralColorPoint[2];
         sensor.neutralColorPoint[2] = new Rational(
-                b.getNumerator() * 51,
-                b.getDenominator() * 50
+                b.getNumerator() * 41,
+                b.getDenominator() * 40
         );
+
+        int[] bl = sensor.blackLevelPattern;
+        int maxBlack = Math.max(Math.max(bl[0], bl[1]), Math.max(bl[2], bl[3]));
+        sensor.blackLevelPattern = new int[] { maxBlack, maxBlack, maxBlack, maxBlack };
 
         /*
         sensor.colorMatrix1 = new float[] {
@@ -70,13 +74,14 @@ public class OnePlus7 extends Generic {
 
     @Override
     void saturationCorrection(float[] saturationMap) {
-        saturationMap[0] *= 1.4f;
-        saturationMap[1] *= 1.4f;
-        saturationMap[2] *= 1.5f;
-        saturationMap[3] *= 1.2f;
-        saturationMap[4] *= 1.1f;
-        saturationMap[5] *= 1.2f;
-        saturationMap[6] *= 1.3f;
-        saturationMap[7] *= 1.4f;
+        super.saturationCorrection(saturationMap);
+        saturationMap[0] *= 1.2f;
+        saturationMap[1] *= 1.2f;
+        saturationMap[2] *= 1.1f;
+        saturationMap[3] *= 1.0f;
+        saturationMap[4] *= 0.9f;
+        saturationMap[5] *= 1.0f;
+        saturationMap[6] *= 1.1f;
+        saturationMap[7] *= 1.2f;
     }
 }
