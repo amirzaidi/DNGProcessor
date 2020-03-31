@@ -8,6 +8,7 @@ uniform int rawWidth;
 uniform int rawHeight;
 
 // Sensor and picture variables
+uniform sampler2D gainMap;
 uniform int cfaPattern; // The Color Filter Arrangement pattern used
 uniform vec4 neutralLevel; // Neutrallevel of sensor
 uniform vec3 neutralPoint; // The camera neutral
@@ -142,10 +143,16 @@ float sigmoid(float val, float transfer) {
     return val;
 }
 
-vec3 convertSensorToIntermediate(vec3 sensor) {
+vec3 convertSensorToIntermediate(ivec2 xy, vec3 sensor) {
     sensor = max(sensor, 0.f);
-    vec3 npf = sensor / neutralPoint;
-    sensor = min(sensor, neutralPoint);
+
+    // Use gainmap to increase dynamic range.
+    vec2 xyInterp = vec2(float(xy.x) / float(rawWidth), float(xy.y) / float(rawHeight));
+    vec4 gains = texture(gainMap, xyInterp);
+    vec3 neutralScaled = vec3(gains.x, (gains.y + gains.z) * 0.5f, gains.w) * neutralPoint;
+
+    vec3 npf = sensor / neutralScaled;
+    sensor = min(sensor, neutralScaled);
 
     // When both red and blue channels are above white point, assume green is too
     // So extend dynamic range by scaling white point
@@ -170,5 +177,5 @@ void main() {
     float[9] rawPatch = load3x3(x, y, rawBuffer);
     float[9] greenPatch = load3x3(x, y, greenBuffer);
     vec3 sensor = demosaic(x, y, rawPatch, greenPatch);
-    intermediate = convertSensorToIntermediate(sensor);
+    intermediate = convertSensorToIntermediate(xy, sensor);
 }

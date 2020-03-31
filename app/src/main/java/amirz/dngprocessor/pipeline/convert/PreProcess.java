@@ -23,7 +23,7 @@ public class PreProcess extends Stage {
     private final SensorParams mSensor;
     private final byte[] mRaw;
 
-    private Texture mSensorTex;
+    private Texture mSensorTex, mGainMapTex;
 
     public PreProcess(SensorParams sensor, byte[] raw) {
         mSensor = sensor;
@@ -44,6 +44,10 @@ public class PreProcess extends Stage {
 
     public int getCfaPattern() {
         return mSensor.cfa;
+    }
+
+    public Texture getGainMapTex() {
+        return mGainMapTex;
     }
 
     @Override
@@ -72,31 +76,29 @@ public class PreProcess extends Stage {
             int[] gainMapSize = mSensor.gainMapSize;
             converter.seti("gainMap", 2);
             if (gainMap == null) {
-                gainMap = new float[]{1.f, 1.f, 1.f, 1.f};
-                gainMapSize = new int[]{1, 1};
+                gainMap = new float[] { 1f, 1f, 1f, 1f };
+                gainMapSize = new int[] {1, 1};
             }
 
-            try (Texture gainMapTex = new Texture(gainMapSize[0], gainMapSize[1], 4, Texture.Format.Float16,
-                    FloatBuffer.wrap(gainMap), GL_LINEAR, GL_CLAMP_TO_EDGE)) {
-                gainMapTex.bind(GL_TEXTURE2);
+            mGainMapTex = new Texture(gainMapSize[0], gainMapSize[1], 4, Texture.Format.Float16,
+                    FloatBuffer.wrap(gainMap), GL_LINEAR, GL_CLAMP_TO_EDGE);
+            mGainMapTex.bind(GL_TEXTURE2);
 
-                int[] blackLevel = mSensor.blackLevelPattern;
-                converter.setf("blackLevel", blackLevel[0], blackLevel[1], blackLevel[2], blackLevel[3]);
-                converter.setf("whiteLevel", mSensor.whiteLevel);
+            int[] blackLevel = mSensor.blackLevelPattern;
+            converter.setf("blackLevel", blackLevel[0], blackLevel[1], blackLevel[2], blackLevel[3]);
+            converter.setf("whiteLevel", mSensor.whiteLevel);
 
-                converter.seti("cfaPattern", getCfaPattern());
+            converter.seti("cfaPattern", getCfaPattern());
 
-                converter.seti("hotPixels", 4);
-                converter.seti("hotPixelsSize", mSensor.hotPixelsSize);
+            converter.seti("hotPixels", 4);
+            converter.seti("hotPixelsSize", mSensor.hotPixelsSize);
 
-                int[] hotPixelsSize = mSensor.hotPixelsSize;
-                try (Texture hotPx = new Texture(hotPixelsSize[0], hotPixelsSize[1], 1, Texture.Format.UInt16,
-                        ShortBuffer.wrap(mSensor.hotPixels), GL_NEAREST, GL_REPEAT)) {
-                    hotPx.bind(GL_TEXTURE4);
-                    converter.drawBlocks(getInWidth(), getInHeight());
-                }
+            int[] hotPixelsSize = mSensor.hotPixelsSize;
+            try (Texture hotPx = new Texture(hotPixelsSize[0], hotPixelsSize[1], 1, Texture.Format.UInt16,
+                    ShortBuffer.wrap(mSensor.hotPixels), GL_NEAREST, GL_REPEAT)) {
+                hotPx.bind(GL_TEXTURE4);
+                converter.drawBlocks(getInWidth(), getInHeight());
             }
-
         }
     }
 
