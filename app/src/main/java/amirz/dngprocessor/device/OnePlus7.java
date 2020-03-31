@@ -77,13 +77,6 @@ public class OnePlus7 extends Generic {
     @Override
     void saturationCorrection(float[] saturationMap) {
         super.saturationCorrection(saturationMap);
-        saturationMap[0] *= 1.2f;
         saturationMap[1] *= 1.2f;
-        saturationMap[2] *= 1.1f;
-        saturationMap[3] *= 1.0f;
-        saturationMap[4] *= 0.9f;
-        saturationMap[5] *= 1.0f;
-        saturationMap[6] *= 1.1f;
-        saturationMap[7] *= 1.2f;
     }
 }
