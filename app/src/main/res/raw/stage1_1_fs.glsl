@@ -56,7 +56,7 @@ void main() {
     vec2 xyInterp = vec2(float(xy.x) / float(rawWidth), float(xy.y) / float(rawHeight));
     vec4 gains = texture(gainMap, xyInterp);
     int index = (xy.x & 1) | ((xy.y & 1) << 1);  // bits [0,1] are blacklevel offset
-    index |= (cfaPattern << 2);
+    //index |= (cfaPattern << 2);
     float bl = 0.f;
     float g = 1.f;
     switch (index) {
@@ -65,6 +65,7 @@ void main() {
         case 1: bl = blackLevel.y; g = gains.y; break;
         case 2: bl = blackLevel.z; g = gains.z; break;
         case 3: bl = blackLevel.w; g = gains.w; break;
+        /*
         // GRBG
         case 4: bl = blackLevel.x; g = gains.y; break;
         case 5: bl = blackLevel.y; g = gains.x; break;
@@ -80,6 +81,7 @@ void main() {
         case 13: bl = blackLevel.y; g = gains.y; break;
         case 14: bl = blackLevel.z; g = gains.z; break;
         case 15: bl = blackLevel.w; g = gains.x; break;
+        */
     }
 
     intermediate = g * (v - bl) / (whiteLevel - bl);
