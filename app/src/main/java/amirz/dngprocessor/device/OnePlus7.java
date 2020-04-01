@@ -73,10 +73,4 @@ public class OnePlus7 extends Generic {
             sensor.gainMapSize = new int[] { 17, 13 };
         }
     }
-
-    @Override
-    void saturationCorrection(float[] saturationMap) {
-        super.saturationCorrection(saturationMap);
-        saturationMap[1] *= 1.2f;
-    }
 }
