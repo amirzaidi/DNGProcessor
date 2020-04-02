@@ -38,5 +38,5 @@ void main() {
     processed.xy = bilateralValXyz.xy;
 
     // Set new luma.
-    processed.z = z;
+    processed.z = clamp(z, 0.f, 1.f);
 }

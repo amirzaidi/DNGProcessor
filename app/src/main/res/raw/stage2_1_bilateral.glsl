@@ -5,10 +5,10 @@ precision mediump float;
 
 // Use buf to blur luma while keeping chroma.
 uniform sampler2D buf;
+uniform ivec2 bufSize;
 
 uniform vec2 sigma;
 uniform ivec2 radius;
-uniform ivec2 bufSize;
 
 // Out
 out vec3 result;

@@ -1,10 +1,19 @@
 #version 300 es
 
+#define PI 3.1415926535897932384626433832795f
+#define hPI 1.57079632679489661923f
+#define qPI 0.785398163397448309616f
+
 precision mediump float;
 
 uniform sampler2D intermediateBuffer;
 uniform int intermediateWidth;
 uniform int intermediateHeight;
+
+uniform int radiusDenoise;
+uniform vec3 sigma;
+
+out vec3 result;
 
 vec3[9] load3x3(ivec2 xy, int n) {
     vec3 outputArray[9];
@@ -15,7 +24,7 @@ vec3[9] load3x3(ivec2 xy, int n) {
 }
 
 void main() {
-    ivec2 xy = ivec2(gl_FragCoord.xy);
+    ivec2 xyPos = ivec2(gl_FragCoord.xy);
 
     vec3[9] impatch = load3x3(xyPos, 2);
     vec3 mid = impatch[4];
@@ -44,4 +53,61 @@ void main() {
     }
     float distxy = distance(minxyz.xy, maxxyz.xy);
     float distz = distance(minxyz.z, maxxyz.z);
+
+    /**
+    CHROMA NOISE REDUCE
+    **/
+
+    // Thresholds
+    float thExclude = 1.5f;
+    float thStop = 2.25f;
+
+    // Expand in a plus
+    vec3 midDivSigma = mid / sigmaLocal;
+    vec3 neighbour;
+    vec3 sum = mid;
+    int coord, bound, count, totalCount = 1, shiftFactor = 16;
+    float dist;
+
+    float lastMinAngle = 0.f;
+    for (float radius = 1.f; radius <= float(radiusDenoise); radius += 1.f) {
+        float expansion = radius * 2.f;
+        float maxDist = 0.f;
+
+        float minAngle = lastMinAngle;
+        float minDist = thStop;
+
+        // Four samples for every radius
+        for (float angle = -hPI; angle < hPI; angle += qPI) {
+            // Reduce angle as radius grows
+            float realAngle = lastMinAngle + angle / pow(radius, 0.5f);
+            ivec2 c = xyPos + ivec2(
+            int(round(expansion * cos(realAngle))),
+            int(round(expansion * sin(realAngle)))
+            );
+
+            // Don't go out of bounds
+            if (c.x >= 0 && c.x < intermediateWidth && c.y >= 0 && c.y < intermediateHeight - 1) {
+                neighbour = texelFetch(intermediateBuffer, c, 0).xyz;
+                dist = distance(midDivSigma, neighbour / sigmaLocal);
+                if (dist < minDist) {
+                    minDist = dist;
+                    minAngle = realAngle;
+                }
+                if (dist < thExclude) {
+                    sum += neighbour;
+                    totalCount++;
+                }
+            }
+        }
+        // No direction left to continue, stop averaging
+        if (minDist >= thStop) {
+            break;
+        }
+        // Keep track of the best angle
+        lastMinAngle = minAngle;
+    }
+
+    result = sum / float(totalCount);
+    result.z = mid.z; // Keep luminosity.
 }

@@ -18,6 +18,7 @@ import amirz.dngprocessor.pipeline.intermediate.BilateralFilter;
 import amirz.dngprocessor.pipeline.intermediate.SampleHistogram;
 import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
 import amirz.dngprocessor.pipeline.post.BlurLCE;
+import amirz.dngprocessor.pipeline.post.NoiseReduce;
 import amirz.dngprocessor.pipeline.post.ToneMap;
 
 public class StagePipeline implements AutoCloseable {
@@ -59,6 +60,7 @@ public class StagePipeline implements AutoCloseable {
         addStage(new MergeDetail(process));
 
         // XYZ -> sRGB
+        addStage(new NoiseReduce(process));
         addStage(new BlurLCE(process));
         addStage(new ToneMap(sensor, process, colorspace.XYZtoProPhoto,
                 colorspace.proPhotoToSRGB));
