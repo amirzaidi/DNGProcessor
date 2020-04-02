@@ -115,6 +115,6 @@ public class ToneMap extends Stage {
 
     @Override
     public int getShader() {
-        return R.raw.stage3_1_fs;
+        return R.raw.stage3_2_tonemap_fs;
     }
 }
