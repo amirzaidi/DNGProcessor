@@ -85,8 +85,8 @@ vec3 processPatch(ivec2 xyPos) {
         float ly = impz[0] - impz[6] + (impz[1] - impz[7]) * 2.f + impz[2] - impz[8];
         float l = sqrt(lx * lx + ly * ly);
 
-        dz = sign(dz) * sigmoid(abs(dz) * 0.5f, 0.25f) * 2.f;
-        z += sharpenFactor * (0.1f + min(l, 0.4f)) * dz;
+        dz = sign(dz) * sigmoid(abs(dz) * 0.75f, 0.25f) * 1.5f;
+        z += sharpenFactor * (0.06f + min(l, 0.29f)) * dz;
 
         if (lce && zMediumBlur > 0.0001f) {
             float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
@@ -97,7 +97,7 @@ vec3 processPatch(ivec2 xyPos) {
     if (lce) {
         float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
         if (zStrongBlur > 0.0001f) {
-            z *= pow(zMediumBlur / zStrongBlur, 1.75f + min(0.f, 2.f * sharpenFactor));
+            z *= pow(zMediumBlur / zStrongBlur, 1.5f + min(0.f, 2.f * sharpenFactor));
         }
     }
 

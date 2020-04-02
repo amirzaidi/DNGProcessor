@@ -19,7 +19,6 @@ float unscaledGaussian(float d, float s) {
 
 // Difference
 float fr(float diffi) {
-    //return unscaledGaussian(diffi, 0.06f);
     return unscaledGaussian(diffi, sigma.x);
 }
 
@@ -30,7 +29,8 @@ float gs(float diffx) {
 }
 
 float pixDiff(vec3 pix1, vec3 pix2) {
-    float z = 5.f * min(pix1.z, pix2.z);
+    // pix1 is input/output pixel position.
+    float z = 8.f * mix(pix1.z, min(pix1.z, pix2.z), 0.25f);
     return length((pix2 - pix1) * vec3(z, z, 1.f));
 }
 
@@ -53,7 +53,7 @@ void main() {
 
             vec2 dxy = vec2(xyPixel - xyCenter);
 
-            float scale = fr(pixDiff(XYZPixel, XYZCenter)) * gs(length(dxy));
+            float scale = fr(pixDiff(XYZCenter, XYZPixel)) * gs(length(dxy));
             I += XYZPixel * scale;
             W += scale;
         }
