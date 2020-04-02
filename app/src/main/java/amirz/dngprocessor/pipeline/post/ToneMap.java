@@ -11,8 +11,6 @@ import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
-import amirz.dngprocessor.pipeline.convert.PreProcess;
-import amirz.dngprocessor.pipeline.intermediate.SampleHistogram;
 
 import static amirz.dngprocessor.colorspace.ColorspaceConstants.CUSTOM_ACR3_TONEMAP_CURVE_COEFFS;
 import static android.opengl.GLES20.*;
@@ -45,15 +43,13 @@ public class ToneMap extends Stage {
 
         glBindFramebuffer(GL_FRAMEBUFFER, mFbo[0]);
 
-        PreProcess preProcess = previousStages.getStage(PreProcess.class);
-
         // Load intermediate buffers as textures
         Texture intermediate = previousStages.getStage(NoiseReduce.class).getDenoised();
         intermediate.bind(GL_TEXTURE0);
 
         converter.seti("intermediateBuffer", 0);
-        converter.seti("intermediateWidth", preProcess.getInWidth());
-        converter.seti("intermediateHeight", preProcess.getInHeight());
+        converter.seti("intermediateWidth", intermediate.getWidth());
+        converter.seti("intermediateHeight", intermediate.getHeight());
 
         if (mProcessParams.lce) {
             BlurLCE blur = previousStages.getStage(BlurLCE.class);
@@ -65,13 +61,6 @@ public class ToneMap extends Stage {
             converter.seti("strongBlur", 6);
         }
 
-        SampleHistogram sampleHistogram = previousStages.getStage(SampleHistogram.class);
-        float[] sigma = sampleHistogram.getSigma();
-        float hypot = (float) Math.hypot(sigma[0], sigma[1]);
-        Log.d(TAG, "Chroma noise hypot " + hypot);
-
-        converter.setf("sigma", sigma);
-
         float satLimit = mProcessParams.satLimit;
         Log.d(TAG, "Saturation limit " + satLimit);
         converter.setf("satLimit", satLimit);
@@ -82,20 +71,10 @@ public class ToneMap extends Stage {
         converter.setf("proPhotoToSRGB", mProPhotoToSRGB);
         converter.seti("outOffset", mSensorParams.outputOffsetX, mSensorParams.outputOffsetY);
 
-        float sharpenFactor = Math.max(mProcessParams.sharpenFactor - 6f * hypot, -0.25f);
-        float adaptiveSaturation = Math.max(0f, mProcessParams.adaptiveSaturation[0] - 30f * hypot);
-        float adaptiveSaturationPow = mProcessParams.adaptiveSaturation[1];
-        float desaturateThres = Math.max(0f, Math.min(0.04f, hypot - 0.05f));
-
-        //Log.d(TAG, "Denoise radius " + denoiseFactor);
-        Log.d(TAG, "Sharpen " + sharpenFactor);
-        Log.d(TAG, "Adaptive saturation " + adaptiveSaturation);
-        Log.d(TAG, "Desaturate threshold " + desaturateThres);
-
-        //converter.seti("radiusDenoise", denoiseFactor);
-        converter.setf("sharpenFactor", sharpenFactor);
-        converter.setf("adaptiveSaturation", adaptiveSaturation, adaptiveSaturationPow);
-        converter.setf("desaturateThres", desaturateThres);
+        NoiseReduce.NRParams nrParams = previousStages.getStage(NoiseReduce.class).getNRParams();
+        converter.setf("sharpenFactor", nrParams.sharpenFactor);
+        converter.setf("adaptiveSaturation", nrParams.adaptiveSaturation, nrParams.adaptiveSaturationPow);
+        converter.setf("desaturateThres", nrParams.desaturateThres);
 
         float[] saturation = mProcessParams.saturationMap;
         float[] sat = new float[saturation.length + 1];
@@ -105,7 +84,6 @@ public class ToneMap extends Stage {
         Texture satTex = new Texture(sat.length, 1, 1, Texture.Format.Float16,
                 FloatBuffer.wrap(sat), GL_LINEAR, GL_CLAMP_TO_EDGE);
         satTex.bind(GL_TEXTURE8);
-
         converter.seti("saturation", 8);
     }
 

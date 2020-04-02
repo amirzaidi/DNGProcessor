@@ -17,10 +17,15 @@ public class NoiseReduce extends Stage {
     private static final String TAG = "NoiseReduce";
 
     private final ProcessParams mProcessParams;
+    private NRParams mNRParams;
     private Texture mDenoised;
 
     public NoiseReduce(ProcessParams process) {
         mProcessParams = process;
+    }
+
+    public NRParams getNRParams() {
+        return mNRParams;
     }
 
     public Texture getDenoised() {
@@ -46,17 +51,11 @@ public class NoiseReduce extends Stage {
         converter.seti("intermediateWidth", w);
         converter.seti("intermediateHeight", h);
 
-        SampleHistogram sampleHistogram = previousStages.getStage(SampleHistogram.class);
-        float[] sigma = sampleHistogram.getSigma();
-        int denoiseFactor = (int)((float) mProcessParams.denoiseFactor
-                * Math.sqrt(sigma[0] + sigma[1]));
-        Log.d(TAG, "Denoise radius " + denoiseFactor);
-        converter.seti("radiusDenoise", denoiseFactor);
-        converter.setf("sigma", sigma);
-
-        float hypot = (float) Math.hypot(sigma[0], sigma[1]);
-        float sharpenFactor = Math.max(mProcessParams.sharpenFactor - 6f * hypot, -0.25f);
-        converter.setf("sharpenFactor", sharpenFactor);
+        mNRParams = new NoiseReduce.NRParams(mProcessParams,
+                previousStages.getStage(SampleHistogram.class).getSigma());
+        converter.seti("radiusDenoise", mNRParams.denoiseFactor);
+        converter.setf("sigma", mNRParams.sigma);
+        converter.setf("sharpenFactor", mNRParams.sharpenFactor);
 
         try (Texture tmp = new Texture(w, h, 3, Texture.Format.Float16, null)) {
             tmp.setFrameBuffer();
@@ -79,5 +78,36 @@ public class NoiseReduce extends Stage {
     @Override
     public int getShader() {
         return R.raw.stage3_1_noise_reduce_fs;
+    }
+
+    /**
+     * Noise Reduction Parameters.
+     */
+    static class NRParams {
+        final float[] sigma;
+        final int denoiseFactor;
+        final float sharpenFactor;
+        final float adaptiveSaturation, adaptiveSaturationPow;
+        final float desaturateThres;
+
+        private NRParams(ProcessParams params, float[] s) {
+            sigma = s;
+
+            float hypot = (float) Math.hypot(s[0], s[1]);
+            Log.d(TAG, "Chroma noise hypot " + hypot);
+
+            denoiseFactor = (int)((float) params.denoiseFactor * Math.sqrt(s[0] + s[1]));
+            Log.d(TAG, "Denoise radius " + denoiseFactor);
+
+            sharpenFactor = Math.max(params.sharpenFactor - 6f * hypot, -0.25f);
+            Log.d(TAG, "Sharpen factor " + sharpenFactor);
+
+            adaptiveSaturation = Math.max(0f, params.adaptiveSaturation[0] - 30f * hypot);
+            adaptiveSaturationPow = params.adaptiveSaturation[1];
+            Log.d(TAG, "Adaptive saturation " + adaptiveSaturation);
+
+            desaturateThres = Math.max(0f, Math.min(0.04f, hypot - 0.05f));
+            Log.d(TAG, "Desaturate threshold " + desaturateThres);
+        }
     }
 }
