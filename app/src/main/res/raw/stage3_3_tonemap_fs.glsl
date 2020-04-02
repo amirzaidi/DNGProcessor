@@ -94,8 +94,6 @@ vec3 processPatch(ivec2 xyPos) {
             float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
             z *= pow(zWeakBlur / zMediumBlur, sharpenFactor * 6.f * sqrt(l));
         }
-    } else if (sharpenFactor < 0.f) {
-        // Use impz
     }
 
     if (lce) {

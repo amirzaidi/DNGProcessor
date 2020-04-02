@@ -54,6 +54,10 @@ public class NoiseReduce extends Stage {
         converter.seti("radiusDenoise", denoiseFactor);
         converter.setf("sigma", sigma);
 
+        float hypot = (float) Math.hypot(sigma[0], sigma[1]);
+        float sharpenFactor = Math.max(mProcessParams.sharpenFactor - 6f * hypot, -0.25f);
+        converter.setf("sharpenFactor", sharpenFactor);
+
         try (Texture tmp = new Texture(w, h, 3, Texture.Format.Float16, null)) {
             tmp.setFrameBuffer();
             converter.drawBlocks(w, h);
@@ -64,7 +68,7 @@ public class NoiseReduce extends Stage {
             converter.seti("buf", 0);
             converter.seti("bufSize", w, h);
 
-            converter.setf("sigma", 0.05f, 1f);
+            converter.setf("sigma", 0.015f, 0.75f);
             converter.seti("radius", 4, 1);
 
             mDenoised.setFrameBuffer();

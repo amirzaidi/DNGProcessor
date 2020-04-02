@@ -12,6 +12,7 @@ uniform int intermediateHeight;
 
 uniform int radiusDenoise;
 uniform vec3 sigma;
+uniform float sharpenFactor;
 
 out vec3 result;
 
@@ -108,6 +109,6 @@ void main() {
         lastMinAngle = minAngle;
     }
 
-    result = sum / float(totalCount);
-    result.z = mid.z; // Keep luminosity.
+    result.xy = sum.xy / float(totalCount);
+    result.z = mix(z, sum.z / float(totalCount), (1.f - z) * clamp(-5.f * sharpenFactor, 0.f, 1.f));
 }
