@@ -1,7 +1,5 @@
 #version 300 es
 #define PI 3.1415926535897932384626433832795f
-#define hPI 1.57079632679489661923f
-#define qPI 0.785398163397448309616f
 
 precision mediump float;
 
@@ -120,6 +118,16 @@ vec3 xyYtoXYZ(vec3 xyY) {
     return clamp(result, 0.f, 1.f);
 }
 
+float tonemapSin(float ch) {
+    return ch < 0.0001f
+        ? ch
+        : 0.5f - 0.5f * cos(pow(ch, 0.8f) * PI);
+}
+
+vec2 tonemapSin(vec2 ch) {
+    return vec2(tonemapSin(ch.x), tonemapSin(ch.y));
+}
+
 vec3 tonemap(vec3 rgb) {
     vec3 sorted = rgb;
 
@@ -151,10 +159,12 @@ vec3 tonemap(vec3 rgb) {
     minmax.y = sorted.z;
 
     // Apply tonemapping curve to min, max RGB channel values
+    vec2 minmaxsin = tonemapSin(minmax);
     minmax = pow(minmax, vec2(3.f)) * toneMapCoeffs.x +
-    pow(minmax, vec2(2.f)) * toneMapCoeffs.y +
-    minmax * toneMapCoeffs.z +
-    toneMapCoeffs.w;
+        pow(minmax, vec2(2.f)) * toneMapCoeffs.y +
+        minmax * toneMapCoeffs.z +
+        toneMapCoeffs.w;
+    minmax = mix(minmax, minmaxsin, 0.35f);
 
     // Rescale middle value
     float newMid;
