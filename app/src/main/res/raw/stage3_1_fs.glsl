@@ -360,7 +360,7 @@ void main() {
 
     // Add saturation
     sRGB = saturate(sRGB);
-    sRGB = tonemap(sRGB);
+    //sRGB = tonemap(sRGB);
 
     // Gamma correct at the end.
     color = vec4(gammaCorrectPixel(sRGB), 1.f);
