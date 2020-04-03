@@ -7,7 +7,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
 import amirz.dngprocessor.R;
 
@@ -47,7 +46,6 @@ public class NotifHandler {
     public static void progress(Context context, int max, int progress) {
         Notification notif = mBuilder.setProgress(max, progress, false).build();
         manager(context).notify(FOREGROUND_ID, notif);
-        Log.w(TAG, "Raw conversion " + progress + "/" + max);
     }
 
     public static void done(Service service) {

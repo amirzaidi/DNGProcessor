@@ -10,6 +10,7 @@ uniform int intermediateHeight;
 uniform sampler2D weakBlur;
 uniform sampler2D mediumBlur;
 uniform sampler2D strongBlur;
+uniform sampler2D noiseTex;
 
 uniform int yOffset;
 
@@ -28,6 +29,10 @@ uniform float sharpenFactor;
 uniform float desaturateThres;
 uniform sampler2D saturation;
 uniform float satLimit;
+
+// Dithering
+uniform usampler2D ditherTex;
+uniform int ditherSize;
 
 // Size
 uniform ivec2 outOffset;
@@ -97,13 +102,16 @@ vec3 processPatch(ivec2 xyPos) {
     if (lce) {
         float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
         if (zStrongBlur > 0.0001f) {
-            z *= pow(zMediumBlur / zStrongBlur, 1.5f + min(0.f, 2.f * sharpenFactor));
+            float lceStrongStrength = max(1.5f, 0.f) + min(0.f, 2.f * sharpenFactor);
+            z *= pow(zMediumBlur / zStrongBlur, lceStrongStrength);
         }
     }
 
-    if (z < desaturateThres) {
+    float noiseLevel = texelFetch(noiseTex, xyPos, 0).x;
+    float desaturatePoint = desaturateThres * noiseLevel * 10.f;
+    if (z < desaturatePoint) {
         // Shift towards D50 white
-        xy = mix(xy, vec2(0.345703f, 0.358539f), 1.f - z / desaturateThres);
+        xy = mix(xy, vec2(0.345703f, 0.358539f), 1.f - z / desaturatePoint);
     }
 
     return clamp(vec3(xy, z), 0.f, 1.f);
@@ -260,6 +268,31 @@ vec3 gammaCorrectPixel(vec3 rgb) {
     return ret;
 }
 
+uint hash(uint x) {
+    x += (x << 10u);
+    x ^= (x >> 6u);
+    x += (x << 3u);
+    x ^= (x >> 11u);
+    x += (x << 15u);
+    return x;
+}
+
+int hash(int x) {
+    return int(hash(uint(x)) >> 1);
+}
+
+ivec2 hash(ivec2 xy) {
+    int hashTogether = hash(xy.x ^ xy.y);
+    return ivec2(hash(xy.x ^ hashTogether), hash(xy.y ^ hashTogether));
+}
+
+vec3 dither(vec3 rgb, ivec2 xy) {
+    int dither = int(texelFetch(ditherTex, hash(xy) % ditherSize, 0).x);
+    float noise = float(dither >> 8) / 255.f; // [0, 1]
+    noise = (noise - 0.5f) / 255.f; // At most half a RGB value of noise.
+    return clamp(rgb + noise, 0.f, 1.f);
+}
+
 void main() {
     ivec2 xy = ivec2(gl_FragCoord.xy) + outOffset;
     xy.y += yOffset;
@@ -281,5 +314,5 @@ void main() {
     sRGB = tonemap(sRGB);
 
     // Gamma correct at the end.
-    color = vec4(gammaCorrectPixel(sRGB), 1.f);
+    color = vec4(dither(gammaCorrectPixel(sRGB), xy), 1.f);
 }

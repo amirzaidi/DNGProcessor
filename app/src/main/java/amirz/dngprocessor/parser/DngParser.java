@@ -203,9 +203,10 @@ public class DngParser {
         final int[] steps = { 0 };
         try (StagePipeline pipeline = new StagePipeline(
                 sensor, process, rawImageInput, argbOutput, loader)) {
-            pipeline.execute((completed, total) -> {
+            pipeline.execute((completed, total, tag) -> {
                 steps[0] = total;
                 NotifHandler.progress(mContext, total + ADD_STEPS, completed);
+                Log.w(TAG, "Raw conversion step " + tag + ": " + completed + "/" + total);
             });
         }
 

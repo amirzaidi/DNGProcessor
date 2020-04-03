@@ -15,8 +15,9 @@ import amirz.dngprocessor.pipeline.convert.GreenDemosaic;
 import amirz.dngprocessor.pipeline.convert.PreProcess;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 import amirz.dngprocessor.pipeline.intermediate.BilateralFilter;
-import amirz.dngprocessor.pipeline.intermediate.SampleHistogram;
+import amirz.dngprocessor.pipeline.intermediate.Analysis;
 import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
+import amirz.dngprocessor.pipeline.intermediate.NoiseMap;
 import amirz.dngprocessor.pipeline.post.BlurLCE;
 import amirz.dngprocessor.pipeline.post.NoiseReduce;
 import amirz.dngprocessor.pipeline.post.ToneMap;
@@ -54,9 +55,10 @@ public class StagePipeline implements AutoCloseable {
         addStage(new ToIntermediate(sensor, colorspace.sensorToXYZ_D50));
 
         // Intermediates
-        addStage(new BilateralFilter(process));
-        addStage(new SampleHistogram(outWidth, outHeight,
+        addStage(new NoiseMap(process));
+        addStage(new Analysis(outWidth, outHeight,
                 sensor.outputOffsetX, sensor.outputOffsetY));
+        addStage(new BilateralFilter(process));
         addStage(new MergeDetail(process));
 
         // XYZ -> sRGB
@@ -76,8 +78,8 @@ public class StagePipeline implements AutoCloseable {
     public void execute(OnProgressReporter reporter) {
         int stageCount = mStages.size();
         for (int i = 0; i < stageCount; i++) {
-            reporter.onProgress(i, stageCount);
             Stage stage = mStages.get(i);
+            reporter.onProgress(i, stageCount, stage.getClass().getSimpleName());
             mConverter.useProgram(stage.getShader());
             stage.execute(new StageMap(mStages.subList(0, i)));
         }
@@ -85,7 +87,7 @@ public class StagePipeline implements AutoCloseable {
         // Assume that last stage set everything but did not render yet.
         mCore.drawBlocksToOutput();
 
-        reporter.onProgress(stageCount, stageCount);
+        reporter.onProgress(stageCount, stageCount, "Done");
     }
 
     @Override
@@ -94,7 +96,7 @@ public class StagePipeline implements AutoCloseable {
     }
 
     public interface OnProgressReporter {
-        void onProgress(int completed, int total);
+        void onProgress(int completed, int total, String tag);
     }
 
     public static class StageMap {

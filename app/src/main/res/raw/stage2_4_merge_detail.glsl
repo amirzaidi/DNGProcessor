@@ -6,6 +6,8 @@ uniform sampler2D bilateral;
 uniform sampler2D intermediate;
 uniform sampler2D hist;
 
+uniform sampler2D noiseTex;
+
 uniform float histFactor;
 
 // Out
@@ -19,6 +21,10 @@ void main() {
 
     float intermediateVal = intermediateValXyz.z;
     float bilateralVal = bilateralValXyz.z;
+
+    // Reduce intermediate noise using noise texture.
+    float noiseLevel = min(texelFetch(noiseTex, xy, 0).x * 1.5f, 1.f);
+    intermediateVal = mix(intermediateVal, bilateralVal, noiseLevel);
 
     float z = intermediateVal;
     if (bilateralVal > 0.0001f && histFactor > 0.0001f) {

@@ -3,7 +3,6 @@
 precision mediump float;
 
 uniform sampler2D intermediate;
-uniform sampler2D bilateral;
 uniform ivec2 outOffset;
 uniform int samplingFactor;
 

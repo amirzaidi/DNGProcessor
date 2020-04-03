@@ -10,6 +10,8 @@ uniform sampler2D intermediateBuffer;
 uniform int intermediateWidth;
 uniform int intermediateHeight;
 
+uniform sampler2D noiseTex;
+
 uniform int radiusDenoise;
 uniform vec3 sigma;
 uniform float sharpenFactor;
@@ -109,6 +111,7 @@ void main() {
         lastMinAngle = minAngle;
     }
 
+    float noise = texelFetch(noiseTex, xyPos, 0).x;
     result.xy = sum.xy / float(totalCount);
-    result.z = mix(z, sum.z / float(totalCount), (1.f - z) * clamp(-5.f * sharpenFactor, 0.f, 1.f));
+    result.z = mix(z, sum.z / float(totalCount), min(noise * 1.65f, 1.f));
 }

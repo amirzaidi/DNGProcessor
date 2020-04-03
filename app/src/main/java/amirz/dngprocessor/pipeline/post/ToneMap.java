@@ -2,7 +2,9 @@ package amirz.dngprocessor.pipeline.post;
 
 import android.util.Log;
 
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.util.Random;
 
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
@@ -11,6 +13,7 @@ import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
+import amirz.dngprocessor.pipeline.intermediate.NoiseMap;
 
 import static amirz.dngprocessor.colorspace.ColorspaceConstants.CUSTOM_ACR3_TONEMAP_CURVE_COEFFS;
 import static android.opengl.GLES20.*;
@@ -22,6 +25,9 @@ public class ToneMap extends Stage {
     private final SensorParams mSensorParams;
     private final ProcessParams mProcessParams;
     private final float[] mXYZtoProPhoto, mProPhotoToSRGB;
+
+    private final int ditherSize = 128;
+    private final byte[] dither = new byte[ditherSize * ditherSize * 2];
 
     public ToneMap(SensorParams sensor, ProcessParams process,
                    float[] XYZtoProPhoto, float[] proPhotoToSRGB) {
@@ -85,6 +91,18 @@ public class ToneMap extends Stage {
                 FloatBuffer.wrap(sat), GL_LINEAR, GL_CLAMP_TO_EDGE);
         satTex.bind(GL_TEXTURE8);
         converter.seti("saturation", 8);
+
+        Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
+        noiseTex.bind(GL_TEXTURE10);
+        converter.seti("noiseTex", 10);
+
+        // Fill with noise
+        new Random(8682522807148012L).nextBytes(dither);
+        Texture ditherTex = new Texture(ditherSize, ditherSize, 1, Texture.Format.UInt16,
+                ByteBuffer.wrap(dither));
+        ditherTex.bind(GL_TEXTURE12);
+        converter.seti("ditherTex", 12);
+        converter.seti("ditherSize", ditherSize);
     }
 
     @Override

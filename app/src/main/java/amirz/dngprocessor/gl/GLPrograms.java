@@ -52,6 +52,11 @@ public class GLPrograms implements AutoCloseable {
         glFlush();
     }
 
+    public void drawBlocks(Texture tex) {
+        tex.setFrameBuffer();
+        drawBlocks(tex.getWidth(), tex.getHeight());
+    }
+
     public void drawBlocks(int w, int h) {
         BlockDivider divider = new BlockDivider(h, BLOCK_HEIGHT);
         int[] row = new int[2];

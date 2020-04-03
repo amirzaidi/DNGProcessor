@@ -51,7 +51,7 @@ public class MergeDetail extends Stage {
         int w = preProcess.getInWidth();
         int h = preProcess.getInHeight();
 
-        SampleHistogram sampleHistogram = previousStages.getStage(SampleHistogram.class);
+        Analysis sampleHistogram = previousStages.getStage(Analysis.class);
         float[] hist = sampleHistogram.getHist().clone();
         for (int i = 0; i < hist.length; i++) {
             hist[i] = (float) Math.pow(hist[i], mHistCurve);
@@ -73,16 +73,20 @@ public class MergeDetail extends Stage {
         bilateralTex.bind(GL_TEXTURE2);
         converter.seti("intermediate", 0);
         converter.seti("bilateral", 2);
-        mIntermediate = new Texture(w, h, 3, Texture.Format.Float16, null);
-        mIntermediate.setFrameBuffer();
-        converter.drawBlocks(w, h);
 
-        //intermediateTex.close();
+        Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
+        noiseTex.bind(GL_TEXTURE4);
+        converter.seti("noiseTex", 4);
+
+        mIntermediate = new Texture(w, h, 3, Texture.Format.Float16, null);
+        converter.drawBlocks(mIntermediate);
+
+        intermediateTex.close();
         bilateralTex.close();
     }
 
     @Override
     public int getShader() {
-        return R.raw.stage2_3_detail;
+        return R.raw.stage2_4_merge_detail;
     }
 }

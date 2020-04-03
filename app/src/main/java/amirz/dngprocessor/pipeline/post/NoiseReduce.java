@@ -9,9 +9,10 @@ import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
-import amirz.dngprocessor.pipeline.intermediate.SampleHistogram;
+import amirz.dngprocessor.pipeline.intermediate.Analysis;
+import amirz.dngprocessor.pipeline.intermediate.NoiseMap;
 
-import static android.opengl.GLES20.GL_TEXTURE0;
+import static android.opengl.GLES20.*;
 
 public class NoiseReduce extends Stage {
     private static final String TAG = "NoiseReduce";
@@ -36,6 +37,8 @@ public class NoiseReduce extends Stage {
     protected void execute(StagePipeline.StageMap previousStages) {
         Texture noisy = previousStages.getStage(MergeDetail.class).getIntermediate();
         mDenoised = noisy;
+        mNRParams = new NoiseReduce.NRParams(mProcessParams,
+                previousStages.getStage(Analysis.class).getSigma());
 
         if (mProcessParams.denoiseFactor == 0) {
             return;
@@ -51,17 +54,19 @@ public class NoiseReduce extends Stage {
         converter.seti("intermediateWidth", w);
         converter.seti("intermediateHeight", h);
 
-        mNRParams = new NoiseReduce.NRParams(mProcessParams,
-                previousStages.getStage(SampleHistogram.class).getSigma());
         converter.seti("radiusDenoise", mNRParams.denoiseFactor);
         converter.setf("sigma", mNRParams.sigma);
         converter.setf("sharpenFactor", mNRParams.sharpenFactor);
+
+        Texture noiseMap = previousStages.getStage(NoiseMap.class).getNoiseTex();
+        noiseMap.bind(GL_TEXTURE2);
+        converter.seti("noiseTex", 2);
 
         try (Texture tmp = new Texture(w, h, 3, Texture.Format.Float16, null)) {
             tmp.setFrameBuffer();
             converter.drawBlocks(w, h);
 
-            converter.useProgram(R.raw.stage2_1_bilateral);
+            converter.useProgram(R.raw.stage2_3_bilateral);
 
             tmp.bind(GL_TEXTURE0);
             converter.seti("buf", 0);
