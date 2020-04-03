@@ -149,7 +149,7 @@ vec3 convertSensorToIntermediate(ivec2 xy, vec3 sensor) {
     // Use gainmap to increase dynamic range.
     vec2 xyInterp = vec2(float(xy.x) / float(rawWidth), float(xy.y) / float(rawHeight));
     vec4 gains = texture(gainMap, xyInterp);
-    vec3 neutralScaled = vec3(gains.x, (gains.y + gains.z) * 0.5f, gains.w) * neutralPoint;
+    vec3 neutralScaled = min(min(gains.x, gains.y), min(gains.z, gains.w)) * neutralPoint;
 
     vec3 npf = sensor / neutralScaled;
     sensor = min(sensor, neutralScaled);
@@ -158,7 +158,7 @@ vec3 convertSensorToIntermediate(ivec2 xy, vec3 sensor) {
     // So extend dynamic range by scaling white point
     // Use a bias so only high green values become higher
     // In highlights, bias should be one
-    float bias = sensor.g * sensor.g * sensor.g;
+    float bias = npf.g * npf.g * npf.g;
     sensor *= mix(1.f, max(npf.r + npf.b, 2.f) * 0.5f, bias);
 
     vec3 XYZ = sensorToXYZ * sensor;
