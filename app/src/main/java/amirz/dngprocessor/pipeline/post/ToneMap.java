@@ -80,7 +80,6 @@ public class ToneMap extends Stage {
         NoiseReduce.NRParams nrParams = previousStages.getStage(NoiseReduce.class).getNRParams();
         converter.setf("sharpenFactor", nrParams.sharpenFactor);
         converter.setf("adaptiveSaturation", nrParams.adaptiveSaturation, nrParams.adaptiveSaturationPow);
-        converter.setf("desaturateThres", nrParams.desaturateThres);
 
         float[] saturation = mProcessParams.saturationMap;
         float[] sat = new float[saturation.length + 1];

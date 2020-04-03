@@ -93,7 +93,6 @@ public class NoiseReduce extends Stage {
         final int denoiseFactor;
         final float sharpenFactor;
         final float adaptiveSaturation, adaptiveSaturationPow;
-        final float desaturateThres;
 
         private NRParams(ProcessParams params, float[] s) {
             sigma = s;
@@ -110,9 +109,6 @@ public class NoiseReduce extends Stage {
             adaptiveSaturation = Math.max(0f, params.adaptiveSaturation[0] - 30f * hypot);
             adaptiveSaturationPow = params.adaptiveSaturation[1];
             Log.d(TAG, "Adaptive saturation " + adaptiveSaturation);
-
-            desaturateThres = Math.max(0f, Math.min(0.04f, hypot - 0.05f));
-            Log.d(TAG, "Desaturate threshold " + desaturateThres);
         }
     }
 }

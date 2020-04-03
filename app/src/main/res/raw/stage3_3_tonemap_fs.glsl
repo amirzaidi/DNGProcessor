@@ -26,7 +26,6 @@ uniform mat3 proPhotoToSRGB; // Color transform from wide-gamut colorspace to sR
 
 // Post processing
 uniform float sharpenFactor;
-uniform float desaturateThres;
 uniform sampler2D saturation;
 uniform float satLimit;
 
@@ -105,13 +104,6 @@ vec3 processPatch(ivec2 xyPos) {
             float lceStrongStrength = max(1.5f, 0.f) + min(0.f, 2.f * sharpenFactor);
             z *= pow(zMediumBlur / zStrongBlur, lceStrongStrength);
         }
-    }
-
-    float noiseLevel = texelFetch(noiseTex, xyPos, 0).x;
-    float desaturatePoint = desaturateThres * noiseLevel * 10.f;
-    if (z < desaturatePoint) {
-        // Shift towards D50 white
-        xy = mix(xy, vec2(0.345703f, 0.358539f), 1.f - z / desaturatePoint);
     }
 
     return clamp(vec3(xy, z), 0.f, 1.f);
