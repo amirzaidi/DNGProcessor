@@ -42,7 +42,7 @@ void main() {
     }
 
     // Reduce xy noise.
-    noiseLevel *= 0.5f;
+    noiseLevel *= 0.35f;
     if (z < noiseLevel) {
         // Shift towards D50 white
         processed.xy = mix(bilateralValXyz.xy,
