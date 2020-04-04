@@ -16,7 +16,7 @@ public class ProcessParams {
                 process.sharpenFactor = 0.25f;
                 process.histFactor = 1f;
                 process.histCurve = 1.3f;
-                process.adaptiveSaturation = new float[] { 3f, 3f };
+                process.adaptiveSaturation = new float[] { 2.5f, 4f };
                 break;
             case Boosted:
                 process.sharpenFactor = 0.45f;
