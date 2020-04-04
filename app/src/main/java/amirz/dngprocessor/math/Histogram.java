@@ -8,7 +8,7 @@ public class Histogram {
     public final float logAvgLuminance;
 
     public Histogram(float[] f, int whPixels) {
-        int histBins = 512;
+        int histBins = 256;
         int[] histv = new int[histBins];
 
         double logTotalLuminance = 0d;
@@ -43,17 +43,33 @@ public class Histogram {
             cumulativeHist[i] /= max;
         }
 
-        improveHist(cumulativeHist);
+        // Limit contrast and banding.
+        float[] tmp = new float[cumulativeHist.length];
+        for (int i = 0; i < 400; i++) {
+            tmp[0] = cumulativeHist[0];
+            for (int j = 1; j < cumulativeHist.length - 1; j++) {
+                tmp[j] = (cumulativeHist[j - 1] + cumulativeHist[j + 1]) * 0.5f;
+            }
+            tmp[tmp.length - 1] = cumulativeHist[cumulativeHist.length - 1];
 
-        float[] gauss = { 0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f };
-        hist = Convolve.conv(cumulativeHist, gauss, true);
+            float[] swp = tmp;
+            tmp = cumulativeHist;
+            cumulativeHist = swp;
+        }
+
+        improveHist(cumulativeHist);
+        hist = cumulativeHist;
+
+        //float[] gauss = { 0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f };
+        //hist = Convolve.conv(cumulativeHist, gauss, true);
     }
 
     private static void improveHist(float[] hist) {
+        /*
         for (int i = 0; i < hist.length; i++) {
             float og = (float) i / hist.length;
             float heq = hist[i];
-            float a = Math.min(0.65f, 20f * og);
+            float a = Math.min(0.75f, 30f * og);
             hist[i] = heq * a + og * (1f - a);
         }
 
@@ -62,12 +78,12 @@ public class Histogram {
             if (hist[i] < hist[i - 1]) {
                 hist[i] = hist[i - 1];
             }
-        }
+        }*/
 
         // Crush shadows
-        int maxShadow = hist.length / 40;
+        int maxShadow = hist.length / 50;
         for (int i = 0; i < maxShadow; i++) {
-            hist[i] *= Math.pow((float) i / maxShadow, 0.67f);
+            hist[i] *= Math.sqrt((float) i / maxShadow);
         }
     }
 

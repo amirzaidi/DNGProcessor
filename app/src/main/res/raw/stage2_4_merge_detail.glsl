@@ -4,11 +4,13 @@ precision mediump float;
 
 uniform sampler2D bilateral;
 uniform sampler2D intermediate;
-uniform sampler2D hist;
 
-uniform sampler2D noiseTex;
+uniform sampler2D hist;
+uniform vec2 histOffset;
 
 uniform float histFactor;
+
+uniform sampler2D noiseTex;
 
 // Out
 out vec3 processed;
@@ -25,20 +27,13 @@ void main() {
     float noiseLevel = texelFetch(noiseTex, xy, 0).x;
 
     // Reduce intermediate noise using noise texture.
-    intermediateVal = mix(intermediateVal, bilateralVal, min(noiseLevel * 1.5f, 1.f));
-
-    float z = intermediateVal;
-    if (bilateralVal > 0.0001f && histFactor > 0.0001f) {
+    float z = mix(intermediateVal, bilateralVal, min(noiseLevel * 1.5f, 1.f));
+    if (bilateralVal > 0.0001f) {
         // (Original Reflectance * Original Luminosity)
         // * (Corrected Luminosity / Original Luminosity)
-        float bilateralCorrect = texture(hist, vec2(bilateralVal, 0.5f)).x;
-        z *= pow(bilateralCorrect / bilateralVal, histFactor);
-
-        // Boost details
-        float detailFactor = 1.5f * histFactor - 0.5f;
-        if (detailFactor > 0.0001f) {
-            z *= pow(intermediateVal / bilateralVal, detailFactor);
-        }
+        float texCoord = histOffset.x + histOffset.y * bilateralVal;
+        float correctLuminance = texture(hist, vec2(texCoord, 0.5f)).x;
+        z *= pow(correctLuminance / bilateralVal, histFactor);
     }
 
     // Reduce xy noise.

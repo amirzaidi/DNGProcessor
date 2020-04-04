@@ -61,6 +61,7 @@ public class MergeDetail extends Stage {
                 FloatBuffer.wrap(hist), GL_LINEAR, GL_CLAMP_TO_EDGE);
         histTex.bind(GL_TEXTURE6);
         converter.seti("hist", 6);
+        converter.setf("histOffset", 0.5f / hist.length, 1.f - 1.f / hist.length);
 
         // If there are many dark patches, the color noise goes up.
         // To ensure that we do not boost that too much, reduce with color noise.

@@ -94,15 +94,14 @@ vec3 processPatch(ivec2 xyPos) {
 
         if (lce && zMediumBlur > 0.0001f) {
             float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
-            z *= pow(zWeakBlur / zMediumBlur, sharpenFactor * 6.f * sqrt(l));
+            z *= pow(zWeakBlur / zMediumBlur, sharpenFactor * 5.f * sqrt(l));
         }
     }
 
     if (lce) {
         float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
         if (zStrongBlur > 0.0001f) {
-            float lceStrongStrength = max(1.5f, 0.f) + min(0.f, 2.f * sharpenFactor);
-            z *= pow(zMediumBlur / zStrongBlur, lceStrongStrength);
+            z *= zMediumBlur / zStrongBlur;
         }
     }
 
