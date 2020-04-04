@@ -72,7 +72,7 @@ public class NoiseReduce extends Stage {
             converter.seti("buf", 0);
             converter.seti("bufSize", w, h);
 
-            converter.setf("sigma", 0.01f, 0.92f);
+            converter.setf("sigma", 0.012f, 0.94f);
             converter.seti("radius", 4, 1);
 
             mDenoised.setFrameBuffer();
