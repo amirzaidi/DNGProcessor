@@ -67,13 +67,7 @@ vec3 processPatch(ivec2 xyPos) {
     LUMA SHARPEN
     **/
     float[9] impz = load3x3z(xyPos);
-    float zMediumBlur;
-    if (lce) {
-        // Local contrast enhancement
-        zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
-    }
 
-    float zScale = 1.f;
     if (sharpenFactor > 0.f) {
         // Sum of difference with all pixels nearby
         float dz = z * 13.f;
@@ -90,15 +84,16 @@ vec3 processPatch(ivec2 xyPos) {
         float ly = impz[0] - impz[6] + (impz[1] - impz[7]) * 2.f + impz[2] - impz[8];
         float l = sqrt(lx * lx + ly * ly);
 
-        z += sharpenFactor * (0.1f + min(l, 0.3f)) * dz;
-        if (lce && zMediumBlur > 0.0001f) {
-            float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
-            zScale = zWeakBlur / zMediumBlur;
-        }
+        z += sharpenFactor * (0.08f + min(l, 0.32f)) * dz;
     }
 
     if (lce) {
-        z *= zScale;
+        float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
+        if (zMediumBlur > 0.0001f) {
+            float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
+            z *= zWeakBlur / zMediumBlur;
+        }
+
         float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
         if (zStrongBlur > 0.0001f) {
             z *= zMediumBlur / zStrongBlur;

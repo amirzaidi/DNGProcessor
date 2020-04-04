@@ -45,7 +45,7 @@ public class BlurLCE extends Stage {
             // First render to the tmp buffer.
             intermediate.bind(GL_TEXTURE0);
             converter.seti("buf", 0);
-            converter.setf("sigma", 1f);
+            converter.setf("sigma", 0.5f);
             converter.seti("radius", 3);
             converter.seti("dir", 0, 1); // Vertical
             converter.setf("ch", 0, 1); // xy[Y]
@@ -66,7 +66,7 @@ public class BlurLCE extends Stage {
             // First render to the tmp buffer.
             intermediate.bind(GL_TEXTURE0);
             converter.seti("buf", 0);
-            converter.setf("sigma", 2f);
+            converter.setf("sigma", 1.5f);
             converter.seti("radius", 6);
             converter.seti("dir", 0, 1); // Vertical
             converter.setf("ch", 0, 1); // xy[Y]
@@ -86,7 +86,7 @@ public class BlurLCE extends Stage {
 
             // First render to the tmp buffer.
             intermediate.bind(GL_TEXTURE0);
-            converter.setf("sigma", 2.5f);
+            converter.setf("sigma", 2f);
             converter.seti("radius", 8);
             converter.seti("dir", 0, 1); // Vertical
             converter.setf("ch", 0, 1); // xy[Y]
