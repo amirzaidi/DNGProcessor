@@ -71,13 +71,13 @@ public class ToneMap extends Stage {
         Log.d(TAG, "Saturation limit " + satLimit);
         converter.setf("satLimit", satLimit);
 
-        converter.seti("lce", mProcessParams.lce ? 1 : 0);
         converter.setf("toneMapCoeffs", CUSTOM_ACR3_TONEMAP_CURVE_COEFFS);
         converter.setf("XYZtoProPhoto", mXYZtoProPhoto);
         converter.setf("proPhotoToSRGB", mProPhotoToSRGB);
         converter.seti("outOffset", mSensorParams.outputOffsetX, mSensorParams.outputOffsetY);
 
         NoiseReduce.NRParams nrParams = previousStages.getStage(NoiseReduce.class).getNRParams();
+        converter.seti("lce", mProcessParams.lce && (nrParams.sharpenFactor >= 0f) ? 1 : 0);
         converter.setf("sharpenFactor", nrParams.sharpenFactor);
         converter.setf("adaptiveSaturation", nrParams.adaptiveSaturation, nrParams.adaptiveSaturationPow);
 
