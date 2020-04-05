@@ -3,7 +3,7 @@ package amirz.dngprocessor.math;
 public class Histogram {
     private static final double EPSILON = 0.01;
 
-    public final float[] sigma = new float[1];
+    public final float[] sigma = new float[3];
     public final float[] hist;
     public final float logAvgLuminance;
 
@@ -13,20 +13,23 @@ public class Histogram {
 
         double logTotalLuminance = 0d;
         // Loop over all values
-        float s = 0f;
         for (int i = 0; i < f.length; i += 4) {
-            s += f[i];
+            for (int j = 0; j < 3; j++) {
+                sigma[j] += f[i + j];
+            }
 
-            int bin = (int) (f[i + 1] * histBins);
+            int bin = (int) (f[i + 3] * histBins);
             if (bin < 0) bin = 0;
             if (bin >= histBins) bin = histBins - 1;
             histv[bin]++;
 
-            logTotalLuminance += Math.log(f[i + 1] + EPSILON);
+            logTotalLuminance += Math.log(f[i + 3] + EPSILON);
         }
 
         logAvgLuminance = (float) Math.exp(logTotalLuminance * 4 / f.length);
-        sigma[0] = s / whPixels;
+        for (int j = 0; j < 3; j++) {
+            sigma[j] /= whPixels;
+        }
 
         limitHighlightContrast(histv, f.length / 4);
 
