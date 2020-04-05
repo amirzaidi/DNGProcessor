@@ -1,5 +1,6 @@
 package amirz.dngprocessor.device;
 
+import android.util.Log;
 import android.util.SparseArray;
 
 import java.util.ArrayList;
@@ -10,6 +11,8 @@ import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.parser.TIFFTag;
 
 public class DeviceMap {
+    private static final String TAG = "DeviceMap";
+
     public interface Device {
         boolean isModel(String model);
 
@@ -37,6 +40,7 @@ public class DeviceMap {
     public static Device get(String model) {
         for (Device device : sDevices) {
             if (device.isModel(model)) {
+                Log.d(TAG, "Device " + model + " found: " + device.getClass().getSimpleName());
                 return device;
             }
         }
