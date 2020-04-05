@@ -63,7 +63,7 @@ public class StagePipeline implements AutoCloseable {
 
         // XYZ -> sRGB
         addStage(new NoiseReduce(process));
-        addStage(new BlurLCE(process));
+        addStage(new BlurLCE(sensor, process));
         addStage(new ToneMap(sensor, process, colorspace.XYZtoProPhoto,
                 colorspace.proPhotoToSRGB));
     }

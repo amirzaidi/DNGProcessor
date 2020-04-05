@@ -4,14 +4,17 @@ import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.params.ProcessParams;
+import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 
 public class BlurLCE extends Stage {
+    private final SensorParams mSensorParams;
     private final ProcessParams mProcessParams;
     private Texture mWeakBlur, mMediumBlur, mStrongBlur;
 
-    public BlurLCE(ProcessParams process) {
+    public BlurLCE(SensorParams sensor, ProcessParams process) {
+        mSensorParams = sensor;
         mProcessParams = process;
     }
 
@@ -40,11 +43,16 @@ public class BlurLCE extends Stage {
         int h = intermediate.getHeight();
 
         try (Texture tmp = new Texture(w, h, 1, Texture.Format.Float16, null)) {
+            int offsetX = mSensorParams.outputOffsetX;
+            int offsetY = mSensorParams.outputOffsetY;
+            converter.seti("minxy", offsetX, offsetY);
+            converter.seti("maxxy", w - offsetX - 1, h - offsetY - 1);
+
             {
                 // First render to the tmp buffer.
                 converter.setTexture("buf", intermediate);
                 converter.setf("sigma", 0.5f);
-                converter.seti("radius", 2);
+                converter.seti("radius", 2, 1);
                 converter.seti("dir", 0, 1); // Vertical
                 converter.setf("ch", 0, 1); // xy[Y]
                 converter.drawBlocks(tmp);
@@ -62,10 +70,8 @@ public class BlurLCE extends Stage {
                 // First render to the tmp buffer.
                 converter.setTexture("buf", intermediate);
                 converter.seti("buf", 0);
-                //converter.setf("sigma", 1.5f);
-                //converter.seti("radius", 6);
                 converter.setf("sigma", 2f);
-                converter.seti("radius", 6);
+                converter.seti("radius", 6, 1);
                 converter.seti("dir", 0, 1); // Vertical
                 converter.setf("ch", 0, 1); // xy[Y]
                 converter.drawBlocks(tmp);
@@ -82,8 +88,8 @@ public class BlurLCE extends Stage {
             {
                 // First render to the tmp buffer.
                 converter.setTexture("buf", intermediate);
-                converter.setf("sigma", 4f);
-                converter.seti("radius", 12);
+                converter.setf("sigma", 32f);
+                converter.seti("radius", 96, 4);
                 converter.seti("dir", 0, 1); // Vertical
                 converter.setf("ch", 0, 1); // xy[Y]
                 converter.drawBlocks(tmp);
