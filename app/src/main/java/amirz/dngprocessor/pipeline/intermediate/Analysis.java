@@ -31,8 +31,8 @@ public class Analysis extends Stage {
         mOffsetY = offsetY;
     }
 
-    public float getSigma() {
-        return mSigma[0];
+    public float[] getSigma() {
+        return mSigma;
     }
 
     public float[] getHist() {
@@ -52,9 +52,6 @@ public class Analysis extends Stage {
 
         converter.setTexture("intermediate", intermediate);
         converter.seti("outOffset", mOffsetX, mOffsetY);
-
-        Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
-        converter.setTexture("noiseTex", noiseTex);
 
         int w = mOutWidth;
         int h = mOutHeight;
