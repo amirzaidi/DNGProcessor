@@ -38,35 +38,23 @@ public class BilateralFilter extends Stage {
             converter.setTexture("buf", intermediate);
             converter.drawBlocks(bilateralTmp);
 
-            // 5-step bilateral filter setup.
+            // 3-step bilateral filter setup.
             converter.useProgram(R.raw.stage2_3_bilateral);
             converter.seti("bufSize", w, h);
 
-            // 1) Very fine blur.
-            converter.setTexture("buf", bilateralTmp);
-            converter.setf("sigma", 0.05f, 0.1f);
-            converter.seti("radius", 1, 1);
-            converter.drawBlocks(mBilateral);
-
-            // 2) Fine blur.
-            converter.setTexture("buf", mBilateral);
-            converter.setf("sigma", 0.04f, 0.3f);
-            converter.seti("radius", 3, 1);
-            converter.drawBlocks(bilateralTmp);
-
-            // 3) Small area, strong blur.
+            // 1) Small area, strong blur.
             converter.setTexture("buf", bilateralTmp);
             converter.setf("sigma", 0.03f, 0.5f);
             converter.seti("radius", 5, 1);
             converter.drawBlocks(mBilateral);
 
-            // 4) Medium area, medium blur.
+            // 2) Medium area, medium blur.
             converter.setTexture("buf", mBilateral);
             converter.setf("sigma", 0.02f, 3f);
             converter.seti("radius", 10, 2);
             converter.drawBlocks(bilateralTmp);
 
-            // 5) Large area, weak blur.
+            // 3) Large area, weak blur.
             converter.setTexture("buf", bilateralTmp);
             converter.setf("sigma", 0.01f, 9f);
             converter.seti("radius", 15, 3);
