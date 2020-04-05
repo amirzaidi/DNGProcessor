@@ -232,7 +232,8 @@ vec3 saturate(vec3 rgb) {
         // Assume saturation map is either constant or has 8+1 values, where the last wraps around
         float f = texture(saturation, vec2(hsv.x * (16.f / 18.f) + (1.f / 18.f), 0.5f)).x;
         hsv.y = sigmoid(hsv.y * f, satLimit);
-        hsv.z = mix(hsv.z, 0.5f, adaptiveSaturation.x * (hsv.z * (1.f - hsv.z)) * pow(hsv.y, adaptiveSaturation.y));
+        float adaptStrength = adaptiveSaturation.x * (hsv.z * (1.f - hsv.z)) * pow(hsv.y, adaptiveSaturation.y);
+        hsv.z = mix(hsv.z, 0.5f, min(adaptStrength, 0.1f));
         rgb = hsv2rgb(hsv);
     }
     return rgb;
