@@ -21,7 +21,8 @@ public class Analysis extends Stage {
     private static final String TAG = "SampleHistogram";
 
     private final int mOutWidth, mOutHeight, mOffsetX, mOffsetY;
-    private float[] mSigma, mHist;
+    private float mSigma;
+    private float[] mHist;
     private Texture mAnalyzeTex;
 
     public Analysis(int outWidth, int outHeight, int offsetX, int offsetY) {
@@ -32,7 +33,7 @@ public class Analysis extends Stage {
     }
 
     public float getSigma() {
-        return mSigma[0];
+        return mSigma;
     }
 
     public float[] getHist() {
@@ -66,7 +67,7 @@ public class Analysis extends Stage {
 
         converter.seti("samplingFactor", samplingFactor);
 
-        mAnalyzeTex = new Texture(w, h, 4, Texture.Format.Float16, null);
+        mAnalyzeTex = new Texture(w, h, 2, Texture.Format.Float16, null);
         converter.drawBlocks(mAnalyzeTex);
 
         int whPixels = w * h;
@@ -79,10 +80,10 @@ public class Analysis extends Stage {
 
         // Calculate a histogram on the result
         Histogram histParser = new Histogram(f, whPixels);
-        mSigma = histParser.sigma;
+        mSigma = histParser.sigma[0];
         mHist = histParser.hist;
 
-        Log.d(TAG, "Sigma " + Arrays.toString(mSigma));
+        Log.d(TAG, "Sigma " + mSigma);
         Log.d(TAG, "LogAvg " + histParser.logAvgLuminance);
     }
 
