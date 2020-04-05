@@ -8,8 +8,6 @@ import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 
-import static android.opengl.GLES20.*;
-
 public class BilateralFilter extends Stage {
     private final ProcessParams mProcess;
     private Texture mBilateral;

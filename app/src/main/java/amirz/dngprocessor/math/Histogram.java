@@ -38,14 +38,16 @@ public class Histogram {
             cumulativeHist[i] = cumulativeHist[i - 1] + histv[i - 1];
         }
 
+        float maxZ = 0.95f;
         float max = cumulativeHist[histBins];
         for (int i = 0; i < cumulativeHist.length; i++) {
             cumulativeHist[i] /= max;
+            cumulativeHist[i] *= maxZ;
         }
 
         // Limit contrast and banding.
         float[] tmp = new float[cumulativeHist.length];
-        for (int i = 0; i < 400; i++) {
+        for (int i = 0; i < 300; i++) {
             tmp[0] = cumulativeHist[0];
             for (int j = 1; j < cumulativeHist.length - 1; j++) {
                 tmp[j] = (cumulativeHist[j - 1] + cumulativeHist[j + 1]) * 0.5f;

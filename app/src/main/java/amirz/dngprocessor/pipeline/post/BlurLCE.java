@@ -7,8 +7,6 @@ import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 
-import static android.opengl.GLES20.GL_TEXTURE0;
-
 public class BlurLCE extends Stage {
     private final ProcessParams mProcessParams;
     private Texture mWeakBlur, mMediumBlur, mStrongBlur;
@@ -42,54 +40,62 @@ public class BlurLCE extends Stage {
         int h = intermediate.getHeight();
 
         try (Texture tmp = new Texture(w, h, 1, Texture.Format.Float16, null)) {
-            // First render to the tmp buffer.
-            converter.setTexture("buf", intermediate);
-            converter.setf("sigma", 0.5f);
-            converter.seti("radius", 3);
-            converter.seti("dir", 0, 1); // Vertical
-            converter.setf("ch", 0, 1); // xy[Y]
-            converter.drawBlocks(tmp);
+            {
+                // First render to the tmp buffer.
+                converter.setTexture("buf", intermediate);
+                converter.setf("sigma", 0.5f);
+                converter.seti("radius", 2);
+                converter.seti("dir", 0, 1); // Vertical
+                converter.setf("ch", 0, 1); // xy[Y]
+                converter.drawBlocks(tmp);
 
-            // Now render from tmp to the real buffer.
-            converter.setTexture("buf", tmp);
-            converter.seti("dir", 1, 0); // Horizontal
-            converter.setf("ch", 1, 0); // [Y]00
+                // Now render from tmp to the real buffer.
+                converter.setTexture("buf", tmp);
+                converter.seti("dir", 1, 0); // Horizontal
+                converter.setf("ch", 1, 0); // [Y]00
 
-            mWeakBlur = new Texture(w, h, 1, Texture.Format.Float16, null);
-            converter.drawBlocks(mWeakBlur);
+                mWeakBlur = new Texture(w, h, 1, Texture.Format.Float16, null);
+                converter.drawBlocks(mWeakBlur);
+            }
 
-            // First render to the tmp buffer.
-            converter.setTexture("buf", intermediate);
-            converter.seti("buf", 0);
-            converter.setf("sigma", 1.5f);
-            converter.seti("radius", 6);
-            converter.seti("dir", 0, 1); // Vertical
-            converter.setf("ch", 0, 1); // xy[Y]
-            converter.drawBlocks(tmp);
+            {
+                // First render to the tmp buffer.
+                converter.setTexture("buf", intermediate);
+                converter.seti("buf", 0);
+                //converter.setf("sigma", 1.5f);
+                //converter.seti("radius", 6);
+                converter.setf("sigma", 2f);
+                converter.seti("radius", 6);
+                converter.seti("dir", 0, 1); // Vertical
+                converter.setf("ch", 0, 1); // xy[Y]
+                converter.drawBlocks(tmp);
 
-            // Now render from tmp to the real buffer.
-            converter.setTexture("buf", tmp);
-            converter.seti("dir", 1, 0); // Horizontal
-            converter.setf("ch", 1, 0); // [Y]00
+                // Now render from tmp to the real buffer.
+                converter.setTexture("buf", tmp);
+                converter.seti("dir", 1, 0); // Horizontal
+                converter.setf("ch", 1, 0); // [Y]00
 
-            mMediumBlur = new Texture(w, h, 1, Texture.Format.Float16, null);
-            converter.drawBlocks(mMediumBlur);
+                mMediumBlur = new Texture(w, h, 1, Texture.Format.Float16, null);
+                converter.drawBlocks(mMediumBlur);
+            }
 
-            // First render to the tmp buffer.
-            converter.setTexture("buf", intermediate);
-            converter.setf("sigma", 2f);
-            converter.seti("radius", 8);
-            converter.seti("dir", 0, 1); // Vertical
-            converter.setf("ch", 0, 1); // xy[Y]
-            converter.drawBlocks(tmp);
+            {
+                // First render to the tmp buffer.
+                converter.setTexture("buf", intermediate);
+                converter.setf("sigma", 4f);
+                converter.seti("radius", 12);
+                converter.seti("dir", 0, 1); // Vertical
+                converter.setf("ch", 0, 1); // xy[Y]
+                converter.drawBlocks(tmp);
 
-            // Now render from tmp to the real buffer.
-            converter.setTexture("buf", tmp);
-            converter.seti("dir", 1, 0); // Horizontal
-            converter.setf("ch", 1, 0); // [Y]00
+                // Now render from tmp to the real buffer.
+                converter.setTexture("buf", tmp);
+                converter.seti("dir", 1, 0); // Horizontal
+                converter.setf("ch", 1, 0); // [Y]00
 
-            mStrongBlur = new Texture(w, h, 1, Texture.Format.Float16, null);
-            converter.drawBlocks(mStrongBlur);
+                mStrongBlur = new Texture(w, h, 1, Texture.Format.Float16, null);
+                converter.drawBlocks(mStrongBlur);
+            }
         }
     }
 

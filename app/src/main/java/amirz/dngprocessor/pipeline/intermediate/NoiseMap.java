@@ -8,8 +8,6 @@ import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 
-import static android.opengl.GLES20.GL_TEXTURE0;
-
 public class NoiseMap extends Stage {
     private final ProcessParams mProcessParams;
     private Texture mNoiseTex;

@@ -6,8 +6,6 @@ import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 
-import static android.opengl.GLES20.GL_TEXTURE0;
-
 public class GreenDemosaic extends Stage {
     private Texture mSensorG;
 

@@ -12,8 +12,6 @@ import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
 import amirz.dngprocessor.pipeline.intermediate.Analysis;
 import amirz.dngprocessor.pipeline.intermediate.NoiseMap;
 
-import static android.opengl.GLES20.*;
-
 public class NoiseReduce extends Stage {
     private static final String TAG = "NoiseReduce";
 
