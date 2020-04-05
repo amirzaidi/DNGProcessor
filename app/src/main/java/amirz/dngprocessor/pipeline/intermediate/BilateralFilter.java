@@ -37,41 +37,39 @@ public class BilateralFilter extends Stage {
         mBilateral = new Texture(w, h, 3, Texture.Format.Float16, null);
         try (Texture bilateralTmp = new Texture(w, h, 3, Texture.Format.Float16, null)) {
             // Pre-bilateral median filter.
-            intermediate.bind(GL_TEXTURE0);
-            converter.seti("buf", 0);
+            converter.setTexture("buf", intermediate);
             converter.drawBlocks(bilateralTmp);
 
             // 5-step bilateral filter setup.
             converter.useProgram(R.raw.stage2_3_bilateral);
-            converter.seti("buf", 0);
             converter.seti("bufSize", w, h);
 
             // 1) Very fine blur.
-            bilateralTmp.bind(GL_TEXTURE0);
+            converter.setTexture("buf", bilateralTmp);
             converter.setf("sigma", 0.05f, 0.1f);
             converter.seti("radius", 1, 1);
             converter.drawBlocks(mBilateral);
 
             // 2) Fine blur.
-            mBilateral.bind(GL_TEXTURE0);
+            converter.setTexture("buf", mBilateral);
             converter.setf("sigma", 0.04f, 0.3f);
             converter.seti("radius", 3, 1);
             converter.drawBlocks(bilateralTmp);
 
             // 3) Small area, strong blur.
-            bilateralTmp.bind(GL_TEXTURE0);
+            converter.setTexture("buf", bilateralTmp);
             converter.setf("sigma", 0.03f, 0.5f);
             converter.seti("radius", 5, 1);
             converter.drawBlocks(mBilateral);
 
             // 4) Medium area, medium blur.
-            mBilateral.bind(GL_TEXTURE0);
+            converter.setTexture("buf", mBilateral);
             converter.setf("sigma", 0.02f, 3f);
             converter.seti("radius", 10, 2);
             converter.drawBlocks(bilateralTmp);
 
             // 5) Large area, weak blur.
-            bilateralTmp.bind(GL_TEXTURE0);
+            converter.setTexture("buf", bilateralTmp);
             converter.setf("sigma", 0.01f, 9f);
             converter.seti("radius", 15, 3);
             converter.drawBlocks(mBilateral);

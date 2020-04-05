@@ -43,8 +43,7 @@ public class BlurLCE extends Stage {
 
         try (Texture tmp = new Texture(w, h, 1, Texture.Format.Float16, null)) {
             // First render to the tmp buffer.
-            intermediate.bind(GL_TEXTURE0);
-            converter.seti("buf", 0);
+            converter.setTexture("buf", intermediate);
             converter.setf("sigma", 0.5f);
             converter.seti("radius", 3);
             converter.seti("dir", 0, 1); // Vertical
@@ -52,8 +51,7 @@ public class BlurLCE extends Stage {
             converter.drawBlocks(tmp);
 
             // Now render from tmp to the real buffer.
-            tmp.bind(GL_TEXTURE0);
-
+            converter.setTexture("buf", tmp);
             converter.seti("dir", 1, 0); // Horizontal
             converter.setf("ch", 1, 0); // [Y]00
 
@@ -61,7 +59,7 @@ public class BlurLCE extends Stage {
             converter.drawBlocks(mWeakBlur);
 
             // First render to the tmp buffer.
-            intermediate.bind(GL_TEXTURE0);
+            converter.setTexture("buf", intermediate);
             converter.seti("buf", 0);
             converter.setf("sigma", 1.5f);
             converter.seti("radius", 6);
@@ -70,8 +68,7 @@ public class BlurLCE extends Stage {
             converter.drawBlocks(tmp);
 
             // Now render from tmp to the real buffer.
-            tmp.bind(GL_TEXTURE0);
-
+            converter.setTexture("buf", tmp);
             converter.seti("dir", 1, 0); // Horizontal
             converter.setf("ch", 1, 0); // [Y]00
 
@@ -79,7 +76,7 @@ public class BlurLCE extends Stage {
             converter.drawBlocks(mMediumBlur);
 
             // First render to the tmp buffer.
-            intermediate.bind(GL_TEXTURE0);
+            converter.setTexture("buf", intermediate);
             converter.setf("sigma", 2f);
             converter.seti("radius", 8);
             converter.seti("dir", 0, 1); // Vertical
@@ -87,7 +84,7 @@ public class BlurLCE extends Stage {
             converter.drawBlocks(tmp);
 
             // Now render from tmp to the real buffer.
-            tmp.bind(GL_TEXTURE0);
+            converter.setTexture("buf", tmp);
             converter.seti("dir", 1, 0); // Horizontal
             converter.setf("ch", 1, 0); // [Y]00
 

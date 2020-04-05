@@ -49,9 +49,8 @@ public class Analysis extends Stage {
 
         Texture intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
         converter.useProgram(R.raw.stage2_2_analysis_fs);
-        intermediate.bind(GL_TEXTURE0);
-        converter.seti("intermediate", 0);
 
+        converter.setTexture("intermediate", intermediate);
         converter.seti("outOffset", mOffsetX, mOffsetY);
 
         int w = mOutWidth;
@@ -62,15 +61,10 @@ public class Analysis extends Stage {
         w /= samplingFactor;
         h /= samplingFactor;
 
-        mAnalyzeTex = new Texture(w, h, 4, Texture.Format.Float16, null);
-
-        // Configure frame buffer
-        mAnalyzeTex.setFrameBuffer();
-
-        glViewport(0, 0, w, h);
-        converter.seti("intermediate", 0);
         converter.seti("samplingFactor", samplingFactor);
-        converter.draw();
+
+        mAnalyzeTex = new Texture(w, h, 4, Texture.Format.Float16, null);
+        converter.drawBlocks(mAnalyzeTex);
 
         int whPixels = w * h;
         float[] f = new float[whPixels * 4];

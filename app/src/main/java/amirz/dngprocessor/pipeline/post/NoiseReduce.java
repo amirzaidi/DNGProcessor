@@ -46,11 +46,10 @@ public class NoiseReduce extends Stage {
 
         GLPrograms converter = getConverter();
 
-        noisy.bind(GL_TEXTURE0);
         int w = noisy.getWidth();
         int h = noisy.getHeight();
 
-        converter.seti("intermediateBuffer", 0);
+        converter.setTexture("intermediateBuffer", noisy);
         converter.seti("intermediateWidth", w);
         converter.seti("intermediateHeight", h);
 
@@ -59,16 +58,14 @@ public class NoiseReduce extends Stage {
         converter.setf("sharpenFactor", mNRParams.sharpenFactor);
 
         Texture noiseMap = previousStages.getStage(NoiseMap.class).getNoiseTex();
-        noiseMap.bind(GL_TEXTURE2);
-        converter.seti("noiseTex", 2);
+        converter.setTexture("noiseTex", noiseMap);
 
         try (Texture tmp = new Texture(w, h, 3, Texture.Format.Float16, null)) {
             converter.drawBlocks(tmp);
 
             converter.useProgram(R.raw.stage2_3_bilateral);
 
-            tmp.bind(GL_TEXTURE0);
-            converter.seti("buf", 0);
+            converter.setTexture("buf", tmp);
             converter.seti("bufSize", w, h);
 
             converter.setf("sigma", 0.012f, 0.94f);

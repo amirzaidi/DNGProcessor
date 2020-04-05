@@ -27,16 +27,14 @@ public class NoiseMap extends Stage {
         GLPrograms converter = getConverter();
 
         Texture intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
-        intermediate.bind(GL_TEXTURE0);
-        converter.seti("intermediate", 0);
+        converter.setTexture("intermediate", intermediate);
 
         try (Texture tmp = new Texture(intermediate.getWidth(), intermediate.getHeight(), 1,
                 Texture.Format.Float16, null)) {
             converter.drawBlocks(tmp);
 
             converter.useProgram(R.raw.stage2_1_bilateral_ch);
-            tmp.bind(GL_TEXTURE0);
-            converter.seti("buf", 0);
+            converter.setTexture("buf", tmp);
             converter.seti("bufSize", tmp.getWidth(), tmp.getHeight());
 
             converter.setf("sigma", 0.25f, 2.5f);

@@ -63,16 +63,13 @@ public class PreProcess extends Stage {
         buffer.flip();
 
         try (Texture sensorUITex = new Texture(getInWidth(), getInHeight(), 1, Texture.Format.UInt16, buffer)) {
-            sensorUITex.bind(GL_TEXTURE0);
-
-            converter.seti("rawBuffer", 0);
+            converter.setTexture("rawBuffer", sensorUITex);
             converter.seti("rawWidth", getInWidth());
             converter.seti("rawHeight", getInHeight());
             converter.seti("cfaPattern", mSensor.cfa);
 
             float[] gainMap = mSensor.gainMap;
             int[] gainMapSize = mSensor.gainMapSize;
-            converter.seti("gainMap", 2);
             if (gainMap == null) {
                 gainMap = new float[] { 1f, 1f, 1f, 1f };
                 gainMapSize = new int[] {1, 1};
@@ -80,21 +77,18 @@ public class PreProcess extends Stage {
 
             mGainMapTex = new Texture(gainMapSize[0], gainMapSize[1], 4, Texture.Format.Float16,
                     FloatBuffer.wrap(gainMap), GL_LINEAR, GL_CLAMP_TO_EDGE);
-            mGainMapTex.bind(GL_TEXTURE2);
+            converter.setTexture("gainMap", mGainMapTex);
 
             int[] blackLevel = mSensor.blackLevelPattern;
             converter.setf("blackLevel", blackLevel[0], blackLevel[1], blackLevel[2], blackLevel[3]);
             converter.setf("whiteLevel", mSensor.whiteLevel);
-
             converter.seti("cfaPattern", getCfaPattern());
-
-            converter.seti("hotPixels", 4);
             converter.seti("hotPixelsSize", mSensor.hotPixelsSize);
 
             int[] hotPixelsSize = mSensor.hotPixelsSize;
             try (Texture hotPx = new Texture(hotPixelsSize[0], hotPixelsSize[1], 1, Texture.Format.UInt16,
                     ShortBuffer.wrap(mSensor.hotPixels), GL_NEAREST, GL_REPEAT)) {
-                hotPx.bind(GL_TEXTURE4);
+                converter.setTexture("hotPixels", hotPx);
                 converter.drawBlocks(mSensorTex);
             }
         }

@@ -59,8 +59,7 @@ public class MergeDetail extends Stage {
 
         Texture histTex = new Texture(hist.length, 1, 1, Texture.Format.Float16,
                 FloatBuffer.wrap(hist), GL_LINEAR, GL_CLAMP_TO_EDGE);
-        histTex.bind(GL_TEXTURE6);
-        converter.seti("hist", 6);
+        converter.setTexture("hist", histTex);
         converter.setf("histOffset", 0.5f / hist.length, 1.f - 1.f / hist.length);
 
         // If there are many dark patches, the color noise goes up.
@@ -70,14 +69,11 @@ public class MergeDetail extends Stage {
         Log.d(TAG, "Bilateral histogram equalization " + baseBase);
         converter.setf("histFactor", baseBase * mHistFactor);
 
-        intermediateTex.bind(GL_TEXTURE0);
-        bilateralTex.bind(GL_TEXTURE2);
-        converter.seti("intermediate", 0);
-        converter.seti("bilateral", 2);
+        converter.setTexture("intermediate", intermediateTex);
+        converter.setTexture("bilateral", bilateralTex);
 
         Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
-        noiseTex.bind(GL_TEXTURE4);
-        converter.seti("noiseTex", 4);
+        converter.setTexture("noiseTex", noiseTex);
 
         mIntermediate = new Texture(w, h, 3, Texture.Format.Float16, null);
         converter.drawBlocks(mIntermediate);

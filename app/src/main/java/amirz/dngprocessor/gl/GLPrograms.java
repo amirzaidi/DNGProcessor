@@ -2,7 +2,9 @@ package amirz.dngprocessor.gl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.math.BlockDivider;
@@ -17,6 +19,8 @@ public class GLPrograms implements AutoCloseable {
     private final ShaderLoader mShaderLoader;
     private final SquareModel mSquare = new SquareModel();
     private final List<Integer> mPrograms = new ArrayList<>();
+    private final Map<String, Integer> mTextureBinds = new HashMap<>();
+    private int mNewTextureId;
     private int mProgramActive;
 
     public GLPrograms(ShaderLoader shaderLoader) {
@@ -30,9 +34,12 @@ public class GLPrograms implements AutoCloseable {
         glLinkProgram(program);
         glUseProgram(program);
         mProgramActive = program;
+
+        mTextureBinds.clear();
+        mNewTextureId = 0;
     }
 
-    public int createProgram(int vertex, String fragmentId) {
+    private int createProgram(int vertex, String fragmentId) {
         int fragment;
         try {
             fragment = loadShader(GL_FRAGMENT_SHADER, fragmentId);
@@ -57,7 +64,7 @@ public class GLPrograms implements AutoCloseable {
         drawBlocks(tex.getWidth(), tex.getHeight());
     }
 
-    public void drawBlocks(int w, int h) {
+    private void drawBlocks(int w, int h) {
         BlockDivider divider = new BlockDivider(h, BLOCK_HEIGHT);
         int[] row = new int[2];
         while (divider.nextBlock(row)) {
@@ -90,6 +97,21 @@ public class GLPrograms implements AutoCloseable {
 
     private int vPosition() {
         return glGetAttribLocation(mProgramActive, "vPosition");
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    public void setTexture(String var, Texture tex) {
+        int textureId;
+        if (mTextureBinds.containsKey(var)) {
+            textureId = mTextureBinds.get(var);
+        } else {
+            textureId = mNewTextureId;
+            mTextureBinds.put(var, textureId);
+            mNewTextureId += 2;
+        }
+
+        seti(var, textureId);
+        tex.bind(GL_TEXTURE0 + textureId);
     }
 
     public void seti(String var, int... vals) {

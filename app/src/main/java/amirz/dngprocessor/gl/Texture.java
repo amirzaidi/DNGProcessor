@@ -62,7 +62,7 @@ public class Texture implements AutoCloseable {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texWrap);
     }
 
-    public void bind(int slot) {
+    void bind(int slot) {
         glActiveTexture(slot);
         glBindTexture(GL_TEXTURE_2D, mTexId);
     }
@@ -75,7 +75,7 @@ public class Texture implements AutoCloseable {
     }
     */
 
-    public void setFrameBuffer() {
+    void setFrameBuffer() {
         // Configure frame buffer
         int[] frameBuffer = new int[1];
         glGenFramebuffers(1, frameBuffer, 0);

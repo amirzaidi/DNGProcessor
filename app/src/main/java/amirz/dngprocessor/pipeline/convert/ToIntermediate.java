@@ -9,8 +9,6 @@ import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 
-import static android.opengl.GLES20.*;
-
 public class ToIntermediate extends Stage {
     private final SensorParams mSensor;
     private final float[] mSensorToXYZ_D50;
@@ -32,8 +30,6 @@ public class ToIntermediate extends Stage {
 
         PreProcess preProcess = previousStages.getStage(PreProcess.class);
 
-        converter.seti("rawBuffer", 0);
-        converter.seti("greenBuffer", 2);
         converter.seti("rawWidth", preProcess.getInWidth());
         converter.seti("rawHeight", preProcess.getInHeight());
 
@@ -44,8 +40,8 @@ public class ToIntermediate extends Stage {
         // Load mosaic and green raw texture
         try (Texture sensorGTex = previousStages.getStage(GreenDemosaic.class).getSensorGTex()) {
             try (Texture sensorTex = preProcess.getSensorTex()) {
-                sensorTex.bind(GL_TEXTURE0);
-                sensorGTex.bind(GL_TEXTURE2);
+                converter.setTexture("rawBuffer", sensorTex);
+                converter.setTexture("greenBuffer", sensorGTex);
 
                 Rational[] neutralPoint = mSensor.neutralColorPoint;
                 byte[] cfaVal = mSensor.cfaVal;
@@ -64,9 +60,7 @@ public class ToIntermediate extends Stage {
                 converter.seti("cfaPattern", preProcess.getCfaPattern());
 
                 try (Texture gainMapTex = preProcess.getGainMapTex()) {
-                    converter.seti("gainMap", 4);
-                    gainMapTex.bind(GL_TEXTURE4);
-
+                    converter.setTexture("gainMap", gainMapTex);
                     converter.drawBlocks(mIntermediate);
                 }
             }

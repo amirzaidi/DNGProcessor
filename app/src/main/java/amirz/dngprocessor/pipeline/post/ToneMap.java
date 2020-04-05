@@ -51,20 +51,15 @@ public class ToneMap extends Stage {
 
         // Load intermediate buffers as textures
         Texture intermediate = previousStages.getStage(NoiseReduce.class).getDenoised();
-        intermediate.bind(GL_TEXTURE0);
-
-        converter.seti("intermediateBuffer", 0);
+        converter.setTexture("intermediateBuffer", intermediate);
         converter.seti("intermediateWidth", intermediate.getWidth());
         converter.seti("intermediateHeight", intermediate.getHeight());
 
         if (mProcessParams.lce) {
             BlurLCE blur = previousStages.getStage(BlurLCE.class);
-            blur.getWeakBlur().bind(GL_TEXTURE2);
-            converter.seti("weakBlur", 2);
-            blur.getMediumBlur().bind(GL_TEXTURE4);
-            converter.seti("mediumBlur", 4);
-            blur.getStrongBlur().bind(GL_TEXTURE6);
-            converter.seti("strongBlur", 6);
+            converter.setTexture("weakBlur", blur.getWeakBlur());
+            converter.setTexture("mediumBlur", blur.getMediumBlur());
+            converter.setTexture("strongBlur", blur.getStrongBlur());
         }
 
         float satLimit = mProcessParams.satLimit;
@@ -88,19 +83,16 @@ public class ToneMap extends Stage {
 
         Texture satTex = new Texture(sat.length, 1, 1, Texture.Format.Float16,
                 FloatBuffer.wrap(sat), GL_LINEAR, GL_CLAMP_TO_EDGE);
-        satTex.bind(GL_TEXTURE8);
-        converter.seti("saturation", 8);
+        converter.setTexture("saturation", satTex);
 
         Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
-        noiseTex.bind(GL_TEXTURE10);
-        converter.seti("noiseTex", 10);
+        converter.setTexture("noiseTex", noiseTex);
 
         // Fill with noise
         new Random(8682522807148012L).nextBytes(dither);
         Texture ditherTex = new Texture(ditherSize, ditherSize, 1, Texture.Format.UInt16,
                 ByteBuffer.wrap(dither));
-        ditherTex.bind(GL_TEXTURE12);
-        converter.seti("ditherTex", 12);
+        converter.setTexture("ditherTex", ditherTex);
         converter.seti("ditherSize", ditherSize);
     }
 
