@@ -82,24 +82,23 @@ public class NoiseReduce extends Stage {
      * Noise Reduction Parameters.
      */
     static class NRParams {
-        final float[] sigma;
+        final float sigma;
         final int denoiseFactor;
         final float sharpenFactor;
         final float adaptiveSaturation, adaptiveSaturationPow;
 
-        private NRParams(ProcessParams params, float[] s) {
+        private NRParams(ProcessParams params, float s) {
             sigma = s;
 
-            float hypot = (float) Math.hypot(s[0], s[1]);
-            Log.d(TAG, "Chroma noise hypot " + hypot);
+            Log.d(TAG, "Chroma noise hypot " + s);
 
-            denoiseFactor = (int)((float) params.denoiseFactor * Math.sqrt(s[0] + s[1]));
+            denoiseFactor = (int)((float) params.denoiseFactor * Math.sqrt(2.f * s));
             Log.d(TAG, "Denoise radius " + denoiseFactor);
 
-            sharpenFactor = Math.max(params.sharpenFactor - 6f * hypot, -0.25f);
+            sharpenFactor = Math.max(params.sharpenFactor - 6f * s, -0.25f);
             Log.d(TAG, "Sharpen factor " + sharpenFactor);
 
-            adaptiveSaturation = Math.max(0f, params.adaptiveSaturation[0] - 30f * hypot);
+            adaptiveSaturation = Math.max(0f, params.adaptiveSaturation[0] - 30f * s);
             adaptiveSaturationPow = params.adaptiveSaturation[1];
             Log.d(TAG, "Adaptive saturation " + adaptiveSaturation);
         }
