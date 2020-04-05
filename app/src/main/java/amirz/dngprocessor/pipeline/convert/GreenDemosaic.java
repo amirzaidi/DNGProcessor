@@ -32,11 +32,8 @@ public class GreenDemosaic extends Stage {
         Texture sensorTex = previousStages.getStage(PreProcess.class).getSensorTex();
         sensorTex.bind(GL_TEXTURE0);
 
-        // Configure frame buffer
-        mSensorG.setFrameBuffer();
-
         converter.seti("cfaPattern", preProcess.getCfaPattern());
-        converter.drawBlocks(preProcess.getInWidth(), preProcess.getInHeight());
+        converter.drawBlocks(mSensorG);
     }
 
     @Override

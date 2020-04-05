@@ -39,8 +39,7 @@ public class BilateralFilter extends Stage {
             // Pre-bilateral median filter.
             intermediate.bind(GL_TEXTURE0);
             converter.seti("buf", 0);
-            bilateralTmp.setFrameBuffer();
-            converter.drawBlocks(w, h);
+            converter.drawBlocks(bilateralTmp);
 
             // 5-step bilateral filter setup.
             converter.useProgram(R.raw.stage2_3_bilateral);
@@ -49,38 +48,33 @@ public class BilateralFilter extends Stage {
 
             // 1) Very fine blur.
             bilateralTmp.bind(GL_TEXTURE0);
-            mBilateral.setFrameBuffer();
             converter.setf("sigma", 0.05f, 0.1f);
             converter.seti("radius", 1, 1);
-            converter.drawBlocks(w, h);
+            converter.drawBlocks(mBilateral);
 
             // 2) Fine blur.
             mBilateral.bind(GL_TEXTURE0);
-            bilateralTmp.setFrameBuffer();
             converter.setf("sigma", 0.04f, 0.3f);
             converter.seti("radius", 3, 1);
-            converter.drawBlocks(w, h);
+            converter.drawBlocks(bilateralTmp);
 
             // 3) Small area, strong blur.
             bilateralTmp.bind(GL_TEXTURE0);
-            mBilateral.setFrameBuffer();
             converter.setf("sigma", 0.03f, 0.5f);
             converter.seti("radius", 5, 1);
-            converter.drawBlocks(w, h);
+            converter.drawBlocks(mBilateral);
 
             // 4) Medium area, medium blur.
             mBilateral.bind(GL_TEXTURE0);
-            bilateralTmp.setFrameBuffer();
             converter.setf("sigma", 0.02f, 3f);
             converter.seti("radius", 10, 2);
-            converter.drawBlocks(w, h);
+            converter.drawBlocks(bilateralTmp);
 
             // 5) Large area, weak blur.
             bilateralTmp.bind(GL_TEXTURE0);
-            mBilateral.setFrameBuffer();
             converter.setf("sigma", 0.01f, 9f);
             converter.seti("radius", 15, 3);
-            converter.drawBlocks(w, h);
+            converter.drawBlocks(mBilateral);
         }
     }
 

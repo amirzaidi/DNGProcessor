@@ -63,8 +63,7 @@ public class NoiseReduce extends Stage {
         converter.seti("noiseTex", 2);
 
         try (Texture tmp = new Texture(w, h, 3, Texture.Format.Float16, null)) {
-            tmp.setFrameBuffer();
-            converter.drawBlocks(w, h);
+            converter.drawBlocks(tmp);
 
             converter.useProgram(R.raw.stage2_3_bilateral);
 
@@ -75,8 +74,7 @@ public class NoiseReduce extends Stage {
             converter.setf("sigma", 0.012f, 0.94f);
             converter.seti("radius", 4, 1);
 
-            mDenoised.setFrameBuffer();
-            converter.drawBlocks(w, h);
+            converter.drawBlocks(mDenoised);
         }
     }
 

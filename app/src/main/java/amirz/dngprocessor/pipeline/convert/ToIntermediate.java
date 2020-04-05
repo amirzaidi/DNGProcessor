@@ -47,9 +47,6 @@ public class ToIntermediate extends Stage {
                 sensorTex.bind(GL_TEXTURE0);
                 sensorGTex.bind(GL_TEXTURE2);
 
-                // Configure frame buffer
-                mIntermediate.setFrameBuffer();
-
                 Rational[] neutralPoint = mSensor.neutralColorPoint;
                 byte[] cfaVal = mSensor.cfaVal;
                 converter.setf("neutralLevel",
@@ -70,7 +67,7 @@ public class ToIntermediate extends Stage {
                     converter.seti("gainMap", 4);
                     gainMapTex.bind(GL_TEXTURE4);
 
-                    converter.drawBlocks(preProcess.getInWidth(), preProcess.getInHeight());
+                    converter.drawBlocks(mIntermediate);
                 }
             }
         }

@@ -70,8 +70,6 @@ public class PreProcess extends Stage {
             converter.seti("rawHeight", getInHeight());
             converter.seti("cfaPattern", mSensor.cfa);
 
-            mSensorTex.setFrameBuffer();
-
             float[] gainMap = mSensor.gainMap;
             int[] gainMapSize = mSensor.gainMapSize;
             converter.seti("gainMap", 2);
@@ -97,7 +95,7 @@ public class PreProcess extends Stage {
             try (Texture hotPx = new Texture(hotPixelsSize[0], hotPixelsSize[1], 1, Texture.Format.UInt16,
                     ShortBuffer.wrap(mSensor.hotPixels), GL_NEAREST, GL_REPEAT)) {
                 hotPx.bind(GL_TEXTURE4);
-                converter.drawBlocks(getInWidth(), getInHeight());
+                converter.drawBlocks(mSensorTex);
             }
         }
     }
