@@ -24,13 +24,11 @@ public class OnePlus7 extends Generic {
                 r.getDenominator() * 60
         );
 
-        /*
         Rational b = sensor.neutralColorPoint[2];
         sensor.neutralColorPoint[2] = new Rational(
-                b.getNumerator() * 91,
-                b.getDenominator() * 90
+                b.getNumerator() * 80,
+                b.getDenominator() * 81
         );
-         */
 
         if (sensor.gainMap == null) {
             sensor.gainMap = new float[] {
