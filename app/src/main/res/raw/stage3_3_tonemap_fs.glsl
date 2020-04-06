@@ -109,7 +109,7 @@ vec3 xyYtoXYZ(vec3 xyY) {
         result.x = xyY.x * xyY.z / xyY.y;
         result.z = (1.f - xyY.x - xyY.y) * xyY.z / xyY.y;
     }
-    return clamp(result, 0.f, 1.f);
+    return result;
 }
 
 float tonemapSin(float ch) {
@@ -299,7 +299,7 @@ void main() {
     vec3 XYZ = xyYtoXYZ(intermediate);
 
     // Convert to ProPhoto space
-    vec3 proPhoto = clamp(XYZtoProPhoto * XYZ, 0.f, 1.f);
+    vec3 proPhoto = XYZtoProPhoto * XYZ;
 
     // Convert to sRGB space
     vec3 sRGB = clamp(proPhotoToSRGB * proPhoto, 0.f, 1.f);
