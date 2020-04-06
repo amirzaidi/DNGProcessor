@@ -66,7 +66,7 @@ public class NoiseReduce extends Stage {
             converter.setTexture("buf", tmp);
             converter.seti("bufSize", w, h);
 
-            converter.setf("sigma", 0.011f, 0.93f);
+            converter.setf("sigma", 0.011f, 0.3f + 3f * mNRParams.sigma[0]);
             converter.seti("radius", 4, 1);
 
             converter.drawBlocks(mDenoised);
