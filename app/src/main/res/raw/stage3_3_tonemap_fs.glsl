@@ -224,6 +224,13 @@ vec3 hsv2rgb(vec3 c) {
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.f, 1.f), c.y);
 }
 
+float saturateToneMap(float inSat) {
+    if (inSat < 0.001f) {
+        return inSat;
+    }
+    return max(inSat, 1.03f * pow(inSat, 1.02f));
+}
+
 vec3 saturate(vec3 rgb) {
     float maxv = max(max(rgb.r, rgb.g), rgb.b);
     float minv = min(min(rgb.r, rgb.g), rgb.b);
@@ -231,8 +238,9 @@ vec3 saturate(vec3 rgb) {
         vec3 hsv = rgb2hsv(rgb);
         // Assume saturation map is either constant or has 8+1 values, where the last wraps around
         float f = texture(saturation, vec2(hsv.x * (16.f / 18.f) + (1.f / 18.f), 0.5f)).x;
-        hsv.y = sigmoid(hsv.y * f, satLimit);
-        float adaptStrength = adaptiveSaturation.x * (hsv.z * (1.f - hsv.z)) * pow(hsv.y, adaptiveSaturation.y);
+        hsv.y = sigmoid(saturateToneMap(hsv.y) * f, satLimit);
+        float adaptStrength = adaptiveSaturation.x * (hsv.z * (1.f - hsv.z))
+            * pow(hsv.y, adaptiveSaturation.y);
         hsv.z = mix(hsv.z, 0.5f, min(adaptStrength, 0.1f));
         rgb = hsv2rgb(hsv);
     }
