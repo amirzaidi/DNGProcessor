@@ -47,7 +47,7 @@ public class Histogram {
         for (int i = 0; i < cumulativeHist.length; i++) {
             float og = (float) i / cumulativeHist.length;
             float heq = cumulativeHist[i];
-            float a = Math.min(1f, 20f * og);
+            float a = Math.min(1f, 21f * og);
             if (a == 1f) {
                 break;
             }
