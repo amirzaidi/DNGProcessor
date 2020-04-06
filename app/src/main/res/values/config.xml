@@ -20,7 +20,7 @@
     <string name="pref_save_path_default">DCIM/Processed</string>
 
     <item name="pref_saturation_default" type="integer" format="float">1</item>
-    <item name="pref_saturation_limit_default" type="integer" format="float">0.95</item>
+    <item name="pref_saturation_limit_default" type="integer" format="float">0.975</item>
 
     <bool name="pref_noise_reduce_default">true</bool>
     <bool name="pref_lce_default">true</bool>
