@@ -43,22 +43,23 @@ public class Histogram {
             cumulativeHist[i] /= max;
         }
 
-        /*
         // Blend shadows with linear curve.
-        for (int i = 0; i < hist.length; i++) {
-            float og = (float) i / hist.length;
-            float heq = hist[i];
-            float a = Math.min(1f, 30f * og);
-            hist[i] = heq * a + og * (1f - a);
+        for (int i = 0; i < cumulativeHist.length; i++) {
+            float og = (float) i / cumulativeHist.length;
+            float heq = cumulativeHist[i];
+            float a = Math.min(1f, 20f * og);
+            if (a == 1f) {
+                break;
+            }
+            cumulativeHist[i] = heq * a + og * (1f - a);
         }
 
         // In case we messed up the histogram, flatten it.
-        for (int i = 1; i < hist.length; i++) {
-            if (hist[i] < hist[i - 1]) {
-                hist[i] = hist[i - 1];
+        for (int i = 1; i < cumulativeHist.length; i++) {
+            if (cumulativeHist[i] < cumulativeHist[i - 1]) {
+                cumulativeHist[i] = cumulativeHist[i - 1];
             }
         }
-         */
 
         // Limit contrast and banding.
         float[] tmp = new float[cumulativeHist.length];
