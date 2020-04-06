@@ -1,6 +1,7 @@
 package amirz.dngprocessor.math;
 
 public class Histogram {
+    private static final int HIST_BINS = 256;
     private static final double EPSILON = 0.01;
 
     public final float[] sigma = new float[3];
@@ -8,8 +9,7 @@ public class Histogram {
     public final float logAvgLuminance;
 
     public Histogram(float[] f, int whPixels) {
-        int histBins = 256;
-        int[] histv = new int[histBins];
+        int[] histv = new int[HIST_BINS];
 
         double logTotalLuminance = 0d;
         // Loop over all values
@@ -18,9 +18,9 @@ public class Histogram {
                 sigma[j] += f[i + j];
             }
 
-            int bin = (int) (f[i + 3] * histBins);
+            int bin = (int) (f[i + 3] * HIST_BINS);
             if (bin < 0) bin = 0;
-            if (bin >= histBins) bin = histBins - 1;
+            if (bin >= HIST_BINS) bin = HIST_BINS - 1;
             histv[bin]++;
 
             logTotalLuminance += Math.log(f[i + 3] + EPSILON);
@@ -31,23 +31,40 @@ public class Histogram {
             sigma[j] /= whPixels;
         }
 
-        limitHighlightContrast(histv, f.length / 4);
+        //limitHighlightContrast(histv, f.length / 4);
 
-        float[] cumulativeHist = new float[histBins + 1];
+        float[] cumulativeHist = new float[HIST_BINS + 1];
         for (int i = 1; i < cumulativeHist.length; i++) {
             cumulativeHist[i] = cumulativeHist[i - 1] + histv[i - 1];
         }
 
-        float max = cumulativeHist[histBins];
+        float max = cumulativeHist[HIST_BINS];
         for (int i = 0; i < cumulativeHist.length; i++) {
             cumulativeHist[i] /= max;
         }
 
+        /*
+        // Blend shadows with linear curve.
+        for (int i = 0; i < hist.length; i++) {
+            float og = (float) i / hist.length;
+            float heq = hist[i];
+            float a = Math.min(1f, 30f * og);
+            hist[i] = heq * a + og * (1f - a);
+        }
+
+        // In case we messed up the histogram, flatten it.
+        for (int i = 1; i < hist.length; i++) {
+            if (hist[i] < hist[i - 1]) {
+                hist[i] = hist[i - 1];
+            }
+        }
+         */
+
         // Limit contrast and banding.
         float[] tmp = new float[cumulativeHist.length];
-        for (int i = 0; i < 300; i++) {
-            tmp[0] = cumulativeHist[0];
-            for (int j = 1; j < cumulativeHist.length - 1; j++) {
+        for (int i = cumulativeHist.length - 1; i > 0; i--) {
+            System.arraycopy(cumulativeHist, 0, tmp, 0, i);
+            for (int j = i; j < cumulativeHist.length - 1; j++) {
                 tmp[j] = (cumulativeHist[j - 1] + cumulativeHist[j + 1]) * 0.5f;
             }
             tmp[tmp.length - 1] = cumulativeHist[cumulativeHist.length - 1];
@@ -57,34 +74,7 @@ public class Histogram {
             cumulativeHist = swp;
         }
 
-        improveHist(cumulativeHist);
         hist = cumulativeHist;
-
-        //float[] gauss = { 0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f };
-        //hist = Convolve.conv(cumulativeHist, gauss, true);
-    }
-
-    private static void improveHist(float[] hist) {
-        /*
-        for (int i = 0; i < hist.length; i++) {
-            float og = (float) i / hist.length;
-            float heq = hist[i];
-            float a = Math.min(0.75f, 30f * og);
-            hist[i] = heq * a + og * (1f - a);
-        }
-
-        // In case we messed up the histogram, flatten it.
-        for (int i = 1; i < hist.length; i++) {
-            if (hist[i] < hist[i - 1]) {
-                hist[i] = hist[i - 1];
-            }
-        }*/
-
-        // Crush shadows
-        int maxShadow = hist.length / 50;
-        for (int i = 0; i < maxShadow; i++) {
-            hist[i] *= Math.sqrt((float) i / maxShadow);
-        }
     }
 
     // Shift highlights down
