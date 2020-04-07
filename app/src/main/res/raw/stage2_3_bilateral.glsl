@@ -7,6 +7,8 @@ precision mediump float;
 uniform sampler2D buf;
 uniform ivec2 bufSize;
 
+uniform sampler2D noiseTex;
+
 uniform vec2 sigma;
 uniform ivec2 radius;
 
@@ -28,9 +30,10 @@ float gs(float diffx) {
     return unscaledGaussian(diffx, sigma.y);
 }
 
-float pixDiff(vec3 pix1, vec3 pix2) {
+float pixDiff(vec3 pix1, vec3 pix2, float noise) {
     // pix1 is input/output pixel position.
     float z = 8.f * mix(pix1.z, min(pix1.z, pix2.z), 0.25f);
+    z *= max(0.f, 1.f - 5.f * noise);
     return length((pix2 - pix1) * vec3(z, z, 1.f));
 }
 
@@ -44,6 +47,7 @@ void main() {
 
     vec3 I = vec3(0.f);
     float W = 0.f;
+    float noise = texelFetch(noiseTex, xyCenter, 0).x;
 
     for (int y = minxy.y; y <= maxxy.y; y += radius.y) {
         for (int x = minxy.x; x <= maxxy.x; x += radius.y) {
@@ -53,7 +57,7 @@ void main() {
 
             vec2 dxy = vec2(xyPixel - xyCenter);
 
-            float scale = fr(pixDiff(XYZCenter, XYZPixel)) * gs(length(dxy));
+            float scale = fr(pixDiff(XYZCenter, XYZPixel, noise)) * gs(length(dxy));
             I += XYZPixel * scale;
             W += scale;
         }

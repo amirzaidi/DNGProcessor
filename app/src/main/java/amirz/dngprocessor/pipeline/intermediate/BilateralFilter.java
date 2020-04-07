@@ -32,6 +32,8 @@ public class BilateralFilter extends Stage {
         int w = intermediate.getWidth();
         int h = intermediate.getHeight();
 
+        Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
+
         mBilateral = new Texture(w, h, 3, Texture.Format.Float16, null);
         try (Texture bilateralTmp = new Texture(w, h, 3, Texture.Format.Float16, null)) {
             // Pre-bilateral median filter.
@@ -41,6 +43,7 @@ public class BilateralFilter extends Stage {
             // 3-step bilateral filter setup.
             converter.useProgram(R.raw.stage2_3_bilateral);
             converter.seti("bufSize", w, h);
+            converter.setTexture("noiseMap", noiseTex);
 
             // 1) Small area, strong blur.
             converter.setTexture("buf", bilateralTmp);

@@ -55,8 +55,8 @@ public class NoiseReduce extends Stage {
         converter.setf("sigma", mNRParams.sigma);
         converter.setf("sharpenFactor", mNRParams.sharpenFactor);
 
-        Texture noiseMap = previousStages.getStage(NoiseMap.class).getNoiseTex();
-        converter.setTexture("noiseTex", noiseMap);
+        Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
+        converter.setTexture("noiseTex", noiseTex);
 
         try (Texture tmp = new Texture(w, h, 3, Texture.Format.Float16, null)) {
             converter.drawBlocks(tmp);
@@ -65,10 +65,11 @@ public class NoiseReduce extends Stage {
 
             converter.setTexture("buf", tmp);
             converter.seti("bufSize", w, h);
+            converter.setTexture("noiseTex", noiseTex);
 
-            converter.setf("sigma", 0.011f, 0.3f + 3f * mNRParams.sigma[0]);
+            float s = mNRParams.sigma[0];
+            converter.setf("sigma", 0.01f + 0.1f * s, 0.25f + 9f * s);
             converter.seti("radius", 4, 1);
-
             converter.drawBlocks(mDenoised);
         }
     }

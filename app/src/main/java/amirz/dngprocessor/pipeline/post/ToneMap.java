@@ -72,7 +72,7 @@ public class ToneMap extends Stage {
         converter.seti("outOffset", mSensorParams.outputOffsetX, mSensorParams.outputOffsetY);
 
         NoiseReduce.NRParams nrParams = previousStages.getStage(NoiseReduce.class).getNRParams();
-        converter.seti("lce", mProcessParams.lce && (nrParams.sharpenFactor > -0.25f) ? 1 : 0);
+        converter.seti("lce", mProcessParams.lce ? 1 : 0);
         converter.setf("sharpenFactor", nrParams.sharpenFactor);
         converter.setf("adaptiveSaturation", nrParams.adaptiveSaturation, nrParams.adaptiveSaturationPow);
 
