@@ -159,7 +159,7 @@ vec3 tonemap(vec3 rgb) {
         pow(minmax, vec2(2.f)) * toneMapCoeffs.y +
         minmax * toneMapCoeffs.z +
         toneMapCoeffs.w;
-    minmax = mix(minmax, minmaxsin, 0.35f);
+    minmax = mix(minmax, minmaxsin, 0.4f);
 
     // Rescale middle value
     float newMid;
