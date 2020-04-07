@@ -65,7 +65,7 @@ public class MergeDetail extends Stage {
         // If there are many dark patches, the color noise goes up.
         // To ensure that we do not boost that too much, reduce with color noise.
         float[] sigma = sampleHistogram.getSigma();
-        float baseBase = Math.max(1f - 6f * (float) Math.hypot(sigma[0], sigma[1]), 0f);
+        float baseBase = Math.max(1f - 6f * (float) Math.hypot(sigma[0], sigma[1]), 0.2f);
         Log.d(TAG, "Bilateral histogram equalization " + baseBase);
         converter.setf("histFactor", baseBase * mHistFactor);
 
