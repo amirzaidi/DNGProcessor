@@ -2,6 +2,7 @@
 #define PI 3.1415926535897932384626433832795f
 
 precision mediump float;
+precision mediump usampler2D;
 
 uniform sampler2D intermediateBuffer;
 uniform int intermediateWidth;
