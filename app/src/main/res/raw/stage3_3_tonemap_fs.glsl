@@ -89,7 +89,7 @@ vec3 processPatch(ivec2 xyPos) {
 
         float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
         if (zStrongBlur > 0.0001f) {
-            z *= sqrt(sqrt(zMediumBlur / zStrongBlur));
+            z *= sqrt(sqrt(sqrt(zMediumBlur / zStrongBlur)));
         }
     }
 
