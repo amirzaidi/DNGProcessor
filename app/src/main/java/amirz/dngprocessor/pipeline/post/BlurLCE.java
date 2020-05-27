@@ -51,8 +51,8 @@ public class BlurLCE extends Stage {
             {
                 // First render to the tmp buffer.
                 converter.setTexture("buf", intermediate);
-                converter.setf("sigma", 0.5f);
-                converter.seti("radius", 2, 1);
+                converter.setf("sigma", 32f);
+                converter.seti("radius", 96, 4);
                 converter.seti("dir", 0, 1); // Vertical
                 converter.setf("ch", 0, 1); // xy[Y]
                 converter.drawBlocks(tmp);
@@ -62,8 +62,8 @@ public class BlurLCE extends Stage {
                 converter.seti("dir", 1, 0); // Horizontal
                 converter.setf("ch", 1, 0); // [Y]00
 
-                mWeakBlur = new Texture(w, h, 1, Texture.Format.Float16, null);
-                converter.drawBlocks(mWeakBlur);
+                mStrongBlur = new Texture(w, h, 1, Texture.Format.Float16, null);
+                converter.drawBlocks(mStrongBlur);
             }
 
             {
@@ -86,21 +86,31 @@ public class BlurLCE extends Stage {
             }
 
             {
-                // First render to the tmp buffer.
                 converter.setTexture("buf", intermediate);
-                converter.setf("sigma", 32f);
-                converter.seti("radius", 96, 4);
+                converter.setf("sigma", 0.5f);
+                converter.seti("radius", 2, 1);
                 converter.seti("dir", 0, 1); // Vertical
                 converter.setf("ch", 0, 1); // xy[Y]
-                converter.drawBlocks(tmp);
 
-                // Now render from tmp to the real buffer.
-                converter.setTexture("buf", tmp);
+                mWeakBlur = new Texture(w, h, 1, Texture.Format.Float16, null);
+                converter.drawBlocks(mWeakBlur);
+
+                converter.setTexture("buf", mWeakBlur);
                 converter.seti("dir", 1, 0); // Horizontal
                 converter.setf("ch", 1, 0); // [Y]00
 
-                mStrongBlur = new Texture(w, h, 1, Texture.Format.Float16, null);
-                converter.drawBlocks(mStrongBlur);
+                converter.drawBlocks(tmp);
+
+                // Use a bilateral blur on the weak blur to reduce noise.
+                converter.useProgram(R.raw.stage2_1_bilateral_ch);
+
+                converter.setTexture("buf", tmp);
+                converter.seti("bufSize", mWeakBlur.getWidth(), mWeakBlur.getHeight());
+
+                converter.setf("sigma", 0.03f, 0.4f);
+                converter.seti("radius", 4, 1);
+
+                converter.drawBlocks(mWeakBlur);
             }
         }
     }

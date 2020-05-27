@@ -76,7 +76,7 @@ vec3 processPatch(ivec2 xyPos) {
         float ly = impz[0] - impz[6] + (impz[1] - impz[7]) * 2.f + impz[2] - impz[8];
         float l = sqrt(lx * lx + ly * ly);
 
-        z += sharpenFactor * (0.09f + min(l, 0.33f)) * dz;
+        z += sharpenFactor * (0.01f + min(0.5f * l, 0.3f)) * dz;
     }
 
     if (lce) {
