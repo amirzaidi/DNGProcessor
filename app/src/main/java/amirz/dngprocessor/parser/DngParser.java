@@ -35,10 +35,10 @@ public class DngParser {
     private final Uri mUri;
     private final String mFile;
 
-    public DngParser(Context context, Uri uri) {
+    public DngParser(Context context, Uri uri, String file) {
         mContext = context;
         mUri = uri;
-        mFile = Path.getFileFromUri(mContext, mUri);
+        mFile = file;
     }
 
     private TIFFTag getTag(SparseArray<TIFFTag> tags, int id) {

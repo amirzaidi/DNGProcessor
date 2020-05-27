@@ -57,7 +57,7 @@ public class DngParseService extends IntentService {
                     .apply();
 
             long startTime = System.currentTimeMillis();
-            new DngParser(this, uri).run();
+            new DngParser(this, uri, file).run();
             long endTime = System.currentTimeMillis();
             Log.d(TAG, "Took " + (endTime - startTime) * 0.001f + "s to process");
 

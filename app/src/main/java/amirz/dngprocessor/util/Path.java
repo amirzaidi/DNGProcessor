@@ -83,21 +83,24 @@ public class Path {
                 id = id.split(":")[1];
             }
 
-            /* document/image:NUM */
-            result = query(cr,
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                    column,
-                    MediaStore.Images.Media._ID + "=?",
-                    new String[] { id });
-
-            /* document/NUM */
-            if (result == null) {
-                try {
-                    long l = Long.valueOf(id);
-                    result = query(cr, ContentUris.withAppendedId(
-                            Uri.parse("content://downloads/public_downloads"), l),
-                            column);
-                } catch (Exception ignored) {
+            String p = uri.getPath();
+            if (p != null) {
+                if (p.startsWith("/document/image")) {
+                    /* document/image:NUM */
+                    result = query(cr,
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                            column,
+                            MediaStore.Images.Media._ID + "=?",
+                            new String[] { id });
+                } else if (p.startsWith("/document")) {
+                    /* document/NUM */
+                    try {
+                        long l = Long.parseLong(id);
+                        result = query(cr, ContentUris.withAppendedId(
+                                Uri.parse("content://downloads/public_downloads"), l),
+                                column);
+                    } catch (Exception ignored) {
+                    }
                 }
             }
         }
