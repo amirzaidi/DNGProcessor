@@ -13,9 +13,7 @@ uniform ivec2 radius;
 // Out
 out float result;
 
-float unscaledGaussian(float d, float s) {
-    return exp(-0.5f * pow(d / s, 2.f));
-}
+#include gaussian
 
 // Difference
 float fr(float diffi) {

@@ -19,13 +19,8 @@ uniform mat3 sensorToXYZ; // Color transform from sensor to XYZ.
 // Out
 out vec3 intermediate;
 
-float[9] load3x3(int x, int y, sampler2D buf) {
-    float outputArray[9];
-    for (int i = 0; i < 9; i++) {
-        outputArray[i] = texelFetch(buf, ivec2(x + (i % 3) - 1, y + (i / 3) - 1), 0).x;
-    }
-    return outputArray;
-}
+#include sigmoid
+#include load3x3
 
 int ind(int x, int y) {
     int dim = 3;
@@ -33,7 +28,10 @@ int ind(int x, int y) {
 }
 
 // Apply bilinear-interpolation to demosaic
-vec3 demosaic(int x, int y, float[9] inputArray, float[9] greenArray) {
+vec3 demosaic(ivec2 xy, float[9] inputArray, float[9] greenArray) {
+    int x = xy.x;
+    int y = xy.y;
+
     int index = (x & 1) | ((y & 1) << 1);
     index |= (cfaPattern << 2);
     vec3 pRGB;
@@ -132,17 +130,6 @@ vec3 XYZtoxyY(vec3 XYZ) {
     return result;
 }
 
-float sigmoid(float val, float transfer) {
-    if (val > transfer) {
-        // This variable maps the cut off point in the linear curve to the sigmoid
-        float a = log((1.f + transfer) / (1.f - transfer)) / transfer;
-
-        // Transform val using the sigmoid curve
-        val = 2.f / (1.f + exp(-a * val)) - 1.f;
-    }
-    return val;
-}
-
 vec3 convertSensorToIntermediate(ivec2 xy, vec3 sensor) {
     sensor = max(sensor, 0.f);
 
@@ -171,11 +158,10 @@ vec3 convertSensorToIntermediate(ivec2 xy, vec3 sensor) {
 
 void main() {
     ivec2 xy = ivec2(gl_FragCoord.xy);
-    int x = clamp(xy.x, 1, rawWidth - 2);
-    int y = clamp(xy.y, 1, rawHeight - 2);
+    ivec2 xyClamped = clamp(xy, ivec2(1), ivec2(rawWidth, rawHeight) - 2);
 
-    float[9] rawPatch = load3x3(x, y, rawBuffer);
-    float[9] greenPatch = load3x3(x, y, greenBuffer);
-    vec3 sensor = demosaic(x, y, rawPatch, greenPatch);
+    float[9] rawPatch = load3x3(xyClamped, rawBuffer);
+    float[9] greenPatch = load3x3(xyClamped, greenBuffer);
+    vec3 sensor = demosaic(xyClamped, rawPatch, greenPatch);
     intermediate = convertSensorToIntermediate(xy, sensor);
 }

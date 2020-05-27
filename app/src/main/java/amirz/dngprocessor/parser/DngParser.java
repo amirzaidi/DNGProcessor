@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 
+import amirz.dngprocessor.R;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.util.NotifHandler;
 import amirz.dngprocessor.util.Path;
@@ -200,6 +201,12 @@ public class DngParser {
         }
 
         ShaderLoader loader = new ShaderLoader(mContext.getResources());
+        loader.mapImport("gaussian", R.raw.import_gaussian);
+        loader.mapImport("load3x3", R.raw.import_load3x3);
+        loader.mapImport("load3x3v2", R.raw.import_load3x3v2);
+        loader.mapImport("load3x3v3", R.raw.import_load3x3v3);
+        loader.mapImport("sigmoid", R.raw.import_sigmoid);
+
         final int[] steps = { 0 };
         try (StagePipeline pipeline = new StagePipeline(
                 sensor, process, rawImageInput, argbOutput, loader)) {

@@ -9,19 +9,13 @@ uniform int samplingFactor;
 // Out
 out vec4 analysis;
 
-vec3[9] load3x3(ivec2 xy, int n) {
-    vec3 outputArray[9];
-    for (int i = 0; i < 9; i++) {
-        outputArray[i] = texelFetch(intermediate, xy + n * ivec2((i % 3) - 1, (i / 3) - 1), 0).xyz;
-    }
-    return outputArray;
-}
+#include load3x3v3
 
 void main() {
     ivec2 xy = samplingFactor * ivec2(gl_FragCoord.xy) + outOffset;
 
     // Load patch
-    vec3[9] impatch = load3x3(xy, 2);
+    vec3[9] impatch = load3x3(xy, 2, intermediate);
 
     /**
      * STANDARD DEVIATIONS

@@ -40,23 +40,14 @@ uniform ivec2 outOffset;
 // Out
 out vec4 color;
 
+#include sigmoid
+
 float[9] load3x3z(ivec2 xy) {
     float outputArray[9];
     for (int i = 0; i < 9; i++) {
         outputArray[i] = texelFetch(intermediateBuffer, xy + ivec2((i % 3) - 1, (i / 3) - 1), 0).z;
     }
     return outputArray;
-}
-
-float sigmoid(float val, float transfer) {
-    if (val > transfer) {
-        // This variable maps the cut off point in the linear curve to the sigmoid
-        float a = log((1.f + transfer) / (1.f - transfer)) / transfer;
-
-        // Transform val using the sigmoid curve
-        val = 2.f / (1.f + exp(-a * val)) - 1.f;
-    }
-    return val;
 }
 
 vec3 processPatch(ivec2 xyPos) {

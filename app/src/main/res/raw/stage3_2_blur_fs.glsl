@@ -15,9 +15,7 @@ uniform vec2 ch;
 // Out
 out float result;
 
-float unscaledGaussian(float d, float s) {
-    return exp(-0.5f * pow(d / s, 2.f));
-}
+#include gaussian
 
 void main() {
     ivec2 xyCenter = ivec2(gl_FragCoord.xy);

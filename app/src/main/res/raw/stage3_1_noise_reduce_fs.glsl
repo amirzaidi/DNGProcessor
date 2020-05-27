@@ -18,18 +18,12 @@ uniform float sharpenFactor;
 
 out vec3 result;
 
-vec3[9] load3x3(ivec2 xy, int n) {
-    vec3 outputArray[9];
-    for (int i = 0; i < 9; i++) {
-        outputArray[i] = texelFetch(intermediateBuffer, xy + n * ivec2((i % 3) - 1, (i / 3) - 1), 0).xyz;
-    }
-    return outputArray;
-}
+#include load3x3v3
 
 void main() {
     ivec2 xyPos = ivec2(gl_FragCoord.xy);
 
-    vec3[9] impatch = load3x3(xyPos, 2);
+    vec3[9] impatch = load3x3(xyPos, 2, intermediateBuffer);
     vec3 mid = impatch[4];
 
     // Take unfiltered xy and z as starting point.
