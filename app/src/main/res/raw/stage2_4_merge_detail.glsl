@@ -27,7 +27,7 @@ void main() {
     float noiseLevel = texelFetch(noiseTex, xy, 0).x;
 
     // Reduce intermediate noise using noise texture.
-    float z = mix(intermediateVal, bilateralVal, min(noiseLevel * 1.5f, 1.f));
+    float z = mix(intermediateVal, bilateralVal, min(noiseLevel * 1.75f, 1.f));
     if (bilateralVal > 0.0001f) {
         // (Original Reflectance * Original Luminosity)
         // * (Corrected Luminosity / Original Luminosity)
@@ -37,7 +37,7 @@ void main() {
     }
 
     // Reduce xy noise.
-    noiseLevel *= 0.3f;
+    noiseLevel *= 0.35f;
     if (z < noiseLevel) {
         // Shift towards D50 white
         processed.xy = mix(bilateralValXyz.xy,
