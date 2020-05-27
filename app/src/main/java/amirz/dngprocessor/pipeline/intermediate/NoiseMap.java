@@ -35,8 +35,8 @@ public class NoiseMap extends Stage {
             converter.setTexture("buf", tmp);
             converter.seti("bufSize", tmp.getWidth(), tmp.getHeight());
 
-            converter.setf("sigma", 0.25f, 2.5f);
-            converter.seti("radius", 5, 1);
+            converter.setf("sigma", 0.25f, 2f);
+            converter.seti("radius", 4, 1);
 
             mNoiseTex = new Texture(intermediate.getWidth(), intermediate.getHeight(), 1,
                     Texture.Format.Float16, null);
