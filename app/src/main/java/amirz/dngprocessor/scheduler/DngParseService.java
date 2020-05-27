@@ -55,7 +55,12 @@ public class DngParseService extends IntentService {
                     .edit()
                     .putString(getString(R.string.pref_reprocess), uri.toString())
                     .apply();
+
+            long startTime = System.currentTimeMillis();
             new DngParser(this, uri).run();
+            long endTime = System.currentTimeMillis();
+            Log.d(TAG, "Took " + (endTime - startTime) * 0.001f + "s to process");
+
             if (pref.deleteOriginal.get()) {
                 String path = Path.getPathFromUri(this, uri);
                 Log.e(TAG, "Deleting " + path);
