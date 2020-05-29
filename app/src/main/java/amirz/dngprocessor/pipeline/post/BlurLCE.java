@@ -7,6 +7,7 @@ import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
+import amirz.dngprocessor.pipeline.intermediate.NoiseMap;
 
 public class BlurLCE extends Stage {
     private final SensorParams mSensorParams;
@@ -52,7 +53,7 @@ public class BlurLCE extends Stage {
                 // First render to the tmp buffer.
                 converter.setTexture("buf", intermediate);
                 converter.setf("sigma", 32f);
-                converter.seti("radius", 96, 4);
+                converter.seti("radius", 84, 4);
                 converter.seti("dir", 0, 1); // Vertical
                 converter.setf("ch", 0, 1); // xy[Y]
                 converter.drawBlocks(tmp);
@@ -71,7 +72,7 @@ public class BlurLCE extends Stage {
                 converter.setTexture("buf", intermediate);
                 converter.seti("buf", 0);
                 converter.setf("sigma", 2f);
-                converter.seti("radius", 6, 1);
+                converter.seti("radius", 5, 1);
                 converter.seti("dir", 0, 1); // Vertical
                 converter.setf("ch", 0, 1); // xy[Y]
                 converter.drawBlocks(tmp);
@@ -86,30 +87,19 @@ public class BlurLCE extends Stage {
             }
 
             {
+                Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
+
+                // Use a bilateral blur to reduce noise.
+                converter.useProgram(R.raw.stage2_3_bilateral);
+
                 converter.setTexture("buf", intermediate);
-                converter.setf("sigma", 0.5f);
-                converter.seti("radius", 2, 1);
-                converter.seti("dir", 0, 1); // Vertical
-                converter.setf("ch", 0, 1); // xy[Y]
+                converter.seti("bufSize", w, h);
+                converter.setTexture("noiseMap", noiseTex);
 
-                mWeakBlur = new Texture(w, h, 1, Texture.Format.Float16, null);
-                converter.drawBlocks(mWeakBlur);
-
-                converter.setTexture("buf", mWeakBlur);
-                converter.seti("dir", 1, 0); // Horizontal
-                converter.setf("ch", 1, 0); // [Y]00
-
-                converter.drawBlocks(tmp);
-
-                // Use a bilateral blur on the weak blur to reduce noise.
-                converter.useProgram(R.raw.stage2_1_bilateral_ch);
-
-                converter.setTexture("buf", tmp);
-                converter.seti("bufSize", mWeakBlur.getWidth(), mWeakBlur.getHeight());
-
-                converter.setf("sigma", 0.03f, 0.4f);
+                converter.setf("sigma", 0.1f, 1f);
                 converter.seti("radius", 4, 1);
 
+                mWeakBlur = new Texture(w, h, 3, Texture.Format.Float16, null);
                 converter.drawBlocks(mWeakBlur);
             }
         }
