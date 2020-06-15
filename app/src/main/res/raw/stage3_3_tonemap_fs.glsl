@@ -59,11 +59,11 @@ vec3 processPatch(ivec2 xyPos) {
     /**
     LUMA SHARPEN
     **/
-    float[9] impz = load3x3z(xyPos);
-
     float noise = texelFetch(noiseTex, xyPos, 0).x;
     float sharpen = sharpenFactor - 2.f * noise;
     if (sharpen > 0.f) {
+        float[9] impz = load3x3z(xyPos);
+        
         // Sum of difference with all pixels nearby
         float dz = z * 13.f;
         for (int i = 0; i < 9; i++) {
