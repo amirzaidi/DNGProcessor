@@ -89,7 +89,7 @@ public class BlurLCE extends Stage {
             {
                 // First render to the tmp buffer.
                 converter.setTexture("buf", intermediate);
-                converter.setf("sigma", 0.5f);
+                converter.setf("sigma", 0.33f);
                 converter.seti("radius", 2, 1);
                 converter.seti("dir", 0, 1); // Vertical
                 converter.setf("ch", 0, 1); // xy[Y]

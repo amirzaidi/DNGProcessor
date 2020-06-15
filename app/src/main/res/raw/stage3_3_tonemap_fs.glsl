@@ -60,10 +60,10 @@ vec3 processPatch(ivec2 xyPos) {
     LUMA SHARPEN
     **/
     float noise = texelFetch(noiseTex, xyPos, 0).x;
-    float sharpen = sharpenFactor - 2.f * noise;
+    float sharpen = sharpenFactor - noise;
     if (sharpen > 0.f) {
         float[9] impz = load3x3z(xyPos);
-        
+
         // Sum of difference with all pixels nearby
         float dz = z * 13.f;
         for (int i = 0; i < 9; i++) {
@@ -79,24 +79,20 @@ vec3 processPatch(ivec2 xyPos) {
         float ly = impz[0] - impz[6] + (impz[1] - impz[7]) * 2.f + impz[2] - impz[8];
         float l = sqrt(lx * lx + ly * ly);
 
-        z += sharpen * (0.01f + min(0.5f * l, 0.3f)) * dz;
+        z += sharpen * (0.03f + min(0.6f * l, 0.4f)) * dz;
     }
 
     if (lce) {
-        float zFactor = 1.f;
-
         float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
         if (zMediumBlur > 0.0001f && sharpenFactor > 0.f) {
             float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
-            zFactor *= sqrt(sqrt(zWeakBlur / zMediumBlur));
+            z *= zWeakBlur / zMediumBlur;
         }
 
         float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
         if (zStrongBlur > 0.0001f) {
-            zFactor *= sqrt(sqrt(sqrt(zMediumBlur / zStrongBlur)));
+            z *= sqrt(sqrt(zMediumBlur / zStrongBlur));
         }
-
-        z *= zFactor * zFactor;
     }
 
     return clamp(vec3(xy, z), 0.f, 1.f);
