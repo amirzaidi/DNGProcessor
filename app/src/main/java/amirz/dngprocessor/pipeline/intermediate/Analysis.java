@@ -23,7 +23,6 @@ public class Analysis extends Stage {
     private final int mOutWidth, mOutHeight, mOffsetX, mOffsetY;
     private float[] mSigma, mHist;
     private float mGamma;
-    private Texture mAnalyzeTex;
 
     public Analysis(int outWidth, int outHeight, int offsetX, int offsetY) {
         mOutWidth = outWidth;
@@ -42,10 +41,6 @@ public class Analysis extends Stage {
 
     public float getGamma() {
         return mGamma;
-    }
-
-    public Texture getAnalyzeTex() {
-        return mAnalyzeTex;
     }
 
     @Override
@@ -68,26 +63,29 @@ public class Analysis extends Stage {
 
         converter.seti("samplingFactor", samplingFactor);
 
-        mAnalyzeTex = new Texture(w, h, 4, Texture.Format.Float16, null);
-        converter.drawBlocks(mAnalyzeTex);
+        try (Texture analyzeTex = new Texture(w, h, 4, Texture.Format.Float16, null)) {
+            converter.drawBlocks(analyzeTex);
 
-        int whPixels = w * h;
-        float[] f = new float[whPixels * 4];
-        FloatBuffer fb = ByteBuffer.allocateDirect(f.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        fb.mark();
+            int whPixels = w * h;
+            float[] f = new float[whPixels * 4];
+            FloatBuffer fb = ByteBuffer.allocateDirect(f.length * 4)
+                    .order(ByteOrder.nativeOrder())
+                    .asFloatBuffer();
+            fb.mark();
 
-        glReadPixels(0, 0, w, h, GL_RGBA, GL_FLOAT, fb.reset());
-        fb.get(f);
+            glReadPixels(0, 0, w, h, GL_RGBA, GL_FLOAT, fb.reset());
+            fb.get(f);
 
-        // Calculate a histogram on the result
-        Histogram histParser = new Histogram(f, whPixels);
-        mSigma = histParser.sigma;
-        mHist = histParser.hist;
-        mGamma = histParser.gamma;
+            // Calculate a histogram on the result
+            Histogram histParser = new Histogram(f, whPixels);
+            mSigma = histParser.sigma;
+            mHist = histParser.hist;
+            mGamma = histParser.gamma;
 
-        Log.d(TAG, "Sigma " + Arrays.toString(mSigma));
-        Log.d(TAG, "LogAvg " + histParser.logAvgLuminance);
-        Log.d(TAG, "Gamma " + histParser.gamma);
+            Log.d(TAG, "Sigma " + Arrays.toString(mSigma));
+            Log.d(TAG, "LogAvg " + histParser.logAvgLuminance);
+            Log.d(TAG, "Gamma " + histParser.gamma);
+        }
     }
 
     @Override
