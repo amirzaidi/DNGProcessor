@@ -18,7 +18,7 @@ import static android.opengl.GLES20.*;
 public class MergeDetail extends Stage {
     private static final String TAG = "MergeDetail";
 
-    private static final float MIN_GAMMA = 0.67f;
+    private static final float MIN_GAMMA = 0.65f;
 
     private final float mHistFactor;
     private Texture mIntermediate;
@@ -70,7 +70,8 @@ public class MergeDetail extends Stage {
         converter.setf("histFactor", baseBase * mHistFactor);
 
         // Keep dark images dark.
-        converter.setf("gamma", Math.max(MIN_GAMMA, sampleHistogram.getGamma()));
+        float minGamma = Math.min(1f, MIN_GAMMA + 4f * (float) Math.hypot(sigma[0], sigma[1]));
+        converter.setf("gamma", Math.max(minGamma, sampleHistogram.getGamma()));
 
         converter.setTexture("intermediate", intermediateTex);
         converter.setTexture("bilateral", bilateralTex);
