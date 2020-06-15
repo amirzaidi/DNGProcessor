@@ -88,7 +88,7 @@ vec3 processPatch(ivec2 xyPos) {
         float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
         if (zMediumBlur > 0.0001f && sharpenFactor > 0.f) {
             float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
-            zFactor *= sqrt(zWeakBlur / zMediumBlur);
+            zFactor *= sqrt(sqrt(zWeakBlur / zMediumBlur));
         }
 
         float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;

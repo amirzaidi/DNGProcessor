@@ -18,7 +18,7 @@ import static android.opengl.GLES20.*;
 public class MergeDetail extends Stage {
     private static final String TAG = "MergeDetail";
 
-    private static final float MIN_GAMMA = 0.65f;
+    private static final float MIN_GAMMA = 0.55f;
 
     private final float mHistFactor;
     private Texture mIntermediate;
@@ -62,16 +62,15 @@ public class MergeDetail extends Stage {
         // If there are many dark patches, the color noise goes up.
         // To ensure that we do not boost that too much, reduce with color noise.
         float[] sigma = sampleHistogram.getSigma();
-        float baseBase = Math.max(0f,
-                1f - 8f * (float) Math.hypot(sigma[0], sigma[1])
-                - sampleHistogram.getGamma() * 0.5f);
+        float minGamma = Math.min(1f, MIN_GAMMA + 3f * (float) Math.hypot(sigma[0], sigma[1]));
+        float gamma = Math.max(minGamma, 0.35f + 0.65f * sampleHistogram.getGamma());
+        Log.d(TAG, "Setting gamma of " + gamma);
+        converter.setf("gamma", gamma);
 
-        Log.d(TAG, "Bilateral histogram equalization " + baseBase);
-        converter.setf("histFactor", baseBase * mHistFactor);
-
-        // Keep dark images dark.
-        float minGamma = Math.min(1f, MIN_GAMMA + 4f * (float) Math.hypot(sigma[0], sigma[1]));
-        converter.setf("gamma", Math.max(minGamma, sampleHistogram.getGamma()));
+        // Reduce the histogram equalization in scenes with good light distribution.
+        float bilatHistEq = Math.max(0.4f, 1f - sampleHistogram.getGamma() * 0.6f);
+        Log.d(TAG, "Bilateral histogram equalization " + bilatHistEq);
+        converter.setf("histFactor", bilatHistEq * mHistFactor);
 
         converter.setTexture("intermediate", intermediateTex);
         converter.setTexture("bilateral", bilateralTex);
