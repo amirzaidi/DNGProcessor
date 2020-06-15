@@ -18,7 +18,7 @@ import static android.opengl.GLES20.*;
 public class MergeDetail extends Stage {
     private static final String TAG = "MergeDetail";
 
-    private static final float MIN_GAMMA = 0.6f;
+    private static final float MIN_GAMMA = 0.67f;
 
     private final float mHistFactor;
     private Texture mIntermediate;
