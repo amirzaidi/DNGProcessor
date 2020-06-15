@@ -87,19 +87,20 @@ public class BlurLCE extends Stage {
             }
 
             {
-                Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
-
-                // Use a bilateral blur to reduce noise.
-                converter.useProgram(R.raw.stage2_3_bilateral);
-
+                // First render to the tmp buffer.
                 converter.setTexture("buf", intermediate);
-                converter.seti("bufSize", w, h);
-                converter.setTexture("noiseMap", noiseTex);
+                converter.setf("sigma", 0.5f);
+                converter.seti("radius", 2, 1);
+                converter.seti("dir", 0, 1); // Vertical
+                converter.setf("ch", 0, 1); // xy[Y]
+                converter.drawBlocks(tmp);
 
-                converter.setf("sigma", 0.1f, 1f);
-                converter.seti("radius", 4, 1);
+                // Now render from tmp to the real buffer.
+                converter.setTexture("buf", tmp);
+                converter.seti("dir", 1, 0); // Horizontal
+                converter.setf("ch", 1, 0); // [Y]00
 
-                mWeakBlur = new Texture(w, h, 3, Texture.Format.Float16, null);
+                mWeakBlur = new Texture(w, h, 1, Texture.Format.Float16, null);
                 converter.drawBlocks(mWeakBlur);
             }
         }

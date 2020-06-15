@@ -22,6 +22,7 @@ public class Analysis extends Stage {
 
     private final int mOutWidth, mOutHeight, mOffsetX, mOffsetY;
     private float[] mSigma, mHist;
+    private float mGamma;
     private Texture mAnalyzeTex;
 
     public Analysis(int outWidth, int outHeight, int offsetX, int offsetY) {
@@ -37,6 +38,10 @@ public class Analysis extends Stage {
 
     public float[] getHist() {
         return mHist;
+    }
+
+    public float getGamma() {
+        return mGamma;
     }
 
     public Texture getAnalyzeTex() {
@@ -78,9 +83,11 @@ public class Analysis extends Stage {
         Histogram histParser = new Histogram(f, whPixels);
         mSigma = histParser.sigma;
         mHist = histParser.hist;
+        mGamma = histParser.gamma;
 
         Log.d(TAG, "Sigma " + Arrays.toString(mSigma));
         Log.d(TAG, "LogAvg " + histParser.logAvgLuminance);
+        Log.d(TAG, "Gamma " + histParser.gamma);
     }
 
     @Override

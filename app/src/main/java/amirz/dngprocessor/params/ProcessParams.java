@@ -9,20 +9,17 @@ public class ProcessParams {
             case Disabled:
                 process.sharpenFactor = 0f;
                 process.histFactor = 0f;
-                process.histCurve = 0f;
                 process.adaptiveSaturation = new float[] { 0f, 1f };
                 break;
             case Natural:
                 process.sharpenFactor = 0.25f;
-                process.histFactor = 0.7f;
-                process.histCurve = 1.16f;
+                process.histFactor = 0.8f;
                 process.adaptiveSaturation = new float[] { 2.5f, 4f };
                 break;
             case Boosted:
-                process.sharpenFactor = 0.45f;
+                process.sharpenFactor = 0.35f;
                 process.histFactor = 1f;
-                process.histCurve = 1.1f;
-                process.adaptiveSaturation = new float[] { 4f, 2f };
+                process.adaptiveSaturation = new float[] { 3f, 2f };
                 break;
         }
         return process;

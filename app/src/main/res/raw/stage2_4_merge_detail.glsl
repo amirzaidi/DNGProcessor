@@ -7,8 +7,8 @@ uniform sampler2D intermediate;
 
 uniform sampler2D hist;
 uniform vec2 histOffset;
-
 uniform float histFactor;
+uniform float gamma;
 
 uniform sampler2D noiseTex;
 
@@ -31,9 +31,13 @@ void main() {
     if (bilateralVal > 0.0001f) {
         // (Original Reflectance * Original Luminosity)
         // * (Corrected Luminosity / Original Luminosity)
+
+        float correctLuminanceGamma = pow(bilateralVal, gamma);
+        z *= correctLuminanceGamma / bilateralVal;
+
         float texCoord = histOffset.x + histOffset.y * bilateralVal;
-        float correctLuminance = texture(hist, vec2(texCoord, 0.5f)).x;
-        z *= pow(correctLuminance / bilateralVal, histFactor);
+        float correctLuminanceHistEq = texture(hist, vec2(texCoord, 0.5f)).x;
+        z *= pow(correctLuminanceHistEq / bilateralVal, histFactor);
     }
 
     // Reduce xy noise.

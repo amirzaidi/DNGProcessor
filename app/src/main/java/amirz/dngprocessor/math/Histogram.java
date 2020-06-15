@@ -3,9 +3,11 @@ package amirz.dngprocessor.math;
 public class Histogram {
     private static final int HIST_BINS = 256;
     private static final double EPSILON = 0.01;
+    private static final float LINEARIZE_PERCEPTION = 2.4f;
 
     public final float[] sigma = new float[3];
     public final float[] hist;
+    public final float gamma;
     public final float logAvgLuminance;
 
     public Histogram(float[] f, int whPixels) {
@@ -43,6 +45,21 @@ public class Histogram {
             cumulativeHist[i] /= max;
         }
 
+        float sumExponent = 0.f;
+        int exponentCounted = 0;
+        float maxi = cumulativeHist.length - 1;
+        for (int i = 0; i <= maxi; i++) {
+            float val = cumulativeHist[i];
+            if (val > 0.001f) {
+                // Which power of the input is the output.
+                double exponent = Math.log(cumulativeHist[i]) / Math.log(i / maxi);
+                if (exponent > 0f && exponent < 10f) {
+                    sumExponent += exponent;
+                    exponentCounted++;
+                }
+            }
+        }
+
         // Blend shadows with linear curve.
         for (int i = 0; i < cumulativeHist.length; i++) {
             float og = (float) i / cumulativeHist.length;
@@ -75,6 +92,15 @@ public class Histogram {
             cumulativeHist = swp;
         }
 
+        // Inverse of the average exponent.
+        gamma = LINEARIZE_PERCEPTION * sumExponent / exponentCounted;
+
+        for (int i = 1; i < cumulativeHist.length; i++) {
+            // Compensate for the gamma being applied first.
+            cumulativeHist[i] *= (i / maxi) / Math.pow(i / maxi, gamma);
+        }
+
+        // To prevent blowing up very dark scenes.
         hist = cumulativeHist;
     }
 

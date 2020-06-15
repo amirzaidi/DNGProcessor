@@ -52,6 +52,7 @@ float[9] load3x3z(ivec2 xy) {
 
 vec3 processPatch(ivec2 xyPos) {
     vec3 xyz = texelFetch(intermediateBuffer, xyPos, 0).xyz;
+
     vec2 xy = xyz.xy;
     float z = xyz.z;
 
@@ -78,7 +79,7 @@ vec3 processPatch(ivec2 xyPos) {
         float ly = impz[0] - impz[6] + (impz[1] - impz[7]) * 2.f + impz[2] - impz[8];
         float l = sqrt(lx * lx + ly * ly);
 
-        z += sharpen * (0.01f + min(0.5f * l, 0.3f)) * dz;
+        z += sharpen * (0.05f + min(0.5f * l, 0.3f)) * dz;
     }
 
     if (lce) {
@@ -86,8 +87,8 @@ vec3 processPatch(ivec2 xyPos) {
 
         float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
         if (zMediumBlur > 0.0001f) {
-            float zWeakBlur = texelFetch(weakBlur, xyPos, 0).z;
-            zFactor *= zWeakBlur / zMediumBlur;
+            float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
+            zFactor *= sqrt(zWeakBlur / zMediumBlur);
         }
 
         float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
