@@ -68,7 +68,8 @@ public class MergeDetail extends Stage {
         converter.setf("gamma", gamma);
 
         // Reduce the histogram equalization in scenes with good light distribution.
-        float bilatHistEq = Math.max(0.4f, 1f - sampleHistogram.getGamma() * 0.6f);
+        float bilatHistEq = Math.max(0.4f, 1f - sampleHistogram.getGamma() * 0.6f
+                - 4f * (float) Math.hypot(sigma[0], sigma[1]));
         Log.d(TAG, "Bilateral histogram equalization " + bilatHistEq);
         converter.setf("histFactor", bilatHistEq * mHistFactor);
 
