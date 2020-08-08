@@ -135,7 +135,8 @@ vec3 XYZtoxyY(vec3 XYZ) {
     float sum = XYZ.x + XYZ.y + XYZ.z;
     if (sum > 0.0001f) {
         // Slightly desaturate very dark pixels here already.
-        result.xy = mix(result.xy, XYZ.xy / sum, smoothstep(0.f, 0.0075f, XYZ.y));
+        //result.xy = mix(result.xy, XYZ.xy / sum, smoothstep(0.f, 0.0075f, XYZ.y));
+        result.xy = XYZ.xy / sum;
     }
     return result;
 }

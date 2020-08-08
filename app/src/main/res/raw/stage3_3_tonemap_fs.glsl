@@ -100,9 +100,12 @@ vec3 processPatch(ivec2 xyPos) {
         float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
         float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
 
-        float edge = 20.f * sqrt(abs(zMediumBlur - zStrongBlur));
+        float edge = 30.f * sqrt(abs(zMediumBlur - zStrongBlur));
+        //float d = zWeakBlur - zMediumBlur;
 
-        z = zMediumBlur + edge * (zWeakBlur - zMediumBlur);
+        //z += edge * sign(d) * sqrt(abs(d));
+
+        z += edge * (zWeakBlur - zMediumBlur);
     }
 
     return clamp(vec3(xy, z), 0.f, 1.f);

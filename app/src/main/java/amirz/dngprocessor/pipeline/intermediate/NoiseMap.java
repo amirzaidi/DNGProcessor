@@ -24,27 +24,25 @@ public class NoiseMap extends Stage {
     protected void execute(StagePipeline.StageMap previousStages) {
         GLPrograms converter = getConverter();
 
-        if (true) {
-            return;
-        }
+        if (true) return;
 
         Texture intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
         converter.setTexture("intermediate", intermediate);
 
         try (Texture tmp = new Texture(intermediate.getWidth(), intermediate.getHeight(), 1,
                 Texture.Format.Float16, null)) {
-            converter.drawBlocks(tmp);
+            //converter.drawBlocks(tmp);
 
-            converter.useProgram(R.raw.stage2_1_bilateral_ch);
-            converter.setTexture("buf", tmp);
-            converter.seti("bufSize", tmp.getWidth(), tmp.getHeight());
+            //converter.useProgram(R.raw.stage2_1_bilateral_ch);
+            //converter.setTexture("buf", tmp);
+            //converter.seti("bufSize", tmp.getWidth(), tmp.getHeight());
 
-            converter.setf("sigma", 0.25f, 2f);
-            converter.seti("radius", 4, 1);
+            //converter.setf("sigma", 0.25f, 2f);
+            //converter.seti("radius", 4, 1);
 
             mNoiseTex = new Texture(intermediate.getWidth(), intermediate.getHeight(), 1,
                     Texture.Format.Float16, null);
-            converter.drawBlocks(mNoiseTex);
+            //converter.drawBlocks(mNoiseTex);
         }
     }
 

@@ -25,6 +25,8 @@ void main() {
 
     vec3[9] impatch = load3x3(xyPos, 2, intermediateBuffer);
     vec3 mid = impatch[4];
+    result = mid;
+    return;
 
     // Take unfiltered xy and z as starting point.
     vec2 xy = mid.xy;

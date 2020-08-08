@@ -35,13 +35,12 @@ public class NoiseReduce extends Stage {
     protected void execute(StagePipeline.StageMap previousStages) {
         Texture noisy = previousStages.getStage(MergeDetail.class).getIntermediate();
         mDenoised = noisy;
-
-        if (mProcessParams.denoiseFactor == 0 || true) {
-            return;
-        }
-
         mNRParams = new NoiseReduce.NRParams(mProcessParams,
                 previousStages.getStage(Analysis.class).getSigma());
+
+        if (mProcessParams.denoiseFactor == 0) {
+            return;
+        }
 
         GLPrograms converter = getConverter();
 
@@ -56,22 +55,29 @@ public class NoiseReduce extends Stage {
         converter.setf("sigma", mNRParams.sigma);
         converter.setf("sharpenFactor", mNRParams.sharpenFactor);
 
-        Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
-        converter.setTexture("noiseTex", noiseTex);
+        //Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
+        //converter.setTexture("noiseTex", noiseTex);
 
         try (Texture tmp = new Texture(w, h, 3, Texture.Format.Float16, null)) {
-            converter.drawBlocks(tmp);
+            //converter.drawBlocks(tmp);
 
             converter.useProgram(R.raw.stage2_3_bilateral);
 
-            converter.setTexture("buf", tmp);
             converter.seti("bufSize", w, h);
-            converter.setTexture("noiseTex", noiseTex);
+            //converter.setTexture("noiseTex", noiseTex);
 
-            float s = mNRParams.sigma[0];
-            converter.setf("sigma", 0.015f + 0.1f * s, 0.35f + 9f * s);
+            //float s = mNRParams.sigma[0];
+            //converter.setf("sigma", 0.015f + 0.1f * s, 0.35f + 9f * s);
+            converter.setf("sigma", 100f, 0.75f);
             converter.seti("radius", 4, 1);
-            converter.drawBlocks(mDenoised);
+
+            for (int i = 0; i < 3; i++) {
+                converter.setTexture("buf", mDenoised);
+                converter.drawBlocks(tmp);
+
+                converter.setTexture("buf", tmp);
+                converter.drawBlocks(mDenoised);
+            }
         }
     }
 

@@ -28,12 +28,27 @@ float gs(float diffx) {
     return unscaledGaussian(diffx, sigma.y);
 }
 
+vec3 xyYtoXYZ(vec3 xyY) {
+    vec3 result = vec3(0.f, xyY.z, 0.f);
+    if (xyY.y > 0.f) {
+        result.x = xyY.x * xyY.z / xyY.y;
+        result.z = (1.f - xyY.x - xyY.y) * xyY.z / xyY.y;
+    }
+    return result;
+}
+
+float pixDiff(vec3 pix1, vec3 pix2) {
+    return distance(xyYtoXYZ(pix1), xyYtoXYZ(pix2));
+}
+
+/*
 float pixDiff(vec3 pix1, vec3 pix2, float noise) {
     // pix1 is input/output pixel position.
     float z = 8.f * mix(pix1.z, min(pix1.z, pix2.z), 0.25f);
     z *= max(0.f, 1.f - 5.f * noise);
     return length((pix2 - pix1) * vec3(z, z, 1.f));
 }
+*/
 
 void main() {
     ivec2 xyCenter = ivec2(gl_FragCoord.xy);
@@ -45,7 +60,7 @@ void main() {
 
     vec3 I = vec3(0.f);
     float W = 0.f;
-    float noise = texelFetch(noiseTex, xyCenter, 0).x;
+    //float noise = texelFetch(noiseTex, xyCenter, 0).x;
 
     for (int y = minxy.y; y <= maxxy.y; y += radius.y) {
         for (int x = minxy.x; x <= maxxy.x; x += radius.y) {
@@ -55,7 +70,7 @@ void main() {
 
             vec2 dxy = vec2(xyPixel - xyCenter);
 
-            float scale = fr(pixDiff(XYZCenter, XYZPixel, noise)) * gs(length(dxy));
+            float scale = fr(pixDiff(XYZCenter, XYZPixel)) * gs(length(dxy));
             I += XYZPixel * scale;
             W += scale;
         }
