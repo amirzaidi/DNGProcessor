@@ -52,7 +52,6 @@ float[9] load3x3z(ivec2 xy) {
 
 vec3 processPatch(ivec2 xyPos) {
     vec3 xyz = texelFetch(intermediateBuffer, xyPos, 0).xyz;
-    return xyz;
 
     vec2 xy = xyz.xy;
     float z = xyz.z;
@@ -60,6 +59,7 @@ vec3 processPatch(ivec2 xyPos) {
     /**
     LUMA SHARPEN
     **/
+    /*
     float noise = texelFetch(noiseTex, xyPos, 0).x;
     float sharpen = sharpenFactor - noise;
     if (sharpen > 0.f) {
@@ -94,6 +94,15 @@ vec3 processPatch(ivec2 xyPos) {
         if (zStrongBlur > 0.0001f) {
             z *= sqrt(sqrt(zMediumBlur / zStrongBlur));
         }
+    }*/
+    if (lce) {
+        float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
+        float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
+        float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
+
+        float edge = 20.f * sqrt(abs(zMediumBlur - zStrongBlur));
+
+        z = zMediumBlur + edge * (zWeakBlur - zMediumBlur);
     }
 
     return clamp(vec3(xy, z), 0.f, 1.f);

@@ -55,7 +55,7 @@ public class ToneMap extends Stage {
         converter.seti("intermediateWidth", intermediate.getWidth());
         converter.seti("intermediateHeight", intermediate.getHeight());
 
-        if (mProcessParams.lce && false) {
+        if (mProcessParams.lce) {
             BlurLCE blur = previousStages.getStage(BlurLCE.class);
             converter.setTexture("weakBlur", blur.getWeakBlur());
             converter.setTexture("mediumBlur", blur.getMediumBlur());

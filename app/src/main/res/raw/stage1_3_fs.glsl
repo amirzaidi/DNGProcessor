@@ -16,6 +16,13 @@ uniform vec3 neutralPoint; // The camera neutral
 // Transform
 uniform mat3 sensorToXYZ; // Color transform from sensor to XYZ.
 
+const int demosaicArray[16] = int[](
+    0, 1, 2, 3,
+    1, 0, 3, 2,
+    2, 3, 0, 1,
+    3, 2, 1, 0
+);
+
 // Out
 out vec3 intermediate;
 
@@ -28,14 +35,16 @@ int ind(int x, int y) {
 }
 
 // Apply bilinear-interpolation to demosaic
-vec3 demosaic(ivec2 xy, float[9] inputArray, float[9] greenArray) {
+vec3 demosaic(ivec2 xy, inout float[9] inputArray, inout float[9] greenArray) {
     int x = xy.x;
     int y = xy.y;
 
     int index = (x & 1) | ((y & 1) << 1);
     index |= (cfaPattern << 2);
     vec3 pRGB;
-    int pxType = -1;
+    int pxType = demosaicArray[index]; -1;
+
+    /*
     switch (index) {
         case 0:
         case 5:
@@ -62,6 +71,7 @@ vec3 demosaic(ivec2 xy, float[9] inputArray, float[9] greenArray) {
             pxType = 3; // GBG
             break;
     }
+    */
 
     // We already computed green
     pRGB.g = greenArray[ind(0, 0)];
@@ -124,8 +134,8 @@ vec3 XYZtoxyY(vec3 XYZ) {
     vec3 result = vec3(0.345703f, 0.358539f, XYZ.y);
     float sum = XYZ.x + XYZ.y + XYZ.z;
     if (sum > 0.0001f) {
-        result.x = XYZ.x / sum;
-        result.y = XYZ.y / sum;
+        // Slightly desaturate very dark pixels here already.
+        result.xy = mix(result.xy, XYZ.xy / sum, smoothstep(0.f, 0.0075f, XYZ.y));
     }
     return result;
 }

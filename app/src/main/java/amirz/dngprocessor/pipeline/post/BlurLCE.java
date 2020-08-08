@@ -33,7 +33,7 @@ public class BlurLCE extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
-        if (!mProcessParams.lce || true) {
+        if (!mProcessParams.lce) {
             return;
         }
 
@@ -52,8 +52,10 @@ public class BlurLCE extends Stage {
             {
                 // First render to the tmp buffer.
                 converter.setTexture("buf", intermediate);
-                converter.setf("sigma", 32f);
-                converter.seti("radius", 84, 4);
+                converter.setf("sigma", 2.5f);
+                converter.seti("radius", 9, 1);
+                //converter.setf("sigma", 32f);
+                //converter.seti("radius", 84, 4);
                 converter.seti("dir", 0, 1); // Vertical
                 converter.setf("ch", 0, 1); // xy[Y]
                 converter.drawBlocks(tmp, false);
@@ -71,8 +73,10 @@ public class BlurLCE extends Stage {
                 // First render to the tmp buffer.
                 converter.setTexture("buf", intermediate);
                 converter.seti("buf", 0);
-                converter.setf("sigma", 2f);
-                converter.seti("radius", 5, 1);
+                //converter.setf("sigma", 2f);
+                //converter.seti("radius", 5, 1);
+                converter.setf("sigma", 1.5f);
+                converter.seti("radius", 6, 1);
                 converter.seti("dir", 0, 1); // Vertical
                 converter.setf("ch", 0, 1); // xy[Y]
                 converter.drawBlocks(tmp, false);
@@ -89,8 +93,10 @@ public class BlurLCE extends Stage {
             {
                 // First render to the tmp buffer.
                 converter.setTexture("buf", intermediate);
-                converter.setf("sigma", 0.33f);
-                converter.seti("radius", 2, 1);
+                //converter.setf("sigma", 0.33f);
+                //converter.seti("radius", 2, 1);
+                converter.setf("sigma", 0.67f);
+                converter.seti("radius", 3, 1);
                 converter.seti("dir", 0, 1); // Vertical
                 converter.setf("ch", 0, 1); // xy[Y]
                 converter.drawBlocks(tmp, false);
