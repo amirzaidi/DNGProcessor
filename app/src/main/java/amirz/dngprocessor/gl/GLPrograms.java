@@ -1,5 +1,8 @@
 package amirz.dngprocessor.gl;
 
+import android.util.Log;
+
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,6 +19,7 @@ import static android.opengl.GLES30.*;
 public class GLPrograms implements AutoCloseable {
     public final int vertexShader;
 
+    private final ByteBuffer mFlushBuffer = ByteBuffer.allocateDirect(32);
     private final ShaderLoader mShaderLoader;
     private final SquareModel mSquare = new SquareModel();
     private final List<Integer> mPrograms = new ArrayList<>();
@@ -60,16 +64,34 @@ public class GLPrograms implements AutoCloseable {
     }
 
     public void drawBlocks(Texture tex) {
-        tex.setFrameBuffer();
-        drawBlocks(tex.getWidth(), tex.getHeight());
+        drawBlocks(tex, true);
     }
 
-    private void drawBlocks(int w, int h) {
+    public void drawBlocks(Texture tex, boolean forceFlush) {
+        tex.setFrameBuffer();
+        drawBlocks(tex.getWidth(), tex.getHeight(), forceFlush ? tex.getFormat() : -1, tex.getType());
+    }
+
+    private void drawBlocks(int w, int h, int format, int type) {
+        // For some reason, Android cannot read all formats.
+        if (format == GL_RED || format == GL_RGB) {
+            format = GL_RGBA;
+        }
+
         BlockDivider divider = new BlockDivider(h, BLOCK_HEIGHT);
         int[] row = new int[2];
         while (divider.nextBlock(row)) {
             glViewport(0, row[0], w, row[1]);
             draw();
+
+            if (format != -1) {
+                mFlushBuffer.position(0);
+                glReadPixels(0, row[0], 1, 1, format, type, mFlushBuffer);
+                int glError = glGetError();
+                if (glError != 0) {
+                    Log.d("GLPrograms", "GLError: " + glError);
+                }
+            }
         }
     }
 

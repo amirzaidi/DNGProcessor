@@ -52,6 +52,7 @@ float[9] load3x3z(ivec2 xy) {
 
 vec3 processPatch(ivec2 xyPos) {
     vec3 xyz = texelFetch(intermediateBuffer, xyPos, 0).xyz;
+    return xyz;
 
     vec2 xy = xyz.xy;
     float z = xyz.z;
@@ -300,9 +301,10 @@ void main() {
     vec3 sRGB = clamp(proPhotoToSRGB * proPhoto, 0.f, 1.f);
 
     // Add saturation
-    sRGB = saturate(sRGB);
-    sRGB = tonemap(sRGB);
+    //sRGB = saturate(sRGB);
+    //sRGB = tonemap(sRGB);
 
     // Gamma correct at the end.
-    color = vec4(dither(gammaCorrectPixel(sRGB), xy), 1.f);
+    //color = vec4(dither(gammaCorrectPixel(sRGB), xy), 1.f);
+    color = vec4(gammaCorrectPixel(sRGB), 1.f);
 }

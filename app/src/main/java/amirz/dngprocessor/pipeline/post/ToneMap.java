@@ -55,7 +55,7 @@ public class ToneMap extends Stage {
         converter.seti("intermediateWidth", intermediate.getWidth());
         converter.seti("intermediateHeight", intermediate.getHeight());
 
-        if (mProcessParams.lce) {
+        if (mProcessParams.lce && false) {
             BlurLCE blur = previousStages.getStage(BlurLCE.class);
             converter.setTexture("weakBlur", blur.getWeakBlur());
             converter.setTexture("mediumBlur", blur.getMediumBlur());
@@ -71,10 +71,10 @@ public class ToneMap extends Stage {
         converter.setf("proPhotoToSRGB", mProPhotoToSRGB);
         converter.seti("outOffset", mSensorParams.outputOffsetX, mSensorParams.outputOffsetY);
 
-        NoiseReduce.NRParams nrParams = previousStages.getStage(NoiseReduce.class).getNRParams();
+        //NoiseReduce.NRParams nrParams = previousStages.getStage(NoiseReduce.class).getNRParams();
         converter.seti("lce", mProcessParams.lce ? 1 : 0);
-        converter.setf("sharpenFactor", nrParams.sharpenFactor);
-        converter.setf("adaptiveSaturation", nrParams.adaptiveSaturation, nrParams.adaptiveSaturationPow);
+        //converter.setf("sharpenFactor", nrParams.sharpenFactor);
+        //converter.setf("adaptiveSaturation", nrParams.adaptiveSaturation, nrParams.adaptiveSaturationPow);
 
         float[] saturation = mProcessParams.saturationMap;
         float[] sat = new float[saturation.length + 1];
@@ -85,8 +85,8 @@ public class ToneMap extends Stage {
                 FloatBuffer.wrap(sat), GL_LINEAR, GL_CLAMP_TO_EDGE);
         converter.setTexture("saturation", satTex);
 
-        Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
-        converter.setTexture("noiseTex", noiseTex);
+        //Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
+        //converter.setTexture("noiseTex", noiseTex);
 
         // Fill with noise
         new Random(8682522807148012L).nextBytes(dither);

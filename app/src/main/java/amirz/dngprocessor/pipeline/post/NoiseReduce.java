@@ -35,12 +35,13 @@ public class NoiseReduce extends Stage {
     protected void execute(StagePipeline.StageMap previousStages) {
         Texture noisy = previousStages.getStage(MergeDetail.class).getIntermediate();
         mDenoised = noisy;
-        mNRParams = new NoiseReduce.NRParams(mProcessParams,
-                previousStages.getStage(Analysis.class).getSigma());
 
-        if (mProcessParams.denoiseFactor == 0) {
+        if (mProcessParams.denoiseFactor == 0 || true) {
             return;
         }
+
+        mNRParams = new NoiseReduce.NRParams(mProcessParams,
+                previousStages.getStage(Analysis.class).getSigma());
 
         GLPrograms converter = getConverter();
 

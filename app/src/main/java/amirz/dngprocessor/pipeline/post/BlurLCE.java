@@ -33,7 +33,7 @@ public class BlurLCE extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
-        if (!mProcessParams.lce) {
+        if (!mProcessParams.lce || true) {
             return;
         }
 
@@ -56,7 +56,7 @@ public class BlurLCE extends Stage {
                 converter.seti("radius", 84, 4);
                 converter.seti("dir", 0, 1); // Vertical
                 converter.setf("ch", 0, 1); // xy[Y]
-                converter.drawBlocks(tmp);
+                converter.drawBlocks(tmp, false);
 
                 // Now render from tmp to the real buffer.
                 converter.setTexture("buf", tmp);
@@ -75,7 +75,7 @@ public class BlurLCE extends Stage {
                 converter.seti("radius", 5, 1);
                 converter.seti("dir", 0, 1); // Vertical
                 converter.setf("ch", 0, 1); // xy[Y]
-                converter.drawBlocks(tmp);
+                converter.drawBlocks(tmp, false);
 
                 // Now render from tmp to the real buffer.
                 converter.setTexture("buf", tmp);
@@ -93,7 +93,7 @@ public class BlurLCE extends Stage {
                 converter.seti("radius", 2, 1);
                 converter.seti("dir", 0, 1); // Vertical
                 converter.setf("ch", 0, 1); // xy[Y]
-                converter.drawBlocks(tmp);
+                converter.drawBlocks(tmp, false);
 
                 // Now render from tmp to the real buffer.
                 converter.setTexture("buf", tmp);

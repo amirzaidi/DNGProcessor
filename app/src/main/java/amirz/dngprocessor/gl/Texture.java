@@ -93,6 +93,14 @@ public class Texture implements AutoCloseable {
         return mHeight;
     }
 
+    public int getType() {
+        return type();
+    }
+
+    public int getFormat() {
+        return format();
+    }
+
     @Override
     public void close() {
         glDeleteTextures(1, new int[] { mTexId }, 0);

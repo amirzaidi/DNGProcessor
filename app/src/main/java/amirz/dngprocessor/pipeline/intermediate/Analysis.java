@@ -47,6 +47,10 @@ public class Analysis extends Stage {
     protected void execute(StagePipeline.StageMap previousStages) {
         GLPrograms converter = getConverter();
 
+        if (true) {
+            return;
+        }
+
         Texture intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();
         converter.useProgram(R.raw.stage2_2_analysis_fs);
 

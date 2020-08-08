@@ -132,6 +132,14 @@ vec3 XYZtoxyY(vec3 XYZ) {
 
 vec3 convertSensorToIntermediate(ivec2 xy, vec3 sensor) {
     sensor = max(sensor, 0.f);
+    sensor = min(sensor, neutralPoint);
+
+    vec3 XYZ = sensorToXYZ * sensor;
+    vec3 intermediate = XYZtoxyY(XYZ);
+
+    return intermediate;
+
+    /*
 
     // Use gainmap to increase dynamic range.
     vec2 xyInterp = vec2(float(xy.x) / float(rawWidth), float(xy.y) / float(rawHeight));
@@ -154,6 +162,8 @@ vec3 convertSensorToIntermediate(ivec2 xy, vec3 sensor) {
     intermediate.z = sigmoid(intermediate.z, 0.25f);
 
     return intermediate;
+
+    */
 }
 
 void main() {
