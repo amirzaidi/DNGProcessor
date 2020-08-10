@@ -28,6 +28,7 @@ out vec3 intermediate;
 
 #include sigmoid
 #include load3x3
+#include xyztoxyy
 
 int ind(int x, int y) {
     int dim = 3;
@@ -130,22 +131,13 @@ vec3 demosaic(ivec2 xy, inout float[9] inputArray, inout float[9] greenArray) {
     return pRGB;
 }
 
-vec3 XYZtoxyY(vec3 XYZ) {
-    vec3 result = vec3(0.345703f, 0.358539f, XYZ.y);
-    float sum = XYZ.x + XYZ.y + XYZ.z;
-    if (sum > 0.0001f) {
-        // Slightly desaturate very dark pixels here already.
-        //result.xy = mix(result.xy, XYZ.xy / sum, smoothstep(0.f, 0.0075f, XYZ.y));
-        result.xy = XYZ.xy / sum;
-    }
-    return result;
-}
 
 vec3 convertSensorToIntermediate(ivec2 xy, vec3 sensor) {
     sensor = max(sensor, 0.f);
     sensor = min(sensor, neutralPoint);
 
     vec3 XYZ = sensorToXYZ * sensor;
+    //return XYZ;
     vec3 intermediate = XYZtoxyY(XYZ);
 
     return intermediate;

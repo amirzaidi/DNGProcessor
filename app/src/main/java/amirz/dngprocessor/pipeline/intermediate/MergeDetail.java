@@ -33,6 +33,8 @@ public class MergeDetail extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
+        if (true) return;
+
         GLPrograms converter = getConverter();
 
         BilateralFilter bilateral = previousStages.getStage(BilateralFilter.class);
@@ -76,8 +78,8 @@ public class MergeDetail extends Stage {
         converter.setTexture("intermediate", intermediateTex);
         converter.setTexture("bilateral", bilateralTex);
 
-        Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
-        converter.setTexture("noiseTex", noiseTex);
+        //Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
+        //converter.setTexture("noiseTex", noiseTex);
 
         mIntermediate = new Texture(w, h, 3, Texture.Format.Float16, null);
         converter.drawBlocks(mIntermediate);

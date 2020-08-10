@@ -34,6 +34,10 @@ public class Texture implements AutoCloseable {
                 config.texWrap);
     }
 
+    public Texture(Texture texture) {
+        this(texture.getWidth(), texture.getHeight(), texture.mChannels, texture.mFormat, null);
+    }
+
     public Texture(int w, int h, int channels, Format format, Buffer pixels) {
         this(w, h, channels, format, pixels, GL_NEAREST);
     }

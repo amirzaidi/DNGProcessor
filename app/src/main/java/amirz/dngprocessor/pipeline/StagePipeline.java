@@ -11,11 +11,13 @@ import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
+import amirz.dngprocessor.pipeline.convert.EdgeMirror;
 import amirz.dngprocessor.pipeline.convert.GreenDemosaic;
 import amirz.dngprocessor.pipeline.convert.PreProcess;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 import amirz.dngprocessor.pipeline.intermediate.BilateralFilter;
 import amirz.dngprocessor.pipeline.intermediate.Analysis;
+import amirz.dngprocessor.pipeline.intermediate.Decompose;
 import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
 import amirz.dngprocessor.pipeline.intermediate.NoiseMap;
 import amirz.dngprocessor.pipeline.post.BlurLCE;
@@ -53,8 +55,10 @@ public class StagePipeline implements AutoCloseable {
         addStage(new PreProcess(sensor, raw));
         addStage(new GreenDemosaic());
         addStage(new ToIntermediate(sensor, colorspace.sensorToXYZ_D50));
+        addStage(new EdgeMirror(sensor));
 
         // Intermediates
+        addStage(new Decompose(sensor, process));
         addStage(new NoiseMap(process));
         addStage(new Analysis(outWidth, outHeight,
                 sensor.outputOffsetX, sensor.outputOffsetY));
@@ -62,7 +66,7 @@ public class StagePipeline implements AutoCloseable {
         addStage(new MergeDetail(process));
 
         // XYZ -> sRGB
-        addStage(new NoiseReduce(process));
+        addStage(new NoiseReduce(sensor, process));
         addStage(new BlurLCE(sensor, process));
         addStage(new ToneMap(sensor, process, colorspace.XYZtoProPhoto,
                 colorspace.proPhotoToSRGB));

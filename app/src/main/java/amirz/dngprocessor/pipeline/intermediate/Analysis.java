@@ -45,6 +45,8 @@ public class Analysis extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
+        if (true) return;
+
         GLPrograms converter = getConverter();
 
         Texture intermediate = previousStages.getStage(ToIntermediate.class).getIntermediate();

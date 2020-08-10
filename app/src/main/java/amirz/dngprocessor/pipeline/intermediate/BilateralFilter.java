@@ -22,7 +22,10 @@ public class BilateralFilter extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
-        if (mProcess.histFactor == 0f || true) {
+        if (true) return;
+
+        /*
+        if (mProcess.histFactor == 0f) {
             return;
         }
 
@@ -63,6 +66,8 @@ public class BilateralFilter extends Stage {
             converter.seti("radius", 12, 3);
             converter.drawBlocks(mBilateral);
         }
+
+         */
     }
 
     @Override

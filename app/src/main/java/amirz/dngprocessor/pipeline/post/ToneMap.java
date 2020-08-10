@@ -13,6 +13,7 @@ import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
+import amirz.dngprocessor.pipeline.intermediate.Decompose;
 import amirz.dngprocessor.pipeline.intermediate.NoiseMap;
 
 import static amirz.dngprocessor.colorspace.ColorspaceConstants.CUSTOM_ACR3_TONEMAP_CURVE_COEFFS;
@@ -50,17 +51,28 @@ public class ToneMap extends Stage {
         glBindFramebuffer(GL_FRAMEBUFFER, mFbo[0]);
 
         // Load intermediate buffers as textures
-        Texture intermediate = previousStages.getStage(NoiseReduce.class).getDenoised();
-        converter.setTexture("intermediateBuffer", intermediate);
-        converter.seti("intermediateWidth", intermediate.getWidth());
-        converter.seti("intermediateHeight", intermediate.getHeight());
+        //Texture intermediate = previousStages.getStage(NoiseReduce.class).getDenoised();
+        //converter.setTexture("intermediateBuffer", intermediate);
 
+        Texture[] layers = previousStages.getStage(NoiseReduce.class).getDenoisedLayers();
+        Texture highResDiff = layers[0];
+        Texture mediumResDiff = layers[1];
+        Texture lowRes = layers[2];
+        converter.setTexture("highResDiff", highResDiff);
+        converter.setTexture("mediumResDiff", mediumResDiff);
+        converter.setTexture("lowRes", lowRes);
+        converter.setf("highResBufSize", highResDiff.getWidth(), highResDiff.getHeight());
+        converter.seti("intermediateWidth", highResDiff.getWidth());
+        converter.seti("intermediateHeight", highResDiff.getHeight());
+
+        /*
         if (mProcessParams.lce) {
             BlurLCE blur = previousStages.getStage(BlurLCE.class);
             converter.setTexture("weakBlur", blur.getWeakBlur());
             converter.setTexture("mediumBlur", blur.getMediumBlur());
             converter.setTexture("strongBlur", blur.getStrongBlur());
         }
+         */
 
         float satLimit = mProcessParams.satLimit;
         Log.d(TAG, "Saturation limit " + satLimit);

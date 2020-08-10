@@ -33,6 +33,8 @@ public class BlurLCE extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
+        if (true) return;
+
         if (!mProcessParams.lce) {
             return;
         }

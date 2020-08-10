@@ -6,10 +6,7 @@
 
 precision mediump float;
 
-uniform sampler2D intermediateBuffer;
-uniform int intermediateWidth;
-uniform int intermediateHeight;
-
+uniform sampler2D inBuffer;
 uniform sampler2D noiseTex;
 
 uniform int radiusDenoise;
@@ -23,11 +20,47 @@ out vec3 result;
 void main() {
     ivec2 xyPos = ivec2(gl_FragCoord.xy);
 
-    vec3[9] impatch = load3x3(xyPos, 2, intermediateBuffer);
+    vec3 noiseLevel = texelFetch(noiseTex, xyPos / 2, 0).xyz; // Sigma
+    vec3 maxDiff = noiseLevel * 2.f * 100.f;
+    vec3[9] impatch = load3x3(xyPos, 1, inBuffer);
+    vec3[9] impatch2 = load3x3(xyPos, 2, inBuffer);
     vec3 mid = impatch[4];
-    result = mid;
+
+    vec3 sum = mid;
+    int weight = 1;
+
+    vec3 val, diff;
+    for (int i = 0; i < 9; i++) {
+        if (i != 4) {
+            // Immediate neighbours.
+            val = impatch[i];
+            diff = abs(val - mid);
+            if (diff.x < maxDiff.x && diff.y < maxDiff.y && diff.z < maxDiff.z) {
+                sum += val;
+                weight += 1;
+            }
+
+            // Further neighbours.
+            val = impatch2[i];
+            diff = abs(val - mid);
+            if (diff.x < maxDiff.x && diff.y < maxDiff.y && diff.z < maxDiff.z) {
+                sum += val;
+                weight += 1;
+            }
+        }
+    }
+
+    // Speckle noise.
+    if (weight <= 3) {
+        sum = impatch[1] + impatch[3] + impatch[5] + impatch[7];
+        weight = 4;
+    }
+
+    // Weight is never zero as mid is always included.
+    result = sum / float(weight);
     return;
 
+    /*
     // Take unfiltered xy and z as starting point.
     vec2 xy = mid.xy;
     float z = mid.z;
@@ -53,10 +86,12 @@ void main() {
     float distxy = distance(minxyz.xy, maxxyz.xy);
     float distz = distance(minxyz.z, maxxyz.z);
 
+*/
     /**
     CHROMA NOISE REDUCE
     **/
 
+    /*
     // Thresholds
     float thExclude = 1.5f;
     float thStop = 2.25f;
@@ -110,4 +145,5 @@ void main() {
     float noise = texelFetch(noiseTex, xyPos, 0).x;
     result.xy = sum.xy / float(totalCount);
     result.z = mix(z, sum.z / float(totalCount), min(noise * 1.65f, 1.f));
+    */
 }

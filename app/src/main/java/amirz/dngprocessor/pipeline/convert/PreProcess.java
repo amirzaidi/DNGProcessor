@@ -70,7 +70,7 @@ public class PreProcess extends Stage {
             }
 
             mGainMapTex = new Texture(gainMapSize[0], gainMapSize[1], 4, Texture.Format.Float16,
-                    FloatBuffer.wrap(gainMap), GL_LINEAR, GL_CLAMP_TO_EDGE);
+                    FloatBuffer.wrap(gainMap), GL_LINEAR);
             converter.setTexture("gainMap", mGainMapTex);
 
             int[] blackLevel = mSensor.blackLevelPattern;
