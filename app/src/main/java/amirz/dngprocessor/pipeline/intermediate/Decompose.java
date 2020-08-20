@@ -9,11 +9,7 @@ import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.EdgeMirror;
 
-import static android.opengl.GLES20.GL_LINEAR;
-
 public class Decompose extends Stage {
-    private static final int SAMPLING_FACTOR = 2;
-
     private final SensorParams mSensorParams;
     private final ProcessParams mProcessParams;
     private Texture mHighRes, mMediumRes, mLowRes;
@@ -26,7 +22,8 @@ public class Decompose extends Stage {
 
     public Texture[] getLayers() {
         return new Texture[] {
-            mHighResDiff, mMediumResDiff, mLowRes
+            //mHighResDiff, mMediumResDiff, mLowRes
+            mHighRes, mMediumRes, mLowRes
         };
     }
 
@@ -40,55 +37,45 @@ public class Decompose extends Stage {
 
         //converter.setf("sigma", 1.36f);
         //converter.seti("radius", 2);
+        converter.seti("bufSize", w, h);
 
-        converter.setf("sigma", 9f);
-        converter.seti("radius", 18);
-
-        try (Texture tmp = new Texture(w, h / SAMPLING_FACTOR + 1, 3,
+        try (Texture tmp = new Texture(w, h, 3,
                 Texture.Format.Float16, null)) {
+            converter.setf("sigma", 3f);
+            converter.seti("radius", 6);
+
             // First render to the tmp buffer.
             converter.setTexture("buf", mHighRes);
-            converter.seti("bufSize", w, h);
             converter.seti("dir", 0, 1); // Vertical
-            converter.seti("samplingFactor", 1, SAMPLING_FACTOR);
             converter.drawBlocks(tmp, false);
 
             // Now render from tmp to the real buffer.
             converter.setTexture("buf", tmp);
-            converter.seti("bufSize", tmp.getWidth(), tmp.getHeight());
             converter.seti("dir", 1, 0); // Horizontal
-            converter.seti("samplingFactor", SAMPLING_FACTOR, 1);
 
-            mMediumRes = new Texture(tmp.getWidth() / SAMPLING_FACTOR + 1, tmp.getHeight(), 3,
+            mMediumRes = new Texture(w, h, 3,
                     Texture.Format.Float16, null);
             converter.drawBlocks(mMediumRes);
-        }
 
-        w = mMediumRes.getWidth();
-        h = mMediumRes.getHeight();
+            converter.setf("sigma", 9f);
+            converter.seti("radius", 18);
 
-        try (Texture tmp = new Texture(w, h / SAMPLING_FACTOR + 1, 3,
-                Texture.Format.Float16, null)) {
             // First render to the tmp buffer.
             converter.setTexture("buf", mMediumRes);
-            converter.seti("bufSize", w, h);
             converter.seti("dir", 0, 1); // Vertical
-            converter.seti("samplingFactor", 1, SAMPLING_FACTOR);
             converter.drawBlocks(tmp, false);
 
             // Now render from tmp to the real buffer.
             converter.setTexture("buf", tmp);
-            converter.seti("bufSize", tmp.getWidth(), tmp.getHeight());
             converter.seti("dir", 1, 0); // Horizontal
-            converter.seti("samplingFactor", SAMPLING_FACTOR, 1);
 
-            mLowRes = new Texture(tmp.getWidth() / SAMPLING_FACTOR + 1, tmp.getHeight(), 3,
+            mLowRes = new Texture(w, h, 3,
                     Texture.Format.Float16, null);
             converter.drawBlocks(mLowRes);
         }
 
+        /*
         converter.useProgram(R.raw.stage2_0_diff_3ch_fs);
-        converter.seti("samplingFactor", SAMPLING_FACTOR);
 
         converter.setTexture("highResBuf", mHighRes);
         converter.setTexture("lowResBuf", mMediumRes);
@@ -101,6 +88,7 @@ public class Decompose extends Stage {
         mMediumResDiff = new Texture(mMediumRes.getWidth(), mMediumRes.getHeight(), 3,
                 Texture.Format.Float16, null);
         converter.drawBlocks(mMediumResDiff);
+         */
     }
 
     @Override

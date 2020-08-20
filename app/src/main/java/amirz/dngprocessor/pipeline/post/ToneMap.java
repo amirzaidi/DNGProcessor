@@ -54,25 +54,25 @@ public class ToneMap extends Stage {
         //Texture intermediate = previousStages.getStage(NoiseReduce.class).getDenoised();
         //converter.setTexture("intermediateBuffer", intermediate);
 
-        Texture[] layers = previousStages.getStage(NoiseReduce.class).getDenoisedLayers();
-        Texture highResDiff = layers[0];
-        Texture mediumResDiff = layers[1];
-        Texture lowRes = layers[2];
-        converter.setTexture("highResDiff", highResDiff);
-        converter.setTexture("mediumResDiff", mediumResDiff);
-        converter.setTexture("lowRes", lowRes);
-        converter.setf("highResBufSize", highResDiff.getWidth(), highResDiff.getHeight());
-        converter.seti("intermediateWidth", highResDiff.getWidth());
-        converter.seti("intermediateHeight", highResDiff.getHeight());
+        Texture highRes = previousStages.getStage(NoiseReduce.class).getDenoised();
+        //Texture mediumResDiff = layers[1];
+        //Texture lowRes = layers[2];
+        converter.setTexture("highRes", highRes);
+        //converter.setTexture("mediumRes", mediumResDiff);
+        //converter.setTexture("lowRes", lowRes);
 
-        /*
+        //converter.setTexture("lowRes", previousStages.getStage(NoiseMap.class).getNoiseTex()[2]);
+
+        //converter.setf("highResBufSize", highResDiff.getWidth(), highResDiff.getHeight());
+        converter.seti("intermediateWidth", highRes.getWidth());
+        converter.seti("intermediateHeight", highRes.getHeight());
+
         if (mProcessParams.lce) {
             BlurLCE blur = previousStages.getStage(BlurLCE.class);
             converter.setTexture("weakBlur", blur.getWeakBlur());
             converter.setTexture("mediumBlur", blur.getMediumBlur());
             converter.setTexture("strongBlur", blur.getStrongBlur());
         }
-         */
 
         float satLimit = mProcessParams.satLimit;
         Log.d(TAG, "Saturation limit " + satLimit);

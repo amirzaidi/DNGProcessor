@@ -33,10 +33,10 @@ public class NoiseReduce extends Stage {
     }
 
     public Texture getDenoised() {
-        return mDenoised;
+        return mDenoisedLayers[0];
     }
 
-    public Texture[] getDenoisedLayers() {
+    private Texture[] getDenoisedLayers() {
         return mDenoisedLayers;
     }
 
@@ -44,96 +44,53 @@ public class NoiseReduce extends Stage {
     protected void execute(StagePipeline.StageMap previousStages) {
         GLPrograms converter = getConverter();
         Texture[] layers = previousStages.getStage(Decompose.class).getLayers();
-
-        mDenoisedLayers = new Texture[] { layers[0], layers[1], layers[2] };
-        if (mProcessParams.denoiseFactor == 0 || true) {
+        if (mProcessParams.denoiseFactor == 0) {
+            mDenoisedLayers = layers;
             return;
         }
 
+        mDenoisedLayers = new Texture[layers.length];
         Texture[] noise = previousStages.getStage(NoiseMap.class).getNoiseTex();
 
-        converter.seti("inBufferSize", layers[1].getWidth(), layers[1].getHeight());
-        converter.setTexture("noiseTex", noise[1]);
-        try (Texture tmp = new Texture(mDenoisedLayers[1])) {
-            for (int i = 0; i < 0; i++) {
-                converter.setTexture("inBuffer", mDenoisedLayers[1]);
-                converter.drawBlocks(tmp);
-
-                converter.setTexture("inBuffer", tmp);
-                converter.drawBlocks(mDenoisedLayers[1]);
-            }
-        }
-
-        /*
-        Texture noisy = previousStages.getStage(MergeDetail.class).getIntermediate();
-        mDenoised = noisy;
-        mNRParams = new NoiseReduce.NRParams(mProcessParams,
-                previousStages.getStage(Analysis.class).getSigma());
-
-        if (mProcessParams.denoiseFactor == 0) {
-            return;
-        }
-
-        GLPrograms converter = getConverter();
-
-        int w = noisy.getWidth();
-        int h = noisy.getHeight();
-
-        converter.setTexture("inBuffer", noisy);
-
-        int offsetX = mSensorParams.outputOffsetX;
-        int offsetY = mSensorParams.outputOffsetY;
-
-        //converter.seti("radiusDenoise", mNRParams.denoiseFactor);
-        //converter.setf("sigma", mNRParams.sigma);
-        //converter.setf("sharpenFactor", mNRParams.sharpenFactor);
-
-        //Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
-        //converter.setTexture("noiseTex", noiseTex);
-
-        try (Texture tmp = new Texture(w, h, 3, Texture.Format.Float16, null)) {
-            //converter.drawBlocks(tmp);
-
-            //converter.useProgram(R.raw.stage2_3_bilateral);
-
-            //converter.seti("bufSize", w, h);
-            //converter.setTexture("noiseTex", noiseTex);
-
-            //float s = mNRParams.sigma[0];
-            //converter.setf("sigma", 0.015f + 0.1f * s, 0.35f + 9f * s);
-            //converter.setf("sigma", 0.1f, 1.5f);
-            //converter.seti("radius", 5, 1);
-
-            // Aggressive chroma denoise.
-            converter.seti("minxy", offsetX, offsetY);
-            converter.seti("maxxy", w - offsetX - 1, h - offsetY - 1);
-            for (int i = 0; i < 0; i++) {
-                converter.setTexture("inBuffer", mDenoised);
-                converter.drawBlocks(tmp);
-
-                converter.setTexture("inBuffer", tmp);
-                converter.drawBlocks(mDenoised);
-            }
-
-            // Mild luma and chroma denoise.
+        for (int i = 0; i < layers.length; i++) {
             converter.useProgram(R.raw.stage3_1_noise_reduce_fs);
-            converter.seti("minxy", offsetX, offsetY);
-            converter.seti("maxxy", w - offsetX - 1, h - offsetY - 1);
-            for (int i = 0; i < 0; i++) {
-                converter.setTexture("inBuffer", mDenoised);
-                converter.drawBlocks(tmp);
 
-                converter.setTexture("inBuffer", tmp);
-                converter.drawBlocks(mDenoised);
-            }
+            converter.seti("bufSize", layers[i].getWidth(), layers[i].getHeight());
+            converter.setTexture("noiseTex", noise[i]);
+            converter.seti("radius", 3 << (i * 2), 1 << (i * 2)); // Radius, Sampling
+            converter.setf("sigma", 2f * (1 << (i * 2)), 3f / (i + 1)); // Spatial, Color
+            converter.setf("blendY", 3f / (2f + layers.length - i));
+
+            mDenoisedLayers[i] = new Texture(layers[i]);
+
+            converter.setTexture("inBuffer", layers[i]);
+            converter.drawBlocks(mDenoisedLayers[i]);
         }
-        */
+
+        converter.useProgram(R.raw.stage3_1_noise_reduce_remove_noise_fs);
+
+        converter.setTexture("bufDenoisedHighRes", mDenoisedLayers[0]);
+        converter.setTexture("bufDenoisedMediumRes", mDenoisedLayers[1]);
+        converter.setTexture("bufDenoisedLowRes", mDenoisedLayers[2]);
+        converter.setTexture("bufNoisyMediumRes", layers[1]);
+        converter.setTexture("bufNoisyLowRes", layers[2]);
+        converter.setTexture("noiseTexMediumRes", noise[1]);
+        converter.setTexture("noiseTexLowRes", noise[2]);
+
+        converter.drawBlocks(layers[0], true);
+        layers[1].close();
+        layers[2].close();
+
+        mDenoisedLayers[0].close();
+        mDenoisedLayers[1].close();
+        mDenoisedLayers[2].close();
+
+        mDenoisedLayers[0] = layers[0];
     }
 
     @Override
     public int getShader() {
         return R.raw.stage3_1_noise_reduce_fs;
-        //return R.raw.stage3_1_noise_reduce_chroma_fs;
     }
 
     /**

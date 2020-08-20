@@ -6,10 +6,11 @@ precision mediump usampler2D;
 
 //uniform sampler2D intermediateBuffer;
 
-uniform sampler2D highResDiff;
-uniform sampler2D mediumResDiff;
-uniform sampler2D lowRes;
-uniform vec2 highResBufSize;
+uniform sampler2D highRes;
+//uniform sampler2D highResDiff;
+//uniform sampler2D mediumResDiff;
+//uniform sampler2D lowRes;
+//uniform vec2 highResBufSize;
 uniform int intermediateWidth;
 uniform int intermediateHeight;
 
@@ -49,82 +50,33 @@ out vec4 color;
 #include xyytoxyz
 #include xyztoxyy
 
-/*
 float[9] load3x3z(ivec2 xy) {
     float outputArray[9];
     for (int i = 0; i < 9; i++) {
-        outputArray[i] = texelFetch(intermediateBuffer, xy + ivec2((i % 3) - 1, (i / 3) - 1), 0).z;
+        outputArray[i] = texelFetch(highRes, xy + ivec2((i % 3) - 1, (i / 3) - 1), 0).z;
     }
     return outputArray;
 }
-*/
-
-vec3 getValBilinear(sampler2D tex, ivec2 xyPos, int factor) {
-    ivec2 xyPos00 = xyPos / factor;
-    ivec2 xyPos01 = xyPos00 + ivec2(1, 0);
-    ivec2 xyPos10 = xyPos00 + ivec2(0, 1);
-    ivec2 xyPos11 = xyPos00 + ivec2(1, 1);
-
-    vec3 xyVal00 = texelFetch(tex, xyPos00, 0).xyz;
-    vec3 xyVal01 = texelFetch(tex, xyPos01, 0).xyz;
-    vec3 xyVal10 = texelFetch(tex, xyPos10, 0).xyz;
-    vec3 xyVal11 = texelFetch(tex, xyPos11, 0).xyz;
-
-    ivec2 xyShift = xyPos % factor;
-    vec2 xyShiftf = vec2(xyShift.x, xyShift.y) / float(factor);
-
-    vec3 xyVal0 = mix(xyVal00, xyVal01, xyShiftf.x);
-    vec3 xyVal1 = mix(xyVal10, xyVal11, xyShiftf.x);
-
-    return mix(xyVal0, xyVal1, xyShiftf.y);
-}
 
 vec3 processPatch(ivec2 xyPos) {
-    //vec2 xyRel = (vec2(xyPos.x, xyPos.y) + 0.5f) / highResBufSize;
-    vec3 highResDiffVal = texelFetch(highResDiff, xyPos, 0).xyz;
-    //vec3 mediumResDiffVal = texture(mediumResDiff, xyRel).xyz;
-    //vec3 lowResVal = texture(lowRes, xyRel).xyz;
-    vec3 mediumResDiffVal = texelFetch(mediumResDiff, xyPos / 2, 0).xyz;
-    //vec3 mediumResDiffVal = getValBilinear(mediumResDiff, xyPos, 2);
-    vec3 lowResVal = texelFetch(lowRes, xyPos / 4, 0).xyz;
-    //vec3 lowResVal = getValBilinear(lowRes, xyPos, 4);
-    //vec3 xyY = highResDiffVal + mediumResDiffVal + lowResVal;
-    //vec3 xyY = highResDiffVal + mediumResDiffVal + lowResVal;
-    //xyY.z -= lowResVal.z;
-    //xyY.z = lowResVal.z;
-    //xyY.xy = lowResVal.xy + mediumResDiffVal.xy;
-    //xyY.xy = vec2(0.345703f, 0.358539f) + 2.f * mediumResDiffVal.xy;
-    //xyY = lowResVal;
-    vec3 xyY = highResDiffVal + mediumResDiffVal + lowResVal;
-    //xyY.xy = lowResVal.xy;
-    //xyY = mediumResDiffVal;
-    //xyY = lowResVal;
-    //xyY = lowResVal + highResDiffVal;
-
-    /*
-    vec3 XYZ = texelFetch(intermediateBuffer, xyPos, 0).xyz;
-
-    //vec3 xyY = XYZtoxyY(XYZ);
-    vec3 xyY = XYZ;
+    vec3 xyY = texelFetch(highRes, xyPos, 0).xyz;
 
     if (lce) {
         float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
         float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
         float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
 
-        //float edge = 30.f * sqrt(abs(zMediumBlur - zStrongBlur));
-        //float d = zWeakBlur - zMediumBlur;
+        float edge = sqrt(sqrt(abs(zMediumBlur - zStrongBlur)));
 
-        //z += edge * sign(d) * sqrt(abs(d));
-
-        xyY.z += 0.25f * (zMediumBlur - zStrongBlur);
-        xyY.z += 1.25f * (zWeakBlur - zMediumBlur);
-    }*/
+        xyY.z += edge * 0.5f * (zMediumBlur - zStrongBlur);
+        xyY.z += edge * 1.5f * (zWeakBlur - zMediumBlur);
+    }
 
     //xyY.xy = vec2(0.345703f, 0.358539f);
     //xyY.z = texelFetch(noiseTex, xyPos / 2, 0).z;
 
-    return xyYtoXYZ(xyY);
+    //return XYZtoxyY(xyY);
+    //return xyYtoXYZ(xyY);
 
     //return xyz;
 
@@ -134,14 +86,12 @@ vec3 processPatch(ivec2 xyPos) {
     /**
     LUMA SHARPEN
     **/
-    /*
-    float noise = texelFetch(noiseTex, xyPos, 0).x;
-    float sharpen = sharpenFactor - noise;
+    float sharpen = 1.f;
     if (sharpen > 0.f) {
         float[9] impz = load3x3z(xyPos);
 
         // Sum of difference with all pixels nearby
-        float dz = z * 13.f;
+        float dz = xyY.z * 13.f;
         for (int i = 0; i < 9; i++) {
             if (i % 2 == 0) {
                 dz -= impz[i];
@@ -155,35 +105,10 @@ vec3 processPatch(ivec2 xyPos) {
         float ly = impz[0] - impz[6] + (impz[1] - impz[7]) * 2.f + impz[2] - impz[8];
         float l = sqrt(lx * lx + ly * ly);
 
-        z += sharpen * (0.03f + min(0.6f * l, 0.4f)) * dz;
+        xyY.z += sharpen * (0.03f + min(0.6f * l, 0.4f)) * dz;
     }
 
-    if (lce) {
-        float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
-        if (zMediumBlur > 0.0001f && sharpenFactor > 0.f) {
-            float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
-            z *= zWeakBlur / zMediumBlur;
-        }
-
-        float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
-        if (zStrongBlur > 0.0001f) {
-            z *= sqrt(sqrt(zMediumBlur / zStrongBlur));
-        }
-    }
-    if (lce && false) {
-        float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
-        float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
-        float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
-
-        float edge = 30.f * sqrt(abs(zMediumBlur - zStrongBlur));
-        //float d = zWeakBlur - zMediumBlur;
-
-        //z += edge * sign(d) * sqrt(abs(d));
-
-        z += edge * (zWeakBlur - zMediumBlur);
-    }
-
-    return clamp(vec3(xy, z), 0.f, 1.f);*/
+    return clamp(xyY, 0.f, 1.f);
 }
 
 float tonemapSin(float ch) {
@@ -370,7 +295,7 @@ void main() {
     vec3 intermediate = processPatch(xy);
 
     // Convert to XYZ space
-    vec3 XYZ = intermediate; // xyYtoXYZ(intermediate);
+    vec3 XYZ = xyYtoXYZ(intermediate);
 
     // Convert to ProPhoto space
     vec3 proPhoto = XYZtoProPhoto * XYZ;
@@ -379,10 +304,10 @@ void main() {
     vec3 sRGB = clamp(proPhotoToSRGB * proPhoto, 0.f, 1.f);
 
     // Add saturation
-    //sRGB = saturate(sRGB);
+    sRGB = saturate(sRGB);
     //sRGB = tonemap(sRGB);
 
     // Gamma correct at the end.
-    //color = vec4(gammaCorrectPixel(sRGB), 1.f);
-    color = vec4(dither(gammaCorrectPixel(sRGB), xy), 1.f);
+    color = vec4(gammaCorrectPixel(sRGB), 1.f);
+    //color = vec4(dither(gammaCorrectPixel(sRGB), xy), 1.f);
 }

@@ -138,8 +138,8 @@ vec3 convertSensorToIntermediate(ivec2 xy, vec3 sensor) {
 
     vec3 XYZ = sensorToXYZ * sensor;
     //return XYZ;
-    vec3 intermediate = XYZtoxyY(XYZ);
 
+    vec3 intermediate = XYZtoxyY(XYZ);
     return intermediate;
 
     /*

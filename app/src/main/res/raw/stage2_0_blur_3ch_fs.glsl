@@ -5,7 +5,6 @@ precision mediump float;
 uniform sampler2D buf;
 uniform ivec2 bufSize;
 
-uniform ivec2 samplingFactor;
 uniform float sigma;
 uniform int radius;
 uniform ivec2 dir;
@@ -15,7 +14,7 @@ out vec3 result;
 #include gaussian
 
 void main() {
-    ivec2 xyCenter = ivec2(gl_FragCoord.xy) * samplingFactor;
+    ivec2 xyCenter = ivec2(gl_FragCoord.xy);
 
     vec3 I = vec3(0.f);
     float W = 0.f;

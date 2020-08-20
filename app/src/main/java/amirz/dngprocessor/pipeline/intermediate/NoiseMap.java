@@ -28,8 +28,10 @@ public class NoiseMap extends Stage {
         mNoiseTex = new Texture[layers.length];
         for (int i = 0; i < layers.length; i++) {
             converter.setTexture("intermediate", layers[i]);
-            mNoiseTex[i] = new Texture(layers[i].getWidth() / 2 + 1,
-                    layers[i].getHeight() / 2 + 1, 3,
+            converter.seti("bufSize", layers[i].getWidth(), layers[i].getHeight());
+            converter.seti("radius", 1 << (i * 2));
+            mNoiseTex[i] = new Texture(layers[i].getWidth() / 4 + 1,
+                    layers[i].getHeight() / 4 + 1, 3,
                     Texture.Format.Float16, null);
             converter.drawBlocks(mNoiseTex[i]);
         }
@@ -45,8 +47,8 @@ public class NoiseMap extends Stage {
 
                 // First render to the tmp buffer.
                 converter.setTexture("buf", mNoiseTex[i]);
-                converter.setf("sigma", 9f);
-                converter.seti("radius", 18, 1);
+                converter.setf("sigma", 1.5f * (1 << i));
+                converter.seti("radius", 3 << i, 1);
                 converter.seti("dir", 0, 1); // Vertical
                 converter.drawBlocks(tmp, false);
 
