@@ -13,8 +13,8 @@ import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
-import amirz.dngprocessor.pipeline.intermediate.Decompose;
-import amirz.dngprocessor.pipeline.intermediate.NoiseMap;
+import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
+import amirz.dngprocessor.pipeline.noisereduce.NoiseReduce;
 
 import static amirz.dngprocessor.colorspace.ColorspaceConstants.CUSTOM_ACR3_TONEMAP_CURVE_COEFFS;
 import static android.opengl.GLES20.*;
@@ -51,19 +51,8 @@ public class ToneMap extends Stage {
         glBindFramebuffer(GL_FRAMEBUFFER, mFbo[0]);
 
         // Load intermediate buffers as textures
-        //Texture intermediate = previousStages.getStage(NoiseReduce.class).getDenoised();
-        //converter.setTexture("intermediateBuffer", intermediate);
-
-        Texture highRes = previousStages.getStage(NoiseReduce.class).getDenoised();
-        //Texture mediumResDiff = layers[1];
-        //Texture lowRes = layers[2];
+        Texture highRes = previousStages.getStage(MergeDetail.class).getIntermediate();
         converter.setTexture("highRes", highRes);
-        //converter.setTexture("mediumRes", mediumResDiff);
-        //converter.setTexture("lowRes", lowRes);
-
-        //converter.setTexture("lowRes", previousStages.getStage(NoiseMap.class).getNoiseTex()[2]);
-
-        //converter.setf("highResBufSize", highResDiff.getWidth(), highResDiff.getHeight());
         converter.seti("intermediateWidth", highRes.getWidth());
         converter.seti("intermediateHeight", highRes.getHeight());
 

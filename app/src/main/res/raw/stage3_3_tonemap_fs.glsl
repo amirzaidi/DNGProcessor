@@ -4,13 +4,7 @@
 precision mediump float;
 precision mediump usampler2D;
 
-//uniform sampler2D intermediateBuffer;
-
 uniform sampler2D highRes;
-//uniform sampler2D highResDiff;
-//uniform sampler2D mediumResDiff;
-//uniform sampler2D lowRes;
-//uniform vec2 highResBufSize;
 uniform int intermediateWidth;
 uniform int intermediateHeight;
 
@@ -61,53 +55,40 @@ float[9] load3x3z(ivec2 xy) {
 vec3 processPatch(ivec2 xyPos) {
     vec3 xyY = texelFetch(highRes, xyPos, 0).xyz;
 
-    if (lce) {
-        float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
-        float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
-        float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
-
-        float edge = sqrt(sqrt(abs(zMediumBlur - zStrongBlur)));
-
-        xyY.z += edge * 0.5f * (zMediumBlur - zStrongBlur);
-        xyY.z += edge * 1.5f * (zWeakBlur - zMediumBlur);
-    }
-
-    //xyY.xy = vec2(0.345703f, 0.358539f);
-    //xyY.z = texelFetch(noiseTex, xyPos / 2, 0).z;
-
-    //return XYZtoxyY(xyY);
-    //return xyYtoXYZ(xyY);
-
-    //return xyz;
-
-    //vec2 xy = xyz.xy;
-    //float z = xyz.z;
-
     /**
     LUMA SHARPEN
     **/
-    float sharpen = 1.f;
-    if (sharpen > 0.f) {
-        float[9] impz = load3x3z(xyPos);
+    float[9] impz = load3x3z(xyPos);
 
-        // Sum of difference with all pixels nearby
-        float dz = xyY.z * 13.f;
-        for (int i = 0; i < 9; i++) {
-            if (i % 2 == 0) {
-                dz -= impz[i];
-            } else {
-                dz -= 2.f * impz[i];
-            }
+    // Sum of difference with all pixels nearby
+    float dz = xyY.z * 13.f;
+    for (int i = 0; i < 9; i++) {
+        if (i % 2 == 0) {
+            dz -= impz[i];
+        } else {
+            dz -= 2.f * impz[i];
         }
-
-        // Edge strength
-        float lx = impz[0] - impz[2] + (impz[3] - impz[5]) * 2.f + impz[6] - impz[8];
-        float ly = impz[0] - impz[6] + (impz[1] - impz[7]) * 2.f + impz[2] - impz[8];
-        float l = sqrt(lx * lx + ly * ly);
-
-        xyY.z += sharpen * (0.03f + min(0.6f * l, 0.4f)) * dz;
     }
 
+    // Edge strength
+    float lx = impz[0] - impz[2] + (impz[3] - impz[5]) * 2.f + impz[6] - impz[8];
+    float ly = impz[0] - impz[6] + (impz[1] - impz[7]) * 2.f + impz[2] - impz[8];
+    float l = sqrt(lx * lx + ly * ly);
+
+    if (lce) {
+        float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
+        if (zMediumBlur > 0.0001f) {
+            float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;
+            xyY.z *= zWeakBlur / zMediumBlur;
+        }
+
+        float zStrongBlur = texelFetch(strongBlur, xyPos, 0).x;
+        if (zStrongBlur > 0.0001f) {
+            xyY.z *= sqrt(zMediumBlur / zStrongBlur);
+        }
+    }
+
+    xyY.z += min(0.03f + 0.6f * l, 0.4f) * dz;
     return clamp(xyY, 0.f, 1.f);
 }
 
@@ -303,11 +284,10 @@ void main() {
     // Convert to sRGB space
     vec3 sRGB = clamp(proPhotoToSRGB * proPhoto, 0.f, 1.f);
 
-    // Add saturation
+    // Add saturation and tonemap.
     sRGB = saturate(sRGB);
-    //sRGB = tonemap(sRGB);
+    sRGB = tonemap(sRGB);
 
-    // Gamma correct at the end.
-    color = vec4(gammaCorrectPixel(sRGB), 1.f);
-    //color = vec4(dither(gammaCorrectPixel(sRGB), xy), 1.f);
+    // Gamma correct and dither at the end.
+    color = vec4(dither(gammaCorrectPixel(sRGB), xy), 1.f);
 }

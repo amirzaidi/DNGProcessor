@@ -7,7 +7,8 @@ import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
-import amirz.dngprocessor.pipeline.intermediate.NoiseMap;
+import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
+import amirz.dngprocessor.pipeline.noisereduce.NoiseReduce;
 
 public class BlurLCE extends Stage {
     private final SensorParams mSensorParams;
@@ -37,7 +38,7 @@ public class BlurLCE extends Stage {
             return;
         }
 
-        Texture intermediate = previousStages.getStage(NoiseReduce.class).getDenoised();
+        Texture intermediate = previousStages.getStage(MergeDetail.class).getIntermediate();
         GLPrograms converter = getConverter();
 
         int w = intermediate.getWidth();

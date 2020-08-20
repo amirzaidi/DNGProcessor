@@ -1,4 +1,4 @@
-package amirz.dngprocessor.pipeline.intermediate;
+package amirz.dngprocessor.pipeline.noisereduce;
 
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
@@ -10,19 +10,10 @@ import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.EdgeMirror;
 
 public class Decompose extends Stage {
-    private final SensorParams mSensorParams;
-    private final ProcessParams mProcessParams;
     private Texture mHighRes, mMediumRes, mLowRes;
-    private Texture mHighResDiff, mMediumResDiff;
-
-    public Decompose(SensorParams sensor, ProcessParams process) {
-        mSensorParams = sensor;
-        mProcessParams = process;
-    }
 
     public Texture[] getLayers() {
         return new Texture[] {
-            //mHighResDiff, mMediumResDiff, mLowRes
             mHighRes, mMediumRes, mLowRes
         };
     }
@@ -35,8 +26,6 @@ public class Decompose extends Stage {
         int w = mHighRes.getWidth();
         int h = mHighRes.getHeight();
 
-        //converter.setf("sigma", 1.36f);
-        //converter.seti("radius", 2);
         converter.seti("bufSize", w, h);
 
         try (Texture tmp = new Texture(w, h, 3,
@@ -73,22 +62,6 @@ public class Decompose extends Stage {
                     Texture.Format.Float16, null);
             converter.drawBlocks(mLowRes);
         }
-
-        /*
-        converter.useProgram(R.raw.stage2_0_diff_3ch_fs);
-
-        converter.setTexture("highResBuf", mHighRes);
-        converter.setTexture("lowResBuf", mMediumRes);
-        mHighResDiff = new Texture(mHighRes.getWidth(), mHighRes.getHeight(), 3,
-                Texture.Format.Float16, null);
-        converter.drawBlocks(mHighResDiff);
-
-        converter.setTexture("highResBuf", mMediumRes);
-        converter.setTexture("lowResBuf", mLowRes);
-        mMediumResDiff = new Texture(mMediumRes.getWidth(), mMediumRes.getHeight(), 3,
-                Texture.Format.Float16, null);
-        converter.drawBlocks(mMediumResDiff);
-         */
     }
 
     @Override

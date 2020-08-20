@@ -60,6 +60,6 @@ void main() {
     }
 
     // Desaturate noisy patches.
-    tmp.xy = mix(tmp.xy, vec2(0.345703f, 0.358539f), min(0.02f * length(noiseLevel.xy) - 0.01f, 0.25f));
+    tmp.xy = mix(tmp.xy, vec2(0.345703f, 0.358539f), min(0.01f * length(noiseLevel.xy) - 0.01f, 0.25f));
     result = tmp;
 }

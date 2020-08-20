@@ -7,8 +7,6 @@ precision mediump float;
 uniform sampler2D buf;
 uniform ivec2 bufSize;
 
-uniform sampler2D noiseTex;
-
 uniform vec2 sigma;
 uniform ivec2 radius;
 
@@ -60,7 +58,6 @@ void main() {
 
     vec3 I = vec3(0.f);
     float W = 0.f;
-    //float noise = texelFetch(noiseTex, xyCenter, 0).x;
 
     for (int y = minxy.y; y <= maxxy.y; y += radius.y) {
         for (int x = minxy.x; x <= maxxy.x; x += radius.y) {

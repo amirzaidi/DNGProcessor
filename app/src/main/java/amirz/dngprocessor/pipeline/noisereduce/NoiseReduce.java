@@ -1,4 +1,4 @@
-package amirz.dngprocessor.pipeline.post;
+package amirz.dngprocessor.pipeline.noisereduce;
 
 import android.util.Log;
 
@@ -9,49 +9,41 @@ import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
-import amirz.dngprocessor.pipeline.intermediate.Decompose;
-import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
-import amirz.dngprocessor.pipeline.intermediate.Analysis;
-import amirz.dngprocessor.pipeline.intermediate.NoiseMap;
 
 public class NoiseReduce extends Stage {
     private static final String TAG = "NoiseReduce";
 
     private final SensorParams mSensorParams;
     private final ProcessParams mProcessParams;
-    private NRParams mNRParams;
     private Texture mDenoised;
-    private Texture[] mDenoisedLayers;
 
     public NoiseReduce(SensorParams sensor, ProcessParams process) {
         mSensorParams = sensor;
         mProcessParams = process;
     }
 
-    public NRParams getNRParams() {
-        return mNRParams;
-    }
-
     public Texture getDenoised() {
-        return mDenoisedLayers[0];
-    }
-
-    private Texture[] getDenoisedLayers() {
-        return mDenoisedLayers;
+        return mDenoised;
     }
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
         GLPrograms converter = getConverter();
+
         Texture[] layers = previousStages.getStage(Decompose.class).getLayers();
+        mDenoised = layers[0];
+
         if (mProcessParams.denoiseFactor == 0) {
-            mDenoisedLayers = layers;
+            for (int i = 1; i < layers.length; i++) {
+                layers[i].close();
+            }
             return;
         }
 
-        mDenoisedLayers = new Texture[layers.length];
+        Texture[] denoised = new Texture[layers.length];
         Texture[] noise = previousStages.getStage(NoiseMap.class).getNoiseTex();
 
+        // Gaussian pyramid denoising.
         for (int i = 0; i < layers.length; i++) {
             converter.useProgram(R.raw.stage3_1_noise_reduce_fs);
 
@@ -61,31 +53,32 @@ public class NoiseReduce extends Stage {
             converter.setf("sigma", 2f * (1 << (i * 2)), 3f / (i + 1)); // Spatial, Color
             converter.setf("blendY", 3f / (2f + layers.length - i));
 
-            mDenoisedLayers[i] = new Texture(layers[i]);
+            denoised[i] = new Texture(layers[i]);
 
             converter.setTexture("inBuffer", layers[i]);
-            converter.drawBlocks(mDenoisedLayers[i]);
+            converter.drawBlocks(denoised[i]);
         }
 
+        // Merge all layers.
         converter.useProgram(R.raw.stage3_1_noise_reduce_remove_noise_fs);
 
-        converter.setTexture("bufDenoisedHighRes", mDenoisedLayers[0]);
-        converter.setTexture("bufDenoisedMediumRes", mDenoisedLayers[1]);
-        converter.setTexture("bufDenoisedLowRes", mDenoisedLayers[2]);
+        converter.setTexture("bufDenoisedHighRes", denoised[0]);
+        converter.setTexture("bufDenoisedMediumRes", denoised[1]);
+        converter.setTexture("bufDenoisedLowRes", denoised[2]);
         converter.setTexture("bufNoisyMediumRes", layers[1]);
         converter.setTexture("bufNoisyLowRes", layers[2]);
         converter.setTexture("noiseTexMediumRes", noise[1]);
         converter.setTexture("noiseTexLowRes", noise[2]);
 
-        converter.drawBlocks(layers[0], true);
-        layers[1].close();
-        layers[2].close();
+        // Reuse original high res noisy texture.
+        converter.drawBlocks(mDenoised);
 
-        mDenoisedLayers[0].close();
-        mDenoisedLayers[1].close();
-        mDenoisedLayers[2].close();
-
-        mDenoisedLayers[0] = layers[0];
+        // Cleanup.
+        denoised[0].close();
+        for (int i = 1; i < layers.length; i++) {
+            layers[i].close();
+            denoised[i].close();
+        }
     }
 
     @Override

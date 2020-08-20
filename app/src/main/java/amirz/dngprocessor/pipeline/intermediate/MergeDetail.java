@@ -12,6 +12,7 @@ import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.PreProcess;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
+import amirz.dngprocessor.pipeline.noisereduce.NoiseReduce;
 
 import static android.opengl.GLES20.*;
 
@@ -33,15 +34,13 @@ public class MergeDetail extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
-        if (true) return;
-
         GLPrograms converter = getConverter();
 
         BilateralFilter bilateral = previousStages.getStage(BilateralFilter.class);
         Texture bilateralTex = bilateral.getBilateral();
 
-        ToIntermediate intermediate = previousStages.getStage(ToIntermediate.class);
-        Texture intermediateTex = intermediate.getIntermediate();
+        NoiseReduce denoiser = previousStages.getStage(NoiseReduce.class);
+        Texture intermediateTex = denoiser.getDenoised();
 
         // If there is no bilateral filtered texture, skip this step.
         if (bilateralTex == null) {
@@ -66,7 +65,7 @@ public class MergeDetail extends Stage {
         float[] sigma = sampleHistogram.getSigma();
         float minGamma = Math.min(1f, MIN_GAMMA + 3f * (float) Math.hypot(sigma[0], sigma[1]));
         float gamma = Math.max(minGamma, 0.35f + 0.65f * sampleHistogram.getGamma());
-        Log.d(TAG, "Setting gamma of " + gamma);
+        Log.d(TAG, "Setting gamma of " + gamma + " (original " + sampleHistogram.getGamma() + ")");
         converter.setf("gamma", gamma);
 
         // Reduce the histogram equalization in scenes with good light distribution.
@@ -78,10 +77,7 @@ public class MergeDetail extends Stage {
         converter.setTexture("intermediate", intermediateTex);
         converter.setTexture("bilateral", bilateralTex);
 
-        //Texture noiseTex = previousStages.getStage(NoiseMap.class).getNoiseTex();
-        //converter.setTexture("noiseTex", noiseTex);
-
-        mIntermediate = new Texture(w, h, 3, Texture.Format.Float16, null);
+        mIntermediate = new Texture(intermediateTex);
         converter.drawBlocks(mIntermediate);
 
         intermediateTex.close();

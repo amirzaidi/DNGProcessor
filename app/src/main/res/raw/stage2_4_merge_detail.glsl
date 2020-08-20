@@ -24,10 +24,7 @@ void main() {
     float intermediateVal = intermediateValXyz.z;
     float bilateralVal = bilateralValXyz.z;
 
-    float noiseLevel = texelFetch(noiseTex, xy, 0).x;
-
-    // Reduce intermediate noise using noise texture.
-    float z = mix(intermediateVal, bilateralVal, min(noiseLevel * 1.75f, 1.f));
+    float z = intermediateVal;
     if (bilateralVal > 0.0001f) {
         // (Original Reflectance * Original Luminosity)
         // * (Corrected Luminosity / Original Luminosity)
@@ -40,18 +37,6 @@ void main() {
         z *= pow(correctLuminanceHistEq / bilateralVal, histFactor);
     }
 
-    // Reduce xy noise.
-    noiseLevel *= 0.35f;
-    if (z < noiseLevel) {
-        // Shift towards D50 white
-        processed.xy = mix(bilateralValXyz.xy,
-            vec2(0.345703f, 0.358539f),
-            1.f - z / noiseLevel);
-    } else {
-        // Copy chroma from background.
-        processed.xy = bilateralValXyz.xy;
-    }
-
-    // Set new luma.
+    processed.xy = mix(intermediateValXyz.xy, bilateralValXyz.xy, 0.67f);
     processed.z = clamp(z, 0.f, 1.f);
 }
