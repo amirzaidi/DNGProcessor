@@ -22,7 +22,7 @@ public class GLPrograms implements AutoCloseable {
     private final ByteBuffer mFlushBuffer = ByteBuffer.allocateDirect(32);
     private final ShaderLoader mShaderLoader;
     private final SquareModel mSquare = new SquareModel();
-    private final List<Integer> mPrograms = new ArrayList<>();
+    private final Map<Integer, Integer> mPrograms = new HashMap<>();
     private final Map<String, Integer> mTextureBinds = new HashMap<>();
     private int mNewTextureId;
     private int mProgramActive;
@@ -33,7 +33,14 @@ public class GLPrograms implements AutoCloseable {
     }
 
     public void useProgram(int fragmentRes) {
-        int program = createProgram(vertexShader, mShaderLoader.readRaw(fragmentRes));
+        int program;
+        if (mPrograms.containsKey(fragmentRes)) {
+            //noinspection ConstantConditions
+            program = mPrograms.get(fragmentRes);
+        } else {
+            program = createProgram(vertexShader, mShaderLoader.readRaw(fragmentRes));
+            mPrograms.put(fragmentRes, program);
+        }
 
         glLinkProgram(program);
         glUseProgram(program);
@@ -54,7 +61,6 @@ public class GLPrograms implements AutoCloseable {
         int program = glCreateProgram();
         glAttachShader(program, vertex);
         glAttachShader(program, fragment);
-        mPrograms.add(program);
         return program;
     }
 
@@ -69,7 +75,7 @@ public class GLPrograms implements AutoCloseable {
 
     public void drawBlocks(Texture tex, boolean forceFlush) {
         tex.setFrameBuffer();
-        drawBlocks(tex.getWidth(), tex.getHeight(), forceFlush ? tex.getFormat() : -1, tex.getType());
+        drawBlocks(tex.getWidth(), tex.getHeight(), forceFlush ? tex.getFormatInt() : -1, tex.getType());
     }
 
     private void drawBlocks(int w, int h, int format, int type) {
@@ -98,7 +104,7 @@ public class GLPrograms implements AutoCloseable {
     @Override
     public void close() {
         // Clean everything up
-        for (int program : mPrograms) {
+        for (int program : mPrograms.values()) {
             glDeleteProgram(program);
         }
     }

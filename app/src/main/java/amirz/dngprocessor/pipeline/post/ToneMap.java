@@ -13,6 +13,8 @@ import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
+import amirz.dngprocessor.pipeline.exposefuse.Merge;
+import amirz.dngprocessor.pipeline.exposefuse.Overexpose;
 import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
 import amirz.dngprocessor.pipeline.noisereduce.NoiseReduce;
 
@@ -56,7 +58,7 @@ public class ToneMap extends Stage {
         converter.seti("intermediateWidth", highRes.getWidth());
         converter.seti("intermediateHeight", highRes.getHeight());
 
-        if (mProcessParams.lce) {
+        if (mProcessParams.lce && false) {
             BlurLCE blur = previousStages.getStage(BlurLCE.class);
             converter.setTexture("weakBlur", blur.getWeakBlur());
             converter.setTexture("mediumBlur", blur.getMediumBlur());
@@ -74,6 +76,7 @@ public class ToneMap extends Stage {
 
         //NoiseReduce.NRParams nrParams = previousStages.getStage(NoiseReduce.class).getNRParams();
         converter.seti("lce", mProcessParams.lce ? 1 : 0);
+        converter.seti("lce", 0);
         //converter.setf("sharpenFactor", nrParams.sharpenFactor);
         //converter.setf("adaptiveSaturation", nrParams.adaptiveSaturation, nrParams.adaptiveSaturationPow);
 

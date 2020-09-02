@@ -12,6 +12,8 @@ uniform sampler2D noiseTexLowRes;
 
 out vec3 result;
 
+#include xyytoxyz
+
 void main() {
     ivec2 xyCenter = ivec2(gl_FragCoord.xy);
     vec3 highRes, mediumRes, lowRes;
@@ -27,5 +29,5 @@ void main() {
     mediumRes *= min(texelFetch(noiseTexMediumRes, xyCenter / 4, 0).xyz * 32.f, 1.f);
     lowRes *= min(texelFetch(noiseTexLowRes, xyCenter / 4, 0).xyz * 64.f, 1.f);
 
-    result = highRes + mediumRes + lowRes;
+    result = xyYtoXYZ(highRes + mediumRes + lowRes);
 }

@@ -3,8 +3,6 @@ package amirz.dngprocessor.pipeline.noisereduce;
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
-import amirz.dngprocessor.params.ProcessParams;
-import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.EdgeMirror;

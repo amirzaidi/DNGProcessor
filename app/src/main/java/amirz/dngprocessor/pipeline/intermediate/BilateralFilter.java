@@ -7,6 +7,7 @@ import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
+import amirz.dngprocessor.pipeline.exposefuse.Merge;
 import amirz.dngprocessor.pipeline.noisereduce.NoiseReduce;
 
 public class BilateralFilter extends Stage {
@@ -29,7 +30,7 @@ public class BilateralFilter extends Stage {
 
         GLPrograms converter = getConverter();
 
-        Texture intermediate = previousStages.getStage(NoiseReduce.class).getDenoised();
+        Texture intermediate = previousStages.getStage(Merge.class).getMerged();
         int w = intermediate.getWidth();
         int h = intermediate.getHeight();
 

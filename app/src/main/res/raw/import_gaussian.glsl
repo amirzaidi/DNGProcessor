@@ -1,7 +1,14 @@
 float unscaledGaussian(float d, float s) {
-    return exp(-0.5f * pow(d / s, 2.f));
+    float interm = d / s;
+    return exp(-0.5f * interm * interm);
+}
+
+vec3 unscaledGaussian(vec3 d, float s) {
+    vec3 interm = d / s;
+    return exp(-0.5f * interm * interm);
 }
 
 vec3 unscaledGaussian(vec3 d, vec3 s) {
-    return exp(-0.5f * pow(d / s, vec3(2.f)));
+    vec3 interm = d / s;
+    return exp(-0.5f * interm * interm);
 }

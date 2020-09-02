@@ -12,6 +12,8 @@ import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.PreProcess;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
+import amirz.dngprocessor.pipeline.exposefuse.Merge;
+import amirz.dngprocessor.pipeline.exposefuse.Overexpose;
 import amirz.dngprocessor.pipeline.noisereduce.NoiseReduce;
 
 import static android.opengl.GLES20.*;
@@ -39,18 +41,12 @@ public class MergeDetail extends Stage {
         BilateralFilter bilateral = previousStages.getStage(BilateralFilter.class);
         Texture bilateralTex = bilateral.getBilateral();
 
-        NoiseReduce denoiser = previousStages.getStage(NoiseReduce.class);
-        Texture intermediateTex = denoiser.getDenoised();
+        mIntermediate = previousStages.getStage(Merge.class).getMerged();
 
         // If there is no bilateral filtered texture, skip this step.
         if (bilateralTex == null) {
-            mIntermediate = intermediateTex;
             return;
         }
-
-        PreProcess preProcess = previousStages.getStage(PreProcess.class);
-        int w = preProcess.getInWidth();
-        int h = preProcess.getInHeight();
 
         Analysis sampleHistogram = previousStages.getStage(Analysis.class);
         float[] hist = sampleHistogram.getHist();
@@ -74,13 +70,11 @@ public class MergeDetail extends Stage {
         Log.d(TAG, "Bilateral histogram equalization " + bilatHistEq);
         converter.setf("histFactor", bilatHistEq * mHistFactor);
 
-        converter.setTexture("intermediate", intermediateTex);
+        converter.setTexture("intermediate", mIntermediate);
         converter.setTexture("bilateral", bilateralTex);
 
-        mIntermediate = new Texture(intermediateTex);
         converter.drawBlocks(mIntermediate);
 
-        intermediateTex.close();
         bilateralTex.close();
     }
 

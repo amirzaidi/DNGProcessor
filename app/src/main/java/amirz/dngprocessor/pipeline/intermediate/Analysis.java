@@ -14,6 +14,7 @@ import amirz.dngprocessor.math.Histogram;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
+import amirz.dngprocessor.pipeline.exposefuse.Merge;
 import amirz.dngprocessor.pipeline.noisereduce.NoiseReduce;
 
 import static android.opengl.GLES20.*;
@@ -48,7 +49,7 @@ public class Analysis extends Stage {
     protected void execute(StagePipeline.StageMap previousStages) {
         GLPrograms converter = getConverter();
 
-        Texture intermediate = previousStages.getStage(NoiseReduce.class).getDenoised();
+        Texture intermediate = previousStages.getStage(Merge.class).getMerged();
         converter.useProgram(R.raw.stage2_2_analysis_fs);
 
         converter.setTexture("intermediate", intermediate);

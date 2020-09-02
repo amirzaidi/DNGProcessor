@@ -75,7 +75,7 @@ vec3 processPatch(ivec2 xyPos) {
     float ly = impz[0] - impz[6] + (impz[1] - impz[7]) * 2.f + impz[2] - impz[8];
     float l = sqrt(lx * lx + ly * ly);
 
-    if (lce) {
+    if (lce && false) {
         float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
         if (zMediumBlur > 0.0001f) {
             float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;

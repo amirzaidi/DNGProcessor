@@ -9,6 +9,7 @@ import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
+import amirz.dngprocessor.pipeline.convert.EdgeMirror;
 
 public class NoiseReduce extends Stage {
     private static final String TAG = "NoiseReduce";

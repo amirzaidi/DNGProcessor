@@ -101,8 +101,16 @@ public class Texture implements AutoCloseable {
         return type();
     }
 
-    public int getFormat() {
+    public Format getFormat() {
+        return mFormat;
+    }
+
+    public int getFormatInt() {
         return format();
+    }
+
+    public int getChannels() {
+        return mChannels;
     }
 
     @Override

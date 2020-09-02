@@ -15,6 +15,9 @@ import amirz.dngprocessor.pipeline.convert.EdgeMirror;
 import amirz.dngprocessor.pipeline.convert.GreenDemosaic;
 import amirz.dngprocessor.pipeline.convert.PreProcess;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
+import amirz.dngprocessor.pipeline.exposefuse.Laplace;
+import amirz.dngprocessor.pipeline.exposefuse.Merge;
+import amirz.dngprocessor.pipeline.exposefuse.Overexpose;
 import amirz.dngprocessor.pipeline.intermediate.BilateralFilter;
 import amirz.dngprocessor.pipeline.intermediate.Analysis;
 import amirz.dngprocessor.pipeline.noisereduce.Decompose;
@@ -61,6 +64,11 @@ public class StagePipeline implements AutoCloseable {
         addStage(new Decompose());
         addStage(new NoiseMap());
         addStage(new NoiseReduce(sensor, process));
+
+        // Exposure Fusion
+        addStage(new Overexpose());
+        addStage(new Laplace());
+        addStage(new Merge());
 
         // Contrast Enhancement
         addStage(new Analysis(outWidth, outHeight,
