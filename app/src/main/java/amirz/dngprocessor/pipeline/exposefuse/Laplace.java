@@ -5,47 +5,35 @@ import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
-import amirz.dngprocessor.pipeline.noisereduce.NoiseReduce;
+import amirz.dngprocessor.pipeline.convert.EdgeMirror;
 
 import static amirz.dngprocessor.pipeline.exposefuse.FuseUtils.*;
 
 public class Laplace extends Stage {
-    private static final int LEVELS = 4;
+    private static final int LEVELS = 10;
 
     public static class Pyramid {
         public Texture[] gauss;
         public Texture[] laplace;
     }
 
-    private Pyramid mNormalExpoPyramid;
-    private Pyramid mHighExpoPyramid;
+    private Pyramid mExpoPyramid;
 
-    public Pyramid getNormalExpoPyramid() {
-        return mNormalExpoPyramid;
+    public Pyramid getExpoPyramid() {
+        return mExpoPyramid;
     }
 
-    public Pyramid getHighExpoPyramid() {
-        return mHighExpoPyramid;
-    }
-
-    public void releasePyramids() {
-        for (Texture tex : mNormalExpoPyramid.gauss) {
+    public void releasePyramid() {
+        for (Texture tex : mExpoPyramid.gauss) {
             tex.close();
         }
-        for (Texture tex : mHighExpoPyramid.gauss) {
-            tex.close();
-        }
-        mNormalExpoPyramid = null;
-        mHighExpoPyramid = null;
+        mExpoPyramid = null;
     }
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
-        Texture normalExposure = previousStages.getStage(NoiseReduce.class).getDenoised();
-        mNormalExpoPyramid = createPyramid(normalExposure);
-
-        Texture highExposure = previousStages.getStage(Overexpose.class).getOverexposed();
-        mHighExpoPyramid = createPyramid(highExposure);
+        Texture normalExposure = previousStages.getStage(EdgeMirror.class).getIntermediate();
+        mExpoPyramid = createPyramid(normalExposure);
     }
 
     private Pyramid createPyramid(Texture remainder) {
@@ -61,7 +49,7 @@ public class Laplace extends Stage {
         // Upsample loop.
         Texture[] upsampled = new Texture[downsampled.length - 1];
         for (int i = 0; i < upsampled.length; i++) {
-            upsampled[i] = upsample2x(converter, downsampled[i + 1]);
+            upsampled[i] = upsample2x(converter, downsampled[i + 1], downsampled[i]);
         }
 
         // Diff loop. Indices for resolution are the same between downsampled and upsampled,

@@ -11,7 +11,6 @@ uniform int intermediateHeight;
 uniform sampler2D weakBlur;
 uniform sampler2D mediumBlur;
 uniform sampler2D strongBlur;
-uniform sampler2D noiseTex;
 
 uniform int yOffset;
 
@@ -54,6 +53,7 @@ float[9] load3x3z(ivec2 xy) {
 
 vec3 processPatch(ivec2 xyPos) {
     vec3 xyY = texelFetch(highRes, xyPos, 0).xyz;
+    //return xyY;
 
     /**
     LUMA SHARPEN
@@ -75,7 +75,7 @@ vec3 processPatch(ivec2 xyPos) {
     float ly = impz[0] - impz[6] + (impz[1] - impz[7]) * 2.f + impz[2] - impz[8];
     float l = sqrt(lx * lx + ly * ly);
 
-    if (lce && false) {
+    if (lce) {
         float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
         if (zMediumBlur > 0.0001f) {
             float zWeakBlur = texelFetch(weakBlur, xyPos, 0).x;

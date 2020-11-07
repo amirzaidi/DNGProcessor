@@ -48,8 +48,9 @@ public class BilateralFilter extends Stage {
             converter.setTexture("buf", bilateralTmp);
             converter.setf("sigma", 0.03f, 0.5f);
             converter.seti("radius", 4, 1);
-            converter.drawBlocks(mBilateral);
+            converter.drawBlocks(mBilateral, false);
 
+            /*
             // 2) Medium area, medium blur.
             converter.setTexture("buf", mBilateral);
             converter.setf("sigma", 0.02f, 3f);
@@ -61,6 +62,7 @@ public class BilateralFilter extends Stage {
             converter.setf("sigma", 0.01f, 9f);
             converter.seti("radius", 12, 3);
             converter.drawBlocks(mBilateral);
+             */
         }
     }
 

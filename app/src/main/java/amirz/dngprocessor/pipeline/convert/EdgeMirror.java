@@ -1,7 +1,5 @@
 package amirz.dngprocessor.pipeline.convert;
 
-import android.util.Rational;
-
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
@@ -27,23 +25,18 @@ public class EdgeMirror extends Stage {
         GLPrograms converter = getConverter();
 
         ToIntermediate toIntermediate = previousStages.getStage(ToIntermediate.class);
-        Texture intermediate = toIntermediate.getIntermediate();
-        int w = intermediate.getWidth();
-        int h = intermediate.getHeight();
+        mIntermediate = toIntermediate.getIntermediate();
+        int w = mIntermediate.getWidth();
+        int h = mIntermediate.getHeight();
 
-        converter.setTexture("intermediateBuffer", intermediate);
+        converter.setTexture("intermediateBuffer", mIntermediate);
 
         int offsetX = mSensor.outputOffsetX;
         int offsetY = mSensor.outputOffsetY;
         converter.seti("minxy", offsetX, offsetY);
         converter.seti("maxxy", w - offsetX - 1, h - offsetY - 1);
 
-        // Second texture for per-CFA pixel data
-        mIntermediate = new Texture(intermediate.getWidth(), intermediate.getHeight(), 3,
-                Texture.Format.Float16, null);
-
         converter.drawBlocks(mIntermediate);
-        intermediate.close();
     }
 
     @Override

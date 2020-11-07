@@ -211,9 +211,16 @@ public class DngParser {
         loader.mapImport("xyztoxyy", R.raw.import_xyz_to_xyy);
 
         final int[] steps = { 0 };
+        final long[] lastTimestamp = { System.currentTimeMillis() };
         try (StagePipeline pipeline = new StagePipeline(
                 sensor, process, rawImageInput, argbOutput, loader)) {
             pipeline.execute((completed, total, tag) -> {
+                if (completed > 0) {
+                    long ts = System.currentTimeMillis();
+                    Log.w(TAG, "Took " + (ts - lastTimestamp[0]) + " ms");
+                    lastTimestamp[0] = ts;
+                }
+
                 steps[0] = total;
                 NotifHandler.progress(mContext, total + ADD_STEPS, completed);
                 Log.w(TAG, "Raw conversion step " + tag + ": " + completed + "/" + total);

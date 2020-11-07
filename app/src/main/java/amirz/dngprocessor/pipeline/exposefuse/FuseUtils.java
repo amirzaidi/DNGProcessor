@@ -18,26 +18,22 @@ public class FuseUtils {
 
             converter.useProgram(R.raw.stage4_2_downsample);
             converter.setTexture("buf", tmp2);
+            converter.seti("maxxy", tmp2.getWidth() - 1, tmp2.getHeight() - 1);
             converter.drawBlocks(downsampled);
         }
 
         return downsampled;
     }
 
-    public static Texture upsample2x(GLPrograms converter, Texture in) {
-        Texture upsampled = new Texture(in.getWidth() * 2,
-                in.getHeight() * 2,
-                in.getChannels(),
-                in.getFormat(), null);
+    public static Texture upsample2x(GLPrograms converter, Texture in, Texture dimens) {
+        Texture upsampled = new Texture(dimens);
+
+        converter.useProgram(R.raw.stage4_3_upsample);
+        converter.setTexture("buf", in);
+        converter.drawBlocks(upsampled);
 
         try (Texture tmp = new Texture(upsampled)) {
-            converter.useProgram(R.raw.stage4_3_upsample);
-            converter.setTexture("buf", in);
-            converter.drawBlocks(tmp);
-
-            try (Texture tmp2 = new Texture(upsampled)) {
-                blur2x(converter, tmp, tmp2, upsampled);
-            }
+            blur2x(converter, upsampled, tmp, upsampled);
         }
 
         return upsampled;

@@ -61,12 +61,12 @@ public class StagePipeline implements AutoCloseable {
         addStage(new EdgeMirror(sensor));
 
         // Noise Reduce
-        addStage(new Decompose());
-        addStage(new NoiseMap());
-        addStage(new NoiseReduce(sensor, process));
+        //addStage(new Decompose());
+        //addStage(new NoiseMap());
+        //addStage(new NoiseReduce(sensor, process));
 
         // Exposure Fusion
-        addStage(new Overexpose());
+        //addStage(new Overexpose());
         addStage(new Laplace());
         addStage(new Merge());
 

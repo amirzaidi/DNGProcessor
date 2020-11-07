@@ -135,7 +135,7 @@ vec3 demosaic(ivec2 xy, inout float[9] inputArray, inout float[9] greenArray) {
 
 vec3 convertSensorToIntermediate(ivec2 xy, vec3 sensor) {    // Use gainmap to increase dynamic range.
     sensor = min(sensor, neutralPoint);
-    return XYZtoxyY(sensorToXYZ * sensor);
+    //return XYZtoxyY(sensorToXYZ * sensor);
 
     vec2 xyInterp = vec2(float(xy.x) / float(rawWidth), float(xy.y) / float(rawHeight));
     vec4 gains = texture(gainMap, xyInterp);
@@ -154,9 +154,9 @@ vec3 convertSensorToIntermediate(ivec2 xy, vec3 sensor) {    // Use gainmap to i
     vec3 XYZ = sensorToXYZ * sensor;
     vec3 intermediate = XYZtoxyY(XYZ);
 
-    intermediate.z = sigmoid(intermediate.z, 0.25f);
-
-    return xyYtoXYZ(intermediate);
+    intermediate.z = sigmoid(intermediate.z, 0.75f);
+    return intermediate;
+    //return xyYtoXYZ(intermediate);
 }
 
 void main() {

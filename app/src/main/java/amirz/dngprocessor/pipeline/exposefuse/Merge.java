@@ -20,52 +20,51 @@ public class Merge extends Stage {
         GLPrograms converter = getConverter();
 
         Laplace laplace = previousStages.getStage(Laplace.class);
+        Laplace.Pyramid pyramid = laplace.getExpoPyramid();
 
-        Laplace.Pyramid normalExpo = laplace.getNormalExpoPyramid();
-        Laplace.Pyramid highExpo = laplace.getHighExpoPyramid();
-
-        converter.seti("useUpsampled", 0);
-
-        Texture wip = new Texture(normalExpo.gauss[normalExpo.gauss.length - 1]);
-
-        // Weighting and blending is the same on the lowest layer.
-        converter.setTexture("normalExpo", normalExpo.gauss[normalExpo.gauss.length - 1]);
-        converter.setTexture("highExpo", highExpo.gauss[highExpo.gauss.length - 1]);
-
-        converter.setTexture("normalExpoDiff", normalExpo.gauss[normalExpo.gauss.length - 1]);
-        converter.setTexture("highExpoDiff", highExpo.gauss[highExpo.gauss.length - 1]);
-
-        converter.drawBlocks(wip);
-
-        for (int i = normalExpo.laplace.length - 1; i >= 0; i--) {
-            try (Texture upsampleWip = upsample2x(converter, wip)) {
+        // Start with the lowest level gaussian.
+        Texture wip = pyramid.gauss[pyramid.gauss.length - 1];
+        for (int i = pyramid.laplace.length - 1; i >= 0; i--) {
+            try (Texture upsampleWip = upsample2x(converter, wip, pyramid.gauss[i])) {
                 converter.useProgram(getShader());
-
-                converter.setTexture("upsampled", upsampleWip);
-                converter.seti("useUpsampled", 1);
 
                 // We can discard the previous work in progress merge.
                 wip.close();
-                wip = new Texture(normalExpo.laplace[i]);
+                wip = new Texture(pyramid.laplace[i]);
 
-                // Weigh full image.
-                converter.setTexture("normalExpo", normalExpo.gauss[i]);
-                converter.setTexture("highExpo", highExpo.gauss[i]);
-
-                // Blend feature level.
-                converter.setTexture("normalExpoDiff", normalExpo.laplace[i]);
-                converter.setTexture("highExpoDiff", highExpo.laplace[i]);
+                converter.setTexture("upscaled", upsampleWip);
+                converter.setTexture("downscaled", pyramid.gauss[i]);
+                converter.setTexture("laplace", pyramid.laplace[i]);
+                converter.seti("level", i);
 
                 converter.drawBlocks(wip);
+
+                if (i < 4) {
+                    // Reuse laplace for NR, and swap with non-NR texture.
+                    Texture tmp = pyramid.laplace[i];
+                    noiseReduce(wip, tmp, i);
+                    pyramid.laplace[i] = wip;
+                    wip = tmp;
+                }
             }
         }
 
-        laplace.releasePyramids();
-
-        converter.useProgram(R.raw.stage4_6_xyz_to_xyy);
-        converter.setTexture("buf", wip);
-        converter.drawBlocks(wip);
+        laplace.releasePyramid();
         mMerged = wip;
+    }
+
+    private void noiseReduce(Texture in, Texture out, int level) {
+        GLPrograms converter = getConverter();
+        converter.useProgram(level > 0
+                ? R.raw.stage4_7_nr_intermediate
+                : R.raw.stage4_8_nr_zero);
+        converter.setTexture("buf", in);
+        converter.seti("bufEdge", in.getWidth() - 1, in.getHeight() - 1);
+        converter.setf("blendY", 0.9f);
+        if (level > 0) {
+            converter.setf("sigma", 0.4f, 0.06f);
+        }
+        converter.drawBlocks(out);
     }
 
     @Override
