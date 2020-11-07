@@ -9,6 +9,10 @@ uniform int level;
 
 out vec3 result;
 
+float compress(float z, int lvl) {
+    return z / (0.5f * sqrt(float(11 - lvl) * abs(z)) + 1.f);
+}
+
 void main() {
     ivec2 xyCenter = ivec2(gl_FragCoord.xy);
 
@@ -17,16 +21,16 @@ void main() {
 
     // Largest feature scale.
     if (level == 8) {
-        float fullz = texelFetch(downscaled, xyCenter, 0).z;
-        base.z *= 1.f - fullz * 0.2f; // Bring down bright areas.
+        base.z = compress(base.z, 9);
     }
 
-    if (diff.z > 0.001f) {
-        float sgn = sign(diff.z);
-        float powf = 1.f - 0.02f * float(level + 1);
-        diff.z = sgn * pow(10.f * abs(diff.z), powf) * 0.1f; // Compression of lows.
-        diff.z *= (1.4f - 0.1f * float(abs(level - 4))); // Increase mids.
-    }
+    // Each following feature scale.
+    diff.z = compress(diff.z, level);
 
-    result = base + diff;
+    vec3 tmp2 = base + diff;
+    if (level == 0) {
+        // Make everything brighter after compressing down.
+        tmp2.z = clamp(tmp2.z * 1.5f, 0.f, 1.f);
+    }
+    result = tmp2;
 }

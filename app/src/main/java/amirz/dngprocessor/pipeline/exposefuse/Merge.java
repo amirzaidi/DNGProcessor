@@ -62,7 +62,7 @@ public class Merge extends Stage {
         converter.seti("bufEdge", in.getWidth() - 1, in.getHeight() - 1);
         converter.setf("blendY", 0.9f);
         if (level > 0) {
-            converter.setf("sigma", 0.4f, 0.06f);
+            converter.setf("sigma", 0.4f, 0.03f);
         }
         converter.drawBlocks(out);
     }

@@ -100,7 +100,6 @@ public class Histogram {
             cumulativeHist[i] *= (i / maxi) / Math.pow(i / maxi, gamma);
         }
 
-        // To prevent blowing up very dark scenes.
         hist = cumulativeHist;
     }
 
