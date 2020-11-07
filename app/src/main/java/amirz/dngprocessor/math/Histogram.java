@@ -100,6 +100,15 @@ public class Histogram {
             cumulativeHist[i] *= (i / maxi) / Math.pow(i / maxi, gamma);
         }
 
+        // Crush shadows.
+        for (int i = 0; i < cumulativeHist.length; i++) {
+            float heq = cumulativeHist[i];
+            if (heq > 0.005f) {
+                break;
+            }
+            cumulativeHist[i] *= Math.sqrt(200f * heq);
+        }
+
         hist = cumulativeHist;
     }
 
