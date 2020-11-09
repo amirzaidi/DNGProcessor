@@ -30,7 +30,7 @@ public class FuseUtils {
 
         converter.useProgram(R.raw.stage4_3_upsample);
         converter.setTexture("buf", in);
-        converter.drawBlocks(upsampled, false);
+        converter.drawBlocks(upsampled);
 
         try (Texture tmp = new Texture(upsampled)) {
             blur2x(converter, upsampled, tmp, upsampled);
@@ -40,7 +40,7 @@ public class FuseUtils {
     }
 
     public static void blur2x(GLPrograms converter, Texture in, Texture tmp, Texture out) {
-        converter.useProgram(R.raw.stage2_0_blur_3ch_fs);
+        converter.useProgram(R.raw.stage4_0_blur_1ch_fs);
         converter.seti("bufSize", in.getWidth(), in.getHeight());
         converter.setf("sigma", 1.36f);
         converter.seti("radius", 2);

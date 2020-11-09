@@ -18,6 +18,7 @@ import amirz.dngprocessor.pipeline.convert.PreProcess;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 import amirz.dngprocessor.pipeline.exposefuse.Laplace;
 import amirz.dngprocessor.pipeline.exposefuse.Merge;
+import amirz.dngprocessor.pipeline.exposefuse.DoubleExpose;
 import amirz.dngprocessor.pipeline.intermediate.BilateralFilter;
 import amirz.dngprocessor.pipeline.intermediate.Analysis;
 import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
@@ -65,7 +66,7 @@ public class StagePipeline implements AutoCloseable {
         //addStage(new NoiseReduce(sensor, process));
 
         // Exposure Fusion
-        //addStage(new Overexpose());
+        addStage(new DoubleExpose());
         addStage(new Laplace());
         addStage(new Merge());
 

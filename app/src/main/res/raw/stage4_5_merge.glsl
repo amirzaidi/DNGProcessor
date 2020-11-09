@@ -1,15 +1,26 @@
 #version 300 es
 
+#define TARGET_Z 0.4f
+#define GAUSS_Z 0.7f
+
 precision mediump float;
 
+uniform bool useUpscaled;
 uniform sampler2D upscaled;
-uniform sampler2D downscaled;
-uniform sampler2D laplace;
+
+// Weighting is done using these.
+uniform sampler2D gaussUnder;
+uniform sampler2D gaussOver;
+
+// Blending is done using these.
+uniform sampler2D blendUnder;
+uniform sampler2D blendOver;
+
 uniform int level;
 
-out vec3 result;
+out float result;
 
-#include sigmoid
+#include gaussian
 
 float compress(float z, int lvl) {
     return z / (sqrt(sqrt(float(11 - lvl) * abs(z))) + 1.f);
@@ -18,22 +29,21 @@ float compress(float z, int lvl) {
 void main() {
     ivec2 xyCenter = ivec2(gl_FragCoord.xy);
 
-    vec3 base = texelFetch(upscaled, xyCenter, 0).xyz;
-    vec3 diff = texelFetch(laplace, xyCenter, 0).xyz;
+    // If this is the lowest layer, start with zero.
+    float base = useUpscaled
+        ? texelFetch(upscaled, xyCenter, 0).x
+        : 0.f;
 
-    // Largest feature scale.
-    if (level == 8) {
-        base.z = compress(base.z, 9);
-    }
+    // How are we going to blend these two?
+    float blendUnderVal = texelFetch(blendUnder, xyCenter, 0).x;
+    float blendOverVal = texelFetch(blendOver, xyCenter, 0).x;
 
-    // Each following feature scale.
-    diff.z = compress(diff.z, level);
+    // Look at result to compute weights.
+    float gaussUnderVal = texelFetch(gaussUnder, xyCenter, 0).x;
+    float gaussOverVal = texelFetch(gaussOver, xyCenter, 0).x;
+    float gaussUnderValDev = sqrt(unscaledGaussian(gaussUnderVal - TARGET_Z, GAUSS_Z));
+    float gaussOverValDev = sqrt(unscaledGaussian(gaussOverVal - TARGET_Z, GAUSS_Z));
 
-    vec3 tmp2 = base + diff;
-    if (level == 0) {
-        // Make everything brighter after compressing down.
-        tmp2.z = max(tmp2.z / compress(1.f, 9), 0.f);
-        tmp2.z = sigmoid(tmp2.z, 0.25f);
-    }
-    result = tmp2;
+    float blend = gaussOverValDev / (gaussUnderValDev + gaussOverValDev); // [0, 1]
+    result = base + mix(blendUnderVal, blendOverVal, blend);
 }

@@ -53,7 +53,6 @@ float[9] load3x3z(ivec2 xy) {
 
 vec3 processPatch(ivec2 xyPos) {
     vec3 xyY = texelFetch(highRes, xyPos, 0).xyz;
-    //return xyY;
 
     /**
     LUMA SHARPEN

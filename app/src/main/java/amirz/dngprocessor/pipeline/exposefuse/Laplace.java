@@ -5,7 +5,6 @@ import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
-import amirz.dngprocessor.pipeline.convert.EdgeMirror;
 
 import static amirz.dngprocessor.pipeline.exposefuse.FuseUtils.*;
 
@@ -17,23 +16,35 @@ public class Laplace extends Stage {
         public Texture[] laplace;
     }
 
-    private Pyramid mExpoPyramid;
+    private Pyramid mUnderPyramid;
+    private Pyramid mOverPyramid;
 
-    public Pyramid getExpoPyramid() {
-        return mExpoPyramid;
+    public Pyramid getUnderPyramid() {
+        return mUnderPyramid;
+    }
+
+    public Pyramid getOverPyramid() {
+        return mOverPyramid;
     }
 
     public void releasePyramid() {
-        for (Texture tex : mExpoPyramid.gauss) {
-            tex.close();
+        for (Pyramid pyr : new Pyramid[] { mUnderPyramid, mOverPyramid }) {
+            for (Texture tex : pyr.gauss) {
+                tex.close();
+            }
+            for (Texture tex : pyr.laplace) {
+                tex.close();
+            }
         }
-        mExpoPyramid = null;
+        mUnderPyramid = null;
+        mOverPyramid = null;
     }
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
-        Texture normalExposure = previousStages.getStage(EdgeMirror.class).getIntermediate();
-        mExpoPyramid = createPyramid(normalExposure);
+        DoubleExpose de = previousStages.getStage(DoubleExpose.class);
+        mUnderPyramid = createPyramid(de.getUnderexposed());
+        mOverPyramid = createPyramid(de.getOverexposed());
     }
 
     private Pyramid createPyramid(Texture remainder) {
@@ -60,9 +71,9 @@ public class Laplace extends Stage {
             converter.setTexture("base", upsampled[i]);
             converter.setTexture("target", downsampled[i]);
 
-            // Reuse the upsampled texture.
-            diff[i] = upsampled[i];
+            diff[i] = new Texture(upsampled[i]);
             converter.drawBlocks(diff[i]);
+            upsampled[i].close();
         }
 
         Pyramid pyramid = new Pyramid();

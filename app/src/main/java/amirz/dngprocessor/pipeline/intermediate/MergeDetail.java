@@ -10,11 +10,7 @@ import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
-import amirz.dngprocessor.pipeline.convert.PreProcess;
-import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 import amirz.dngprocessor.pipeline.exposefuse.Merge;
-import amirz.dngprocessor.pipeline.exposefuse.Overexpose;
-import amirz.dngprocessor.pipeline.noisereduce.NoiseReduce;
 
 import static android.opengl.GLES20.*;
 

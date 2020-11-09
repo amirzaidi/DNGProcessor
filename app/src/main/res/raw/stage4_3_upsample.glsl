@@ -4,7 +4,7 @@ precision mediump float;
 
 uniform sampler2D buf;
 
-out vec3 result;
+out float result;
 
 void main() {
     ivec2 xyCenter = ivec2(gl_FragCoord.xy);
@@ -13,13 +13,13 @@ void main() {
 
     // We always upsample from a texture that is larger or the proper size,
     // so do not worry about clamping coordinates.
-    vec3 topLeft = texelFetch(buf, xyDownscaled, 0).xyz;
-    vec3 topRight, bottomLeft;
+    float topLeft = texelFetch(buf, xyDownscaled, 0).x;
+    float topRight, bottomLeft;
     if (xyAlign.x == 1) {
-        topRight = texelFetch(buf, xyDownscaled + ivec2(1, 0), 0).xyz;
+        topRight = texelFetch(buf, xyDownscaled + ivec2(1, 0), 0).x;
     }
     if (xyAlign.y == 1) {
-        bottomLeft = texelFetch(buf, xyDownscaled + ivec2(0, 1), 0).xyz;
+        bottomLeft = texelFetch(buf, xyDownscaled + ivec2(0, 1), 0).x;
     }
 
     // Linear interpolation over 2x upscaling is the same as bicubic or cosine interpolation,
@@ -37,7 +37,7 @@ void main() {
             result = (topLeft + bottomLeft) * 0.5f;
             break;
         case 3: // BR
-            vec3 bottomRight = texelFetch(buf, xyDownscaled + ivec2(1, 1), 0).xyz;
+            float bottomRight = texelFetch(buf, xyDownscaled + ivec2(1, 1), 0).x;
             result = (topLeft + topRight + bottomLeft + bottomRight) * 0.25f;
             break;
     }

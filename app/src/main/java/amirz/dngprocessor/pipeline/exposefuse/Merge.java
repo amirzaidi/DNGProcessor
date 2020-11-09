@@ -5,6 +5,7 @@ import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
+import amirz.dngprocessor.pipeline.convert.EdgeMirror;
 
 import static amirz.dngprocessor.pipeline.exposefuse.FuseUtils.upsample2x;
 
@@ -20,38 +21,62 @@ public class Merge extends Stage {
         GLPrograms converter = getConverter();
 
         Laplace laplace = previousStages.getStage(Laplace.class);
-        Laplace.Pyramid pyramid = laplace.getExpoPyramid();
+        Laplace.Pyramid underExpo = laplace.getUnderPyramid();
+        Laplace.Pyramid overExpo = laplace.getOverPyramid();
+
+        converter.useProgram(getShader());
+        converter.seti("useUpscaled", 0);
+        converter.setTexture("gaussUnder", underExpo.gauss[underExpo.gauss.length - 1]);
+        converter.setTexture("gaussOver", overExpo.gauss[overExpo.gauss.length - 1]);
+        converter.setTexture("blendUnder", underExpo.gauss[underExpo.gauss.length - 1]);
+        converter.setTexture("blendOver", overExpo.gauss[overExpo.gauss.length - 1]);
+        converter.seti("level", overExpo.gauss.length - 1);
+
+        Texture wip = new Texture(underExpo.gauss[underExpo.gauss.length - 1]);
+        converter.drawBlocks(wip, false);
 
         // Start with the lowest level gaussian.
-        Texture wip = pyramid.gauss[pyramid.gauss.length - 1];
-        for (int i = pyramid.laplace.length - 1; i >= 0; i--) {
-            try (Texture upsampleWip = upsample2x(converter, wip, pyramid.gauss[i])) {
+        for (int i = underExpo.laplace.length - 1; i >= 0; i--) {
+            try (Texture upscaleWip = upsample2x(converter, wip, underExpo.gauss[i])) {
                 converter.useProgram(getShader());
 
                 // We can discard the previous work in progress merge.
                 wip.close();
-                wip = new Texture(pyramid.laplace[i]);
+                wip = new Texture(underExpo.laplace[i]);
 
-                converter.setTexture("upscaled", upsampleWip);
-                converter.setTexture("downscaled", pyramid.gauss[i]);
-                converter.setTexture("laplace", pyramid.laplace[i]);
+                converter.seti("useUpscaled", 1);
+                converter.setTexture("upscaled", upscaleWip);
+                converter.setTexture("gaussUnder", underExpo.gauss[i]);
+                converter.setTexture("gaussOver", overExpo.gauss[i]);
+                converter.setTexture("blendUnder", underExpo.laplace[i]);
+                converter.setTexture("blendOver", overExpo.laplace[i]);
                 converter.seti("level", i);
 
                 converter.drawBlocks(wip, false);
 
+                /*
                 if (i < 4) {
                     // Reuse laplace for NR, and swap with non-NR texture, which will be closed
                     // by call to releasePyramid below.
-                    Texture tmp = pyramid.laplace[i];
+                    Texture tmp = underExpo.laplace[i];
                     noiseReduce(wip, tmp, i);
-                    pyramid.laplace[i] = wip;
+                    underExpo.laplace[i] = wip;
                     wip = tmp;
                 }
+                 */
             }
         }
 
         laplace.releasePyramid();
-        mMerged = wip;
+        Texture chroma = previousStages.getStage(EdgeMirror.class).getIntermediate();
+
+        converter.useProgram(R.raw.stage4_9_combine_z);
+        converter.setTexture("bufChroma", chroma);
+        converter.setTexture("bufLuma", wip);
+        mMerged = new Texture(chroma);
+        converter.drawBlocks(mMerged);
+
+        wip.close();
     }
 
     private void noiseReduce(Texture in, Texture out, int level) {
