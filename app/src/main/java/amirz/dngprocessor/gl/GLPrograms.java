@@ -3,10 +3,8 @@ package amirz.dngprocessor.gl;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import amirz.dngprocessor.R;
@@ -27,7 +25,8 @@ public class GLPrograms implements AutoCloseable {
     private int mNewTextureId;
     private int mProgramActive;
 
-    public GLPrograms(ShaderLoader shaderLoader) {
+    public GLPrograms(int surfaceWidth, int surfaceHeight, ShaderLoader shaderLoader) {
+        GLCore.setDimens(surfaceWidth, surfaceHeight);
         mShaderLoader = shaderLoader;
         vertexShader = loadShader(GL_VERTEX_SHADER, shaderLoader.readRaw(R.raw.passthrough_vs));
     }

@@ -7,10 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import amirz.dngprocessor.colorspace.ColorspaceConverter;
-import amirz.dngprocessor.gl.GLCoreManager;
+import amirz.dngprocessor.gl.GLCore;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.ShaderLoader;
-import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.convert.EdgeMirror;
@@ -19,23 +18,21 @@ import amirz.dngprocessor.pipeline.convert.PreProcess;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 import amirz.dngprocessor.pipeline.exposefuse.Laplace;
 import amirz.dngprocessor.pipeline.exposefuse.Merge;
-import amirz.dngprocessor.pipeline.exposefuse.Overexpose;
 import amirz.dngprocessor.pipeline.intermediate.BilateralFilter;
 import amirz.dngprocessor.pipeline.intermediate.Analysis;
-import amirz.dngprocessor.pipeline.noisereduce.Decompose;
 import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
-import amirz.dngprocessor.pipeline.noisereduce.NoiseMap;
 import amirz.dngprocessor.pipeline.post.BlurLCE;
-import amirz.dngprocessor.pipeline.noisereduce.NoiseReduce;
 import amirz.dngprocessor.pipeline.post.ToneMap;
+
+import static amirz.dngprocessor.util.Constants.BLOCK_HEIGHT;
 
 public class StagePipeline implements AutoCloseable {
     private static final String TAG = "StagePipeline";
 
     private final List<Stage> mStages = new ArrayList<>();
 
-    private final GLCoreBlockProcessing mCore;
     private final GLPrograms mConverter;
+    private final GLBlockProcessing mBlockProcessing;
 
     public StagePipeline(SensorParams sensor, ProcessParams process,
                          byte[] raw, Bitmap argbOutput, ShaderLoader loader) {
@@ -51,8 +48,8 @@ public class StagePipeline implements AutoCloseable {
         }
         Log.d(TAG, "Output width,height: " + outWidth + "," + outHeight);
 
-        mCore = new GLCoreBlockProcessing(argbOutput, loader);
-        mConverter = mCore.getProgram();
+        mConverter = new GLPrograms(argbOutput.getWidth(), BLOCK_HEIGHT, loader);
+        mBlockProcessing = new GLBlockProcessing(argbOutput);
 
         ColorspaceConverter colorspace = new ColorspaceConverter(sensor);
 
@@ -101,15 +98,15 @@ public class StagePipeline implements AutoCloseable {
         }
 
         // Assume that last stage set everything but did not render yet.
-        mCore.drawBlocksToOutput();
+        mBlockProcessing.drawBlocksToOutput(mConverter);
 
         reporter.onProgress(stageCount, stageCount, "Done");
     }
 
     @Override
     public void close() {
-        mCore.close();
-        GLCoreManager.closeContext();
+        mConverter.close();
+        GLCore.closeContext();
     }
 
     public interface OnProgressReporter {
