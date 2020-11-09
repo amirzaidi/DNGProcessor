@@ -36,7 +36,7 @@ public class EdgeMirror extends Stage {
         converter.seti("minxy", offsetX, offsetY);
         converter.seti("maxxy", w - offsetX - 1, h - offsetY - 1);
 
-        converter.drawBlocks(mIntermediate);
+        converter.drawBlocks(mIntermediate, false);
     }
 
     @Override
