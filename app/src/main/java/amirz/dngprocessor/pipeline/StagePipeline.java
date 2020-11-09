@@ -102,8 +102,6 @@ public class StagePipeline implements AutoCloseable {
 
         // Assume that last stage set everything but did not render yet.
         mCore.drawBlocksToOutput();
-        Texture.closeAll();
-        GLCoreManager.closeContext();
 
         reporter.onProgress(stageCount, stageCount, "Done");
     }
@@ -111,6 +109,7 @@ public class StagePipeline implements AutoCloseable {
     @Override
     public void close() {
         mCore.close();
+        GLCoreManager.closeContext();
     }
 
     public interface OnProgressReporter {

@@ -4,6 +4,7 @@ import android.opengl.EGLConfig;
 import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
+import android.util.Log;
 import android.util.Pair;
 
 import java.util.HashMap;
@@ -61,6 +62,7 @@ public class GLCoreManager {
 
     public static void setDimens(int width, int height) {
         Pair<Integer, Integer> dimens = new Pair<>(width, height);
+        Log.d("GLCoreManager", "Reusing texture: " + sSurfaces.containsKey(dimens));
         EGLSurface surface = sSurfaces.computeIfAbsent(dimens, x -> eglCreatePbufferSurface(
                 sDisplay, sConfig, new int[] {
                         EGL_WIDTH, x.first,

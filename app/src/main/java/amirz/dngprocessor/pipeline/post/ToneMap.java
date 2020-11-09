@@ -50,8 +50,6 @@ public class ToneMap extends Stage {
     protected void execute(StagePipeline.StageMap previousStages) {
         GLPrograms converter = getConverter();
 
-        glBindFramebuffer(GL_FRAMEBUFFER, mFbo[0]);
-
         // Load intermediate buffers as textures
         Texture highRes = previousStages.getStage(MergeDetail.class).getIntermediate();
         converter.setTexture("highRes", highRes);
@@ -96,6 +94,8 @@ public class ToneMap extends Stage {
                 ByteBuffer.wrap(dither));
         converter.setTexture("ditherTex", ditherTex);
         converter.seti("ditherSize", ditherSize);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, mFbo[0]);
     }
 
     @Override
