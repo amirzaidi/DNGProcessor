@@ -19,7 +19,7 @@ public class FuseUtils {
             converter.useProgram(R.raw.stage4_2_downsample);
             converter.setTexture("buf", tmp2);
             converter.seti("maxxy", tmp2.getWidth() - 1, tmp2.getHeight() - 1);
-            converter.drawBlocks(downsampled);
+            converter.drawBlocks(downsampled, false);
         }
 
         return downsampled;
@@ -30,7 +30,7 @@ public class FuseUtils {
 
         converter.useProgram(R.raw.stage4_3_upsample);
         converter.setTexture("buf", in);
-        converter.drawBlocks(upsampled);
+        converter.drawBlocks(upsampled, false);
 
         try (Texture tmp = new Texture(upsampled)) {
             blur2x(converter, upsampled, tmp, upsampled);
@@ -47,10 +47,10 @@ public class FuseUtils {
 
         converter.setTexture("buf", in);
         converter.seti("dir", 1, 0); // Horizontal
-        converter.drawBlocks(tmp);
+        converter.drawBlocks(tmp, false);
 
         converter.setTexture("buf", tmp);
         converter.seti("dir", 0, 1); // Vertical
-        converter.drawBlocks(out);
+        converter.drawBlocks(out, false);
     }
 }

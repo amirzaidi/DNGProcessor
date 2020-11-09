@@ -37,10 +37,11 @@ public class Merge extends Stage {
                 converter.setTexture("laplace", pyramid.laplace[i]);
                 converter.seti("level", i);
 
-                converter.drawBlocks(wip);
+                converter.drawBlocks(wip, false);
 
                 if (i < 4) {
-                    // Reuse laplace for NR, and swap with non-NR texture.
+                    // Reuse laplace for NR, and swap with non-NR texture, which will be closed
+                    // by call to releasePyramid below.
                     Texture tmp = pyramid.laplace[i];
                     noiseReduce(wip, tmp, i);
                     pyramid.laplace[i] = wip;
@@ -64,7 +65,7 @@ public class Merge extends Stage {
         if (level > 0) {
             converter.setf("sigma", 0.4f, 0.03f);
         }
-        converter.drawBlocks(out);
+        converter.drawBlocks(out, level == 0);
     }
 
     @Override
