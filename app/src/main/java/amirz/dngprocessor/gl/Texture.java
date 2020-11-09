@@ -1,6 +1,9 @@
 package amirz.dngprocessor.gl;
 
 import java.nio.Buffer;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import static android.opengl.GLES20.*;
 import static android.opengl.GLES30.*;
@@ -9,6 +12,14 @@ import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MAG_FILTER;
 import static javax.microedition.khronos.opengles.GL10.GL_TEXTURE_MIN_FILTER;
 
 public class Texture implements AutoCloseable {
+    private static final Set<Texture> sTextures = new HashSet<>();
+
+    public static void closeAll() {
+        for (Texture texture : new ArrayList<>(sTextures)) {
+            texture.close();
+        }
+    }
+
     public enum Format {
         Float16,
         UInt16
@@ -64,6 +75,8 @@ public class Texture implements AutoCloseable {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texFilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, texWrap);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texWrap);
+
+        sTextures.add(this);
     }
 
     void bind(int slot) {
@@ -116,6 +129,7 @@ public class Texture implements AutoCloseable {
     @Override
     public void close() {
         glDeleteTextures(1, new int[] { mTexId }, 0);
+        sTextures.remove(this);
     }
 
     private int internalFormat() {

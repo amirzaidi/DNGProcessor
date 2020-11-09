@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import amirz.dngprocessor.colorspace.ColorspaceConverter;
+import amirz.dngprocessor.gl.GLCoreManager;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.ShaderLoader;
+import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.convert.EdgeMirror;
@@ -100,6 +102,8 @@ public class StagePipeline implements AutoCloseable {
 
         // Assume that last stage set everything but did not render yet.
         mCore.drawBlocksToOutput();
+        Texture.closeAll();
+        GLCoreManager.closeContext();
 
         reporter.onProgress(stageCount, stageCount, "Done");
     }
