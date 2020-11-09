@@ -103,10 +103,10 @@ public class Histogram {
         // Crush shadows.
         for (int i = 0; i < cumulativeHist.length; i++) {
             float heq = cumulativeHist[i];
-            if (heq > 0.005f) {
+            if (heq > 0.02f) {
                 break;
             }
-            cumulativeHist[i] *= Math.sqrt(200f * heq);
+            cumulativeHist[i] *= Math.sqrt(50f * heq);
         }
 
         hist = cumulativeHist;
