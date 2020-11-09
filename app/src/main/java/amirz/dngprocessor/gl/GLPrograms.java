@@ -33,14 +33,8 @@ public class GLPrograms implements AutoCloseable {
     }
 
     public void useProgram(int fragmentRes) {
-        int program;
-        if (mPrograms.containsKey(fragmentRes)) {
-            //noinspection ConstantConditions
-            program = mPrograms.get(fragmentRes);
-        } else {
-            program = createProgram(vertexShader, mShaderLoader.readRaw(fragmentRes));
-            mPrograms.put(fragmentRes, program);
-        }
+        int program = mPrograms.computeIfAbsent(fragmentRes, x -> createProgram(
+                vertexShader, mShaderLoader.readRaw(x)));
 
         glLinkProgram(program);
         glUseProgram(program);
