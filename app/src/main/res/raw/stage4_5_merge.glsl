@@ -1,7 +1,7 @@
 #version 300 es
 
 #define TARGET_Z 0.4f
-#define GAUSS_Z 0.7f
+#define GAUSS_Z 0.5f
 
 precision mediump float;
 
@@ -21,9 +21,17 @@ uniform int level;
 out float result;
 
 #include gaussian
+#include sigmoid
 
 float compress(float z, int lvl) {
-    return z / (sqrt(sqrt(float(11 - lvl) * abs(z))) + 1.f);
+    return z / (0.05f * sqrt(sqrt(float(11 - lvl) * abs(z))) + 1.f);
+}
+
+float applyGamma(float x) {
+    if (abs(x) < 0.001) {
+        return x;
+    }
+    return sign(x) * pow(abs(x), 1.f / 2.2f);
 }
 
 void main() {
@@ -41,9 +49,20 @@ void main() {
     // Look at result to compute weights.
     float gaussUnderVal = texelFetch(gaussUnder, xyCenter, 0).x;
     float gaussOverVal = texelFetch(gaussOver, xyCenter, 0).x;
-    float gaussUnderValDev = sqrt(unscaledGaussian(gaussUnderVal - TARGET_Z, GAUSS_Z));
-    float gaussOverValDev = sqrt(unscaledGaussian(gaussOverVal - TARGET_Z, GAUSS_Z));
+
+    float gaussUnderValDev = sqrt(
+        unscaledGaussian(applyGamma(gaussUnderVal) - applyGamma(TARGET_Z), GAUSS_Z)
+    );
+    float gaussOverValDev = sqrt(
+        unscaledGaussian(applyGamma(gaussOverVal) - applyGamma(TARGET_Z), GAUSS_Z)
+    );
 
     float blend = gaussOverValDev / (gaussUnderValDev + gaussOverValDev); // [0, 1]
-    result = base + mix(blendUnderVal, blendOverVal, blend);
+    float blendVal = mix(blendUnderVal, blendOverVal, blend);
+    float res = base + compress(blendVal, level);
+    if (level == 0) {
+        res = max(res / compress(1.f, 10), 0.f);
+        res = sigmoid(res, 0.25f);
+    }
+    result = res;
 }

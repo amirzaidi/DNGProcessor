@@ -57,6 +57,7 @@ public class MergeDetail extends Stage {
         float[] sigma = sampleHistogram.getSigma();
         float minGamma = Math.min(1f, MIN_GAMMA + 3f * (float) Math.hypot(sigma[0], sigma[1]));
         float gamma = Math.max(minGamma, 0.35f + 0.65f * sampleHistogram.getGamma());
+        gamma = (float) Math.pow(gamma, mHistFactor);
         Log.d(TAG, "Setting gamma of " + gamma + " (original " + sampleHistogram.getGamma() + ")");
         converter.setf("gamma", gamma);
 

@@ -28,12 +28,12 @@ public class DoubleExpose extends Stage {
         mUnderexposed = new Texture(normalExposure.getWidth(), normalExposure.getHeight(),
                 1, Texture.Format.Float16, null);
         converter.setTexture("buf", normalExposure);
-        converter.setf("factor", 0.75f);
+        converter.setf("factor", 0.67f);
         converter.drawBlocks(mUnderexposed);
 
         mOverexposed = new Texture(mUnderexposed);
         converter.setTexture("buf", normalExposure);
-        converter.setf("factor", 2f);
+        converter.setf("factor", 1.5f);
         converter.drawBlocks(mOverexposed);
     }
 
