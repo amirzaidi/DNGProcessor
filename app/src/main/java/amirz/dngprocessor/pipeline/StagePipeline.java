@@ -10,6 +10,7 @@ import amirz.dngprocessor.colorspace.ColorspaceConverter;
 import amirz.dngprocessor.gl.GLCore;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.ShaderLoader;
+import amirz.dngprocessor.gl.TexturePool;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.convert.EdgeMirror;

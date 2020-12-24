@@ -80,6 +80,7 @@ public class GLCore {
 
     public static void closeContext() {
         if (sContext != null) {
+            TexturePool.invalidateAll();
             eglMakeCurrent(sDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
             eglDestroyContext(sDisplay, sContext);
             sContext = null;

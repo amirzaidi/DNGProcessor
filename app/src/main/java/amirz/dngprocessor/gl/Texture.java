@@ -57,7 +57,7 @@ public class Texture implements AutoCloseable {
         glGenTextures(texId.length, texId, 0);
         mTexId = texId[0];
 
-        // Use a high ID to load
+        // Use a high ID to load buffer.
         glActiveTexture(GL_TEXTURE16);
         glBindTexture(GL_TEXTURE_2D, mTexId);
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat(), w, h, 0, format(), type(), pixels);
@@ -65,6 +65,13 @@ public class Texture implements AutoCloseable {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texFilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, texWrap);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texWrap);
+    }
+
+    public void setPixels(Buffer pixels) {
+        // Use a high ID to update buffer.
+        glActiveTexture(GL_TEXTURE16);
+        glBindTexture(GL_TEXTURE_2D, mTexId);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, mWidth, mHeight, format(), type(), pixels);
     }
 
     void bind(int slot) {
