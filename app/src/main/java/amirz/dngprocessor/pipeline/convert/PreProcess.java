@@ -53,14 +53,9 @@ public class PreProcess extends Stage {
         mSensorTex = TexturePool.get(getInWidth(), getInHeight(),
                 TexturePool.Type.OneChF);
 
-        // Now create the input texture and bind it to TEXTURE0
-        ByteBuffer buffer = ByteBuffer.allocateDirect(mRaw.length);
-        buffer.put(mRaw);
-        buffer.flip();
-
         Texture sensorUITex = TexturePool.get(getInWidth(), getInHeight(),
                 TexturePool.Type.OneChI);
-        sensorUITex.setPixels(buffer);
+        sensorUITex.setPixels(mRaw);
 
         converter.setTexture("rawBuffer", sensorUITex);
         converter.seti("rawWidth", getInWidth());
@@ -91,7 +86,7 @@ public class PreProcess extends Stage {
             converter.drawBlocks(mSensorTex);
         }
 
-        sensorUITex.close();
+        TexturePool.put(sensorUITex);
     }
 
     @Override

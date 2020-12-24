@@ -15,6 +15,24 @@ import static android.opengl.GLES20.*;
 import static android.opengl.GLES30.*;
 
 public class GLPrograms implements AutoCloseable {
+    private static GLPrograms sInstance;
+
+    static {
+        GLCore.addOnCloseContextRunnable(() -> {
+            if (sInstance != null) {
+                sInstance.close();
+            }
+            sInstance = null;
+        });
+    }
+
+    public static GLPrograms getInstance(ShaderLoader shaderLoader) {
+        if (sInstance == null) {
+            sInstance = new GLPrograms(shaderLoader);
+        }
+        return sInstance;
+    }
+
     public final int vertexShader;
 
     private final ByteBuffer mFlushBuffer = ByteBuffer.allocateDirect(32);
@@ -25,7 +43,7 @@ public class GLPrograms implements AutoCloseable {
     private int mNewTextureId;
     private int mProgramActive;
 
-    public GLPrograms(ShaderLoader shaderLoader) {
+    private GLPrograms(ShaderLoader shaderLoader) {
         mShaderLoader = shaderLoader;
         vertexShader = loadShader(GL_VERTEX_SHADER, shaderLoader.readRaw(R.raw.passthrough_vs));
     }
@@ -99,6 +117,7 @@ public class GLPrograms implements AutoCloseable {
         for (int program : mPrograms.values()) {
             glDeleteProgram(program);
         }
+        mPrograms.clear();
     }
 
     protected static int loadShader(int type, String shaderCode) {

@@ -7,16 +7,26 @@ import android.opengl.EGLSurface;
 import android.util.Log;
 import android.util.Pair;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static android.opengl.EGL14.*;
 
+/**
+ * Since OpenGL is entirely static, this is a static wrapper.
+ */
 public class GLCore {
+    private static final String TAG = "GLCore";
+
     private static final EGLDisplay sDisplay;
     private static final EGLConfig sConfig;
     private static final Map<Pair<Integer, Integer>, EGLSurface> sSurfaces = new HashMap<>();
+    private static final List<Runnable> sRunOnCloseContext = new ArrayList<>();
     private static EGLContext sContext;
+    private static EGLSurface sSurface;
+    private static Pair<Integer, Integer> sDimens;
 
     static {
         sDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -60,30 +70,45 @@ public class GLCore {
         }
     }
 
-    public static void openContext(int width, int height) {
-        Pair<Integer, Integer> dimens = new Pair<>(width, height);
-        Log.d("GLCoreManager", "Reusing texture: " + sSurfaces.containsKey(dimens));
-        EGLSurface surface = sSurfaces.computeIfAbsent(dimens, x -> eglCreatePbufferSurface(
-                sDisplay, sConfig, new int[] {
-                        EGL_WIDTH, x.first,
-                        EGL_HEIGHT, x.second,
-                        EGL_NONE
-                }, 0));
+    public static void setDimens(int width, int height) {
+        if (sDimens != null && sDimens.first == width && sDimens.second == height) {
+            Log.d(TAG, "Reusing full Context and Pbuffer Surface");
+        } else {
+            closeExistingContext();
 
-        sContext = eglCreateContext(sDisplay, sConfig, EGL_NO_CONTEXT, new int[] {
-                EGL_CONTEXT_CLIENT_VERSION, 3,
-                EGL_NONE
-        }, 0);
+            sDimens = new Pair<>(width, height);
+            Log.d(TAG, "Reusing Pbuffer Surface: " + sSurfaces.containsKey(sDimens));
+            sSurface = sSurfaces.computeIfAbsent(sDimens, x -> eglCreatePbufferSurface(
+                    sDisplay, sConfig, new int[] {
+                            EGL_WIDTH, x.first,
+                            EGL_HEIGHT, x.second,
+                            EGL_NONE
+                    }, 0));
 
-        eglMakeCurrent(sDisplay, surface, surface, sContext);
+            sContext = eglCreateContext(sDisplay, sConfig, EGL_NO_CONTEXT, new int[] {
+                    EGL_CONTEXT_CLIENT_VERSION, 3,
+                    EGL_NONE
+            }, 0);
+        }
+
+        eglMakeCurrent(sDisplay, sSurface, sSurface, sContext);
     }
 
-    public static void closeContext() {
+    private static void closeExistingContext() {
         if (sContext != null) {
-            TexturePool.invalidateAll();
+            Log.d(TAG, "Closing current context");
+
+            for (Runnable runnable : sRunOnCloseContext) {
+                runnable.run();
+            }
+
             eglMakeCurrent(sDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
             eglDestroyContext(sDisplay, sContext);
             sContext = null;
         }
+    }
+
+    public static void addOnCloseContextRunnable(Runnable onClose) {
+        sRunOnCloseContext.add(onClose);
     }
 }

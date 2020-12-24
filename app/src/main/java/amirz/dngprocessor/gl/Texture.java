@@ -1,6 +1,7 @@
 package amirz.dngprocessor.gl;
 
 import java.nio.Buffer;
+import java.nio.ByteBuffer;
 
 import static android.opengl.GLES20.*;
 import static android.opengl.GLES30.*;
@@ -28,6 +29,7 @@ public class Texture implements AutoCloseable {
     private final int mChannels;
     private final Format mFormat;
     private final int mTexId;
+    private ByteBuffer mBuffer;
 
     public Texture(Config config) {
         this(config.w, config.h, config.channels, config.format, config.pixels, config.texFilter,
@@ -67,11 +69,17 @@ public class Texture implements AutoCloseable {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texWrap);
     }
 
-    public void setPixels(Buffer pixels) {
+    public void setPixels(byte[] bytes) {
+        if (mBuffer == null) {
+            mBuffer = ByteBuffer.allocateDirect(bytes.length);
+        }
+        mBuffer.put(bytes);
+        mBuffer.flip();
+
         // Use a high ID to update buffer.
         glActiveTexture(GL_TEXTURE16);
         glBindTexture(GL_TEXTURE_2D, mTexId);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, mWidth, mHeight, format(), type(), pixels);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, mWidth, mHeight, format(), type(), mBuffer);
     }
 
     void bind(int slot) {
