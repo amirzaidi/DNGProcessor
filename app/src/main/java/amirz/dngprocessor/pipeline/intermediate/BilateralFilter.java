@@ -3,6 +3,7 @@ package amirz.dngprocessor.pipeline.intermediate;
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
+import amirz.dngprocessor.gl.TexturePool;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
@@ -34,8 +35,8 @@ public class BilateralFilter extends Stage {
         int w = intermediate.getWidth();
         int h = intermediate.getHeight();
 
-        mBilateral = new Texture(w, h, 3, Texture.Format.Float16, null);
-        try (Texture bilateralTmp = new Texture(w, h, 3, Texture.Format.Float16, null)) {
+        mBilateral = TexturePool.get(w, h, 3, Texture.Format.Float16);
+        try (Texture bilateralTmp = TexturePool.get(w, h, 3, Texture.Format.Float16)) {
             // Pre-bilateral median filter.
             converter.setTexture("buf", intermediate);
             converter.drawBlocks(bilateralTmp, false);

@@ -3,6 +3,7 @@ package amirz.dngprocessor.pipeline.post;
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
+import amirz.dngprocessor.gl.TexturePool;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
@@ -44,7 +45,7 @@ public class BlurLCE extends Stage {
         int w = intermediate.getWidth();
         int h = intermediate.getHeight();
 
-        try (Texture tmp = new Texture(w, h, 1, Texture.Format.Float16, null)) {
+        try (Texture tmp = TexturePool.get(w, h, 1, Texture.Format.Float16)) {
             int offsetX = mSensorParams.outputOffsetX;
             int offsetY = mSensorParams.outputOffsetY;
             converter.seti("minxy", offsetX, offsetY);
@@ -66,7 +67,7 @@ public class BlurLCE extends Stage {
                 converter.seti("dir", 1, 0); // Horizontal
                 converter.setf("ch", 1, 0); // [Y]00
 
-                mStrongBlur = new Texture(w, h, 1, Texture.Format.Float16, null);
+                mStrongBlur = TexturePool.get(w, h, 1, Texture.Format.Float16);
                 converter.drawBlocks(mStrongBlur);
             }
 
@@ -87,7 +88,7 @@ public class BlurLCE extends Stage {
                 converter.seti("dir", 1, 0); // Horizontal
                 converter.setf("ch", 1, 0); // [Y]00
 
-                mMediumBlur = new Texture(w, h, 1, Texture.Format.Float16, null);
+                mMediumBlur = TexturePool.get(w, h, 1, Texture.Format.Float16);
                 converter.drawBlocks(mMediumBlur);
             }
 
@@ -107,10 +108,17 @@ public class BlurLCE extends Stage {
                 converter.seti("dir", 1, 0); // Horizontal
                 converter.setf("ch", 1, 0); // [Y]00
 
-                mWeakBlur = new Texture(w, h, 1, Texture.Format.Float16, null);
+                mWeakBlur = TexturePool.get(w, h, 1, Texture.Format.Float16);
                 converter.drawBlocks(mWeakBlur);
             }
         }
+    }
+
+    @Override
+    public void close() {
+        mWeakBlur.close();
+        mMediumBlur.close();
+        mStrongBlur.close();
     }
 
     @Override

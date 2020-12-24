@@ -10,6 +10,7 @@ import java.util.Arrays;
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
+import amirz.dngprocessor.gl.TexturePool;
 import amirz.dngprocessor.math.Histogram;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
@@ -65,7 +66,7 @@ public class Analysis extends Stage {
 
         converter.seti("samplingFactor", samplingFactor);
 
-        try (Texture analyzeTex = new Texture(w, h, 4, Texture.Format.Float16, null)) {
+        try (Texture analyzeTex = TexturePool.get(w, h, 4, Texture.Format.Float16)) {
             converter.drawBlocks(analyzeTex);
 
             int whPixels = w * h;

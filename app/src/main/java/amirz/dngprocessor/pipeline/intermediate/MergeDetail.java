@@ -79,4 +79,9 @@ public class MergeDetail extends Stage {
     public int getShader() {
         return R.raw.stage2_4_merge_detail;
     }
+
+    @Override
+    public void close() {
+        mIntermediate.close();
+    }
 }

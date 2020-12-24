@@ -3,6 +3,7 @@ package amirz.dngprocessor.pipeline.exposefuse;
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
+import amirz.dngprocessor.gl.TexturePool;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.convert.EdgeMirror;
@@ -32,7 +33,7 @@ public class Merge extends Stage {
         converter.setTexture("blendOver", overExpo.gauss[overExpo.gauss.length - 1]);
         converter.seti("level", overExpo.gauss.length - 1);
 
-        Texture wip = new Texture(underExpo.gauss[underExpo.gauss.length - 1]);
+        Texture wip = TexturePool.get(underExpo.gauss[underExpo.gauss.length - 1]);
         converter.drawBlocks(wip, false);
 
         // Start with the lowest level gaussian.
@@ -42,7 +43,7 @@ public class Merge extends Stage {
 
                 // We can discard the previous work in progress merge.
                 wip.close();
-                wip = new Texture(underExpo.laplace[i]);
+                wip = TexturePool.get(underExpo.laplace[i]);
 
                 converter.seti("useUpscaled", 1);
                 converter.setTexture("upscaled", upscaleWip);
@@ -69,11 +70,11 @@ public class Merge extends Stage {
 
         laplace.releasePyramid();
         Texture chroma = previousStages.getStage(EdgeMirror.class).getIntermediate();
+        mMerged = chroma; // Reuse.
 
         converter.useProgram(R.raw.stage4_9_combine_z);
         converter.setTexture("bufChroma", chroma);
         converter.setTexture("bufLuma", wip);
-        mMerged = new Texture(chroma);
         converter.drawBlocks(mMerged);
 
         wip.close();

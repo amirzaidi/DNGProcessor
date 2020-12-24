@@ -29,6 +29,8 @@ public class ToneMap extends Stage {
     private final int ditherSize = 128;
     private final byte[] dither = new byte[ditherSize * ditherSize * 2];
 
+    private Texture mDitherTex;
+
     public ToneMap(SensorParams sensor, ProcessParams process,
                    float[] XYZtoProPhoto, float[] proPhotoToSRGB) {
         mSensorParams = sensor;
@@ -87,9 +89,9 @@ public class ToneMap extends Stage {
 
         // Fill with noise
         new Random(8682522807148012L).nextBytes(dither);
-        Texture ditherTex = new Texture(ditherSize, ditherSize, 1, Texture.Format.UInt16,
+        mDitherTex = new Texture(ditherSize, ditherSize, 1, Texture.Format.UInt16,
                 ByteBuffer.wrap(dither));
-        converter.setTexture("ditherTex", ditherTex);
+        converter.setTexture("ditherTex", mDitherTex);
         converter.seti("ditherSize", ditherSize);
 
         glBindFramebuffer(GL_FRAMEBUFFER, mFbo[0]);
@@ -98,5 +100,10 @@ public class ToneMap extends Stage {
     @Override
     public int getShader() {
         return R.raw.stage3_3_tonemap_fs;
+    }
+
+    @Override
+    public void close() {
+        mDitherTex.close();
     }
 }

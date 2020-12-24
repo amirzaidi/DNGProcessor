@@ -3,6 +3,7 @@ package amirz.dngprocessor.pipeline.exposefuse;
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
+import amirz.dngprocessor.gl.TexturePool;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 
@@ -71,7 +72,7 @@ public class Laplace extends Stage {
             converter.setTexture("base", upsampled[i]);
             converter.setTexture("target", downsampled[i]);
 
-            diff[i] = new Texture(upsampled[i]);
+            diff[i] = TexturePool.get(upsampled[i]);
             converter.drawBlocks(diff[i]);
             upsampled[i].close();
         }
