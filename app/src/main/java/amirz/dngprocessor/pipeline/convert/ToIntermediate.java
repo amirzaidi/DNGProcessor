@@ -5,6 +5,7 @@ import android.util.Rational;
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
+import amirz.dngprocessor.gl.TexturePool;
 import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
@@ -34,8 +35,8 @@ public class ToIntermediate extends Stage {
         converter.seti("rawHeight", preProcess.getInHeight());
 
         // Second texture for per-CFA pixel data
-        mIntermediate = new Texture(preProcess.getInWidth(), preProcess.getInHeight(), 3,
-                Texture.Format.Float16, null);
+        mIntermediate = TexturePool.get(preProcess.getInWidth(), preProcess.getInHeight(), 3,
+                Texture.Format.Float16);
 
         // Load mosaic and green raw texture
         try (Texture sensorGTex = previousStages.getStage(GreenDemosaic.class).getSensorGTex()) {

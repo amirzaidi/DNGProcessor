@@ -30,6 +30,7 @@ public class Texture implements AutoCloseable {
     private final Format mFormat;
     private final int mTexId;
     private ByteBuffer mBuffer;
+    private Runnable mCloseOverride;
 
     public Texture(Config config) {
         this(config.w, config.h, config.channels, config.format, config.pixels, config.texFilter,
@@ -69,17 +70,34 @@ public class Texture implements AutoCloseable {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texWrap);
     }
 
+    public void setCloseOverride(Runnable closeOverride) {
+        mCloseOverride = closeOverride;
+    }
+
     public void setPixels(byte[] bytes) {
         if (mBuffer == null) {
             mBuffer = ByteBuffer.allocateDirect(bytes.length);
         }
         mBuffer.put(bytes);
         mBuffer.flip();
+        setPixels(mBuffer);
+    }
 
+    public void setPixels(Buffer buffer) {
         // Use a high ID to update buffer.
         glActiveTexture(GL_TEXTURE16);
         glBindTexture(GL_TEXTURE_2D, mTexId);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, mWidth, mHeight, format(), type(), mBuffer);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, mWidth, mHeight, format(), type(), buffer);
+    }
+
+    public void setTexHandling(int texFilter, int texWrap) {
+        // Use a high ID to update buffer.
+        glActiveTexture(GL_TEXTURE16);
+        glBindTexture(GL_TEXTURE_2D, mTexId);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, texFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, texWrap);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, texWrap);
     }
 
     void bind(int slot) {
@@ -131,6 +149,10 @@ public class Texture implements AutoCloseable {
 
     @Override
     public void close() {
+        if (mCloseOverride != null) {
+            mCloseOverride.run();
+            return;
+        }
         glDeleteTextures(1, new int[] { mTexId }, 0);
     }
 

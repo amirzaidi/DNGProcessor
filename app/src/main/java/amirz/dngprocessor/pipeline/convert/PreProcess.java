@@ -50,43 +50,42 @@ public class PreProcess extends Stage {
         GLPrograms converter = getConverter();
 
         // First texture is just for normalization
-        mSensorTex = TexturePool.get(getInWidth(), getInHeight(),
-                TexturePool.Type.OneChF);
+        mSensorTex = TexturePool.get(getInWidth(), getInHeight(), 1,
+                Texture.Format.Float16);
 
-        Texture sensorUITex = TexturePool.get(getInWidth(), getInHeight(),
-                TexturePool.Type.OneChI);
-        sensorUITex.setPixels(mRaw);
+        try (Texture sensorUITex = TexturePool.get(getInWidth(), getInHeight(), 1,
+                Texture.Format.UInt16)) {
+            sensorUITex.setPixels(mRaw);
 
-        converter.setTexture("rawBuffer", sensorUITex);
-        converter.seti("rawWidth", getInWidth());
-        converter.seti("rawHeight", getInHeight());
-        converter.seti("cfaPattern", mSensor.cfa);
+            converter.setTexture("rawBuffer", sensorUITex);
+            converter.seti("rawWidth", getInWidth());
+            converter.seti("rawHeight", getInHeight());
+            converter.seti("cfaPattern", mSensor.cfa);
 
-        float[] gainMap = mSensor.gainMap;
-        int[] gainMapSize = mSensor.gainMapSize;
-        if (gainMap == null) {
-            gainMap = new float[] { 1f, 1f, 1f, 1f };
-            gainMapSize = new int[] {1, 1};
+            float[] gainMap = mSensor.gainMap;
+            int[] gainMapSize = mSensor.gainMapSize;
+            if (gainMap == null) {
+                gainMap = new float[] { 1f, 1f, 1f, 1f };
+                gainMapSize = new int[] { 1, 1 };
+            }
+
+            mGainMapTex = new Texture(gainMapSize[0], gainMapSize[1], 4, Texture.Format.Float16,
+                    FloatBuffer.wrap(gainMap), GL_LINEAR);
+            converter.setTexture("gainMap", mGainMapTex);
+
+            int[] blackLevel = mSensor.blackLevelPattern;
+            converter.setf("blackLevel", blackLevel[0], blackLevel[1], blackLevel[2], blackLevel[3]);
+            converter.setf("whiteLevel", mSensor.whiteLevel);
+            converter.seti("cfaPattern", getCfaPattern());
+            converter.seti("hotPixelsSize", mSensor.hotPixelsSize);
+
+            int[] hotPixelsSize = mSensor.hotPixelsSize;
+            try (Texture hotPx = new Texture(hotPixelsSize[0], hotPixelsSize[1], 1, Texture.Format.UInt16,
+                    ShortBuffer.wrap(mSensor.hotPixels), GL_NEAREST, GL_REPEAT)) {
+                converter.setTexture("hotPixels", hotPx);
+                converter.drawBlocks(mSensorTex);
+            }
         }
-
-        mGainMapTex = new Texture(gainMapSize[0], gainMapSize[1], 4, Texture.Format.Float16,
-                FloatBuffer.wrap(gainMap), GL_LINEAR);
-        converter.setTexture("gainMap", mGainMapTex);
-
-        int[] blackLevel = mSensor.blackLevelPattern;
-        converter.setf("blackLevel", blackLevel[0], blackLevel[1], blackLevel[2], blackLevel[3]);
-        converter.setf("whiteLevel", mSensor.whiteLevel);
-        converter.seti("cfaPattern", getCfaPattern());
-        converter.seti("hotPixelsSize", mSensor.hotPixelsSize);
-
-        int[] hotPixelsSize = mSensor.hotPixelsSize;
-        try (Texture hotPx = new Texture(hotPixelsSize[0], hotPixelsSize[1], 1, Texture.Format.UInt16,
-                ShortBuffer.wrap(mSensor.hotPixels), GL_NEAREST, GL_REPEAT)) {
-            converter.setTexture("hotPixels", hotPx);
-            converter.drawBlocks(mSensorTex);
-        }
-
-        TexturePool.put(sensorUITex);
     }
 
     @Override
