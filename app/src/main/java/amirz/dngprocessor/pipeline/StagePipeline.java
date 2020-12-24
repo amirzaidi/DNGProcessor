@@ -49,7 +49,8 @@ public class StagePipeline implements AutoCloseable {
         }
         Log.d(TAG, "Output width,height: " + outWidth + "," + outHeight);
 
-        mConverter = new GLPrograms(argbOutput.getWidth(), BLOCK_HEIGHT, loader);
+        GLCore.openContext(argbOutput.getWidth(), BLOCK_HEIGHT);
+        mConverter = new GLPrograms(loader);
         mBlockProcessing = new GLBlockProcessing(argbOutput);
 
         ColorspaceConverter colorspace = new ColorspaceConverter(sensor);

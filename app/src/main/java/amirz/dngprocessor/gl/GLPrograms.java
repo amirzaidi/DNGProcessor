@@ -25,8 +25,7 @@ public class GLPrograms implements AutoCloseable {
     private int mNewTextureId;
     private int mProgramActive;
 
-    public GLPrograms(int surfaceWidth, int surfaceHeight, ShaderLoader shaderLoader) {
-        GLCore.setDimens(surfaceWidth, surfaceHeight);
+    public GLPrograms(ShaderLoader shaderLoader) {
         mShaderLoader = shaderLoader;
         vertexShader = loadShader(GL_VERTEX_SHADER, shaderLoader.readRaw(R.raw.passthrough_vs));
     }

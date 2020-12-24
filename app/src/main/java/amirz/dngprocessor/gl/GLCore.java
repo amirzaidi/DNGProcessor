@@ -60,7 +60,7 @@ public class GLCore {
         }
     }
 
-    public static void setDimens(int width, int height) {
+    public static void openContext(int width, int height) {
         Pair<Integer, Integer> dimens = new Pair<>(width, height);
         Log.d("GLCoreManager", "Reusing texture: " + sSurfaces.containsKey(dimens));
         EGLSurface surface = sSurfaces.computeIfAbsent(dimens, x -> eglCreatePbufferSurface(
@@ -80,6 +80,7 @@ public class GLCore {
 
     public static void closeContext() {
         if (sContext != null) {
+            eglMakeCurrent(sDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
             eglDestroyContext(sDisplay, sContext);
             sContext = null;
         }
