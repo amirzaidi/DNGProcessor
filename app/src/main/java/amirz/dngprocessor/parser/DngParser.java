@@ -200,15 +200,7 @@ public class DngParser {
             sensor.calibrationTransform2 = DIAGONAL;
         }
 
-        ShaderLoader loader = new ShaderLoader(mContext.getResources());
-        loader.mapImport("gaussian", R.raw.import_gaussian);
-        loader.mapImport("load3x3", R.raw.import_load3x3);
-        loader.mapImport("load3x3v2", R.raw.import_load3x3v2);
-        loader.mapImport("load3x3v3", R.raw.import_load3x3v3);
-        loader.mapImport("load5x5v3", R.raw.import_load5x5v3);
-        loader.mapImport("sigmoid", R.raw.import_sigmoid);
-        loader.mapImport("xyytoxyz", R.raw.import_xyy_to_xyz);
-        loader.mapImport("xyztoxyy", R.raw.import_xyz_to_xyy);
+        ShaderLoader loader = ShaderLoader.getInstance(mContext);
 
         final int[] steps = { 0 };
         final long[] lastTimestamp = { System.currentTimeMillis() };
