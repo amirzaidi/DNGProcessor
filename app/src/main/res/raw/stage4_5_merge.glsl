@@ -48,8 +48,16 @@ void main() {
 
     float blend = gaussOverValDev / (gaussUnderValDev + gaussOverValDev); // [0, 1]
     float blendVal = mix(blendUnderVal, blendOverVal, blend);
-    float res = base + blendVal;
 
+    if (level == 0) {
+        blendVal *= 2.5f;
+    } else if (level == 1) {
+        blendVal *= 1.5f;
+    } else {
+        blendVal *= max(1.f, 1.22f - 0.022f * float(level));
+    }
+
+    float res = base + blendVal;
     if (level == 0) {
         // Invert sqrt curve.
         res = res * res;
