@@ -18,7 +18,7 @@ public class GLPrograms implements AutoCloseable {
     private static GLPrograms sInstance;
 
     static {
-        GLCore.addOnCloseContextRunnable(() -> {
+        GLCore.getInstance().addOnCloseContextRunnable(() -> {
             if (sInstance != null) {
                 sInstance.close();
             }

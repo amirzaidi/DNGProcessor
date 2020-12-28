@@ -12,7 +12,7 @@ public class TexturePool {
     private static final Set<Texture> sUnreturned = new HashSet<>();
 
     static {
-        GLCore.addOnCloseContextRunnable(() -> {
+        GLCore.getInstance().addOnCloseContextRunnable(() -> {
             for (Texture texture : sPool) {
                 texture.setCloseOverride(null);
                 texture.close();

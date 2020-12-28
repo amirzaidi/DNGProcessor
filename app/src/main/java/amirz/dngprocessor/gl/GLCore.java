@@ -15,25 +15,34 @@ import java.util.Map;
 import static android.opengl.EGL14.*;
 
 /**
- * Since OpenGL is entirely static, this is a static wrapper.
+ * Since OpenGL is entirely static, this is a singleton wrapper.
  */
 public class GLCore {
     private static final String TAG = "GLCore";
 
-    private static final EGLDisplay sDisplay;
-    private static final EGLConfig sConfig;
-    private static final Map<Pair<Integer, Integer>, EGLSurface> sSurfaces = new HashMap<>();
-    private static final List<Runnable> sRunOnCloseContext = new ArrayList<>();
-    private static EGLContext sContext;
-    private static EGLSurface sSurface;
-    private static Pair<Integer, Integer> sDimens;
+    private static GLCore sInstance;
 
-    static {
-        sDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    public static GLCore getInstance() {
+        if (sInstance == null) {
+            sInstance = new GLCore();
+        }
+        return sInstance;
+    }
+
+    private final EGLDisplay mDisplay;
+    private final EGLConfig mConfig;
+    private final Map<Pair<Integer, Integer>, EGLSurface> mSurfaces = new HashMap<>();
+    private final List<Runnable> mRunOnCloseContext = new ArrayList<>();
+    private EGLContext mContext;
+    private EGLSurface mSurface;
+    private Pair<Integer, Integer> mDimens;
+
+    public GLCore() {
+        mDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
         int[] major = new int[2];
         int[] minor = new int[2];
-        eglInitialize(sDisplay, major, 0, minor, 0);
+        eglInitialize(mDisplay, major, 0, minor, 0);
 
         int[] attribList = {
                 EGL_DEPTH_SIZE, 0,
@@ -51,7 +60,7 @@ public class GLCore {
         // No error checking performed, minimum required code to elucidate logic
         // Expand on this logic to be more selective in choosing a configuration
         int[] numConfig = new int[1];
-        if (!eglChooseConfig(sDisplay, attribList, 0,
+        if (!eglChooseConfig(mDisplay, attribList, 0,
                 null, 0, 0, numConfig, 0)
                 || numConfig[0] == 0) {
             throw new RuntimeException("OpenGL config count zero");
@@ -59,56 +68,56 @@ public class GLCore {
 
         int configSize = numConfig[0];
         EGLConfig[] configs = new EGLConfig[configSize];
-        if (!eglChooseConfig(sDisplay, attribList, 0,
+        if (!eglChooseConfig(mDisplay, attribList, 0,
                 configs, 0, configSize, numConfig, 0)) {
             throw new RuntimeException("OpenGL config loading failed");
         }
 
-        sConfig = configs[0];
-        if (sConfig == null) {
+        mConfig = configs[0];
+        if (mConfig == null) {
             throw new RuntimeException("OpenGL config is null");
         }
     }
 
-    public static void setDimens(int width, int height) {
-        if (sDimens != null && sDimens.first == width && sDimens.second == height) {
+    public void setDimens(int width, int height) {
+        if (mDimens != null && mDimens.first == width && mDimens.second == height) {
             Log.d(TAG, "Reusing full Context and Pbuffer Surface");
         } else {
             closeExistingContext();
 
-            sDimens = new Pair<>(width, height);
-            Log.d(TAG, "Reusing Pbuffer Surface: " + sSurfaces.containsKey(sDimens));
-            sSurface = sSurfaces.computeIfAbsent(sDimens, x -> eglCreatePbufferSurface(
-                    sDisplay, sConfig, new int[] {
+            mDimens = new Pair<>(width, height);
+            Log.d(TAG, "Reusing Pbuffer Surface: " + mSurfaces.containsKey(mDimens));
+            mSurface = mSurfaces.computeIfAbsent(mDimens, x -> eglCreatePbufferSurface(
+                    mDisplay, mConfig, new int[] {
                             EGL_WIDTH, x.first,
                             EGL_HEIGHT, x.second,
                             EGL_NONE
                     }, 0));
 
-            sContext = eglCreateContext(sDisplay, sConfig, EGL_NO_CONTEXT, new int[] {
+            mContext = eglCreateContext(mDisplay, mConfig, EGL_NO_CONTEXT, new int[] {
                     EGL_CONTEXT_CLIENT_VERSION, 3,
                     EGL_NONE
             }, 0);
         }
 
-        eglMakeCurrent(sDisplay, sSurface, sSurface, sContext);
+        eglMakeCurrent(mDisplay, mSurface, mSurface, mContext);
     }
 
-    private static void closeExistingContext() {
-        if (sContext != null) {
+    private void closeExistingContext() {
+        if (mContext != null) {
             Log.d(TAG, "Closing current context");
 
-            for (Runnable runnable : sRunOnCloseContext) {
+            for (Runnable runnable : mRunOnCloseContext) {
                 runnable.run();
             }
 
-            eglMakeCurrent(sDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-            eglDestroyContext(sDisplay, sContext);
-            sContext = null;
+            eglMakeCurrent(mDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+            eglDestroyContext(mDisplay, mContext);
+            mContext = null;
         }
     }
 
-    public static void addOnCloseContextRunnable(Runnable onClose) {
-        sRunOnCloseContext.add(onClose);
+    public void addOnCloseContextRunnable(Runnable onClose) {
+        mRunOnCloseContext.add(onClose);
     }
 }
