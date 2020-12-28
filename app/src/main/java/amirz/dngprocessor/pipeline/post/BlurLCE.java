@@ -116,9 +116,11 @@ public class BlurLCE extends Stage {
 
     @Override
     public void close() {
-        mWeakBlur.close();
-        mMediumBlur.close();
-        mStrongBlur.close();
+        if (mProcessParams.lce) {
+            mWeakBlur.close();
+            mMediumBlur.close();
+            mStrongBlur.close();
+        }
     }
 
     @Override
