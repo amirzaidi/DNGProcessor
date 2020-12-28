@@ -33,7 +33,6 @@ public class GLCore {
     private final EGLDisplay mDisplay;
     private final EGLConfig mConfig;
     private final Map<Pair<Integer, Integer>, EGLSurface> mSurfaces = new HashMap<>();
-    private final List<Runnable> mRunOnCloseContext = new ArrayList<>();
     private final Map<Class<?>, GLResource> mComponents = new HashMap<>();
     private EGLContext mContext;
     private EGLSurface mSurface;
@@ -108,10 +107,6 @@ public class GLCore {
     private void closeExistingContext() {
         if (mContext != null) {
             Log.d(TAG, "Closing current context");
-
-            for (Runnable runnable : mRunOnCloseContext) {
-                runnable.run();
-            }
             for (GLResource resource : mComponents.values()) {
                 resource.release();
             }
@@ -120,10 +115,6 @@ public class GLCore {
             eglDestroyContext(mDisplay, mContext);
             mContext = null;
         }
-    }
-
-    public void addOnCloseContextRunnable(Runnable onClose) {
-        mRunOnCloseContext.add(onClose);
     }
 
     @SuppressWarnings("unchecked")
