@@ -56,7 +56,8 @@ public class MergeDetail extends Stage {
         // To ensure that we do not boost that too much, reduce with color noise.
         float[] sigma = sampleHistogram.getSigma();
         float minGamma = Math.min(1f, MIN_GAMMA + 3f * (float) Math.hypot(sigma[0], sigma[1]));
-        float gamma = Math.max(minGamma, 0.35f + 0.65f * sampleHistogram.getGamma());
+        float gamma = sampleHistogram.getGamma();
+        gamma = Math.max(minGamma, gamma < 1.f ? 0.6f + 0.4f * gamma : gamma);
         gamma = (float) Math.pow(gamma, mHistFactor);
         Log.d(TAG, "Setting gamma of " + gamma + " (original " + sampleHistogram.getGamma() + ")");
         converter.setf("gamma", gamma);
@@ -64,7 +65,7 @@ public class MergeDetail extends Stage {
         // Reduce the histogram equalization in scenes with good light distribution.
         float bilatHistEq = Math.max(0.4f, 1f - sampleHistogram.getGamma() * 0.6f
                 - 4f * (float) Math.hypot(sigma[0], sigma[1]));
-        Log.d(TAG, "Bilateral histogram equalization " + bilatHistEq);
+        Log.d(TAG, "Smoothed histogram equalization " + bilatHistEq);
         converter.setf("histFactor", bilatHistEq * mHistFactor);
 
         converter.setTexture("intermediate", mIntermediate);
