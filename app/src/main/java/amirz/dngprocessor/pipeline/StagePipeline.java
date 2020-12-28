@@ -67,12 +67,12 @@ public class StagePipeline implements AutoCloseable {
         //addStage(new NoiseMap());
         //addStage(new NoiseReduce(sensor, process));
 
-        // Exposure Fusion
+        // Exposure Fusion: Compress Dynamic Range
         addStage(new DoubleExpose());
         addStage(new Laplace());
         addStage(new Merge());
 
-        // Contrast Enhancement
+        // Contrast Enhancement: Tone Mapping
         addStage(new Analysis(outWidth, outHeight,
                 sensor.outputOffsetX, sensor.outputOffsetY));
         addStage(new BilateralFilter(process));
