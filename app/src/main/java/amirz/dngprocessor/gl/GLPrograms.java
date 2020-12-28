@@ -17,21 +17,9 @@ import static android.opengl.GLES30.*;
 public class GLPrograms extends GLResource {
     private static final int NO_VERTEX_SHADER = -1;
 
-    private static GLPrograms sInstance;
-
-    static {
-        GLCore.getInstance().addOnCloseContextRunnable(() -> {
-            if (sInstance != null) {
-                sInstance.release();
-            }
-        });
-    }
-
     public static GLPrograms getInstance(ShaderLoader shaderLoader) {
-        if (sInstance == null) {
-            sInstance = new GLPrograms(shaderLoader);
-        }
-        return sInstance;
+        return GLCore.getInstance().getComponent(GLPrograms.class,
+                () -> new GLPrograms(shaderLoader));
     }
 
     private final ByteBuffer mFlushBuffer = ByteBuffer.allocateDirect(32);
