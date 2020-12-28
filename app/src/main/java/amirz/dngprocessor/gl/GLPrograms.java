@@ -9,6 +9,7 @@ import java.util.Map;
 
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.math.BlockDivider;
+import amirz.dngprocessor.util.ShaderLoader;
 
 import static amirz.dngprocessor.util.Constants.BLOCK_HEIGHT;
 import static android.opengl.GLES20.*;

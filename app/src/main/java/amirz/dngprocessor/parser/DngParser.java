@@ -12,13 +12,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 
-import amirz.dngprocessor.R;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.util.NotifHandler;
 import amirz.dngprocessor.util.Path;
 import amirz.dngprocessor.Preferences;
 import amirz.dngprocessor.device.DeviceMap;
-import amirz.dngprocessor.gl.ShaderLoader;
+import amirz.dngprocessor.util.ShaderLoader;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.params.SensorParams;
 
