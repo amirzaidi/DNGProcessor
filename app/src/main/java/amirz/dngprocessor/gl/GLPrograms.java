@@ -14,15 +14,16 @@ import static amirz.dngprocessor.util.Constants.BLOCK_HEIGHT;
 import static android.opengl.GLES20.*;
 import static android.opengl.GLES30.*;
 
-public class GLPrograms implements AutoCloseable {
+public class GLPrograms extends GLResource {
+    private static final int NO_VERTEX_SHADER = -1;
+
     private static GLPrograms sInstance;
 
     static {
         GLCore.getInstance().addOnCloseContextRunnable(() -> {
             if (sInstance != null) {
-                sInstance.close();
+                sInstance.release();
             }
-            sInstance = null;
         });
     }
 
@@ -33,24 +34,26 @@ public class GLPrograms implements AutoCloseable {
         return sInstance;
     }
 
-    public final int vertexShader;
-
     private final ByteBuffer mFlushBuffer = ByteBuffer.allocateDirect(32);
     private final ShaderLoader mShaderLoader;
     private final SquareModel mSquare = new SquareModel();
     private final Map<Integer, Integer> mPrograms = new HashMap<>();
     private final Map<String, Integer> mTextureBinds = new HashMap<>();
+    private int mVertexShader = NO_VERTEX_SHADER;
     private int mNewTextureId;
     private int mProgramActive;
 
     private GLPrograms(ShaderLoader shaderLoader) {
         mShaderLoader = shaderLoader;
-        vertexShader = loadShader(GL_VERTEX_SHADER, shaderLoader.readRaw(R.raw.passthrough_vs));
     }
 
     public void useProgram(int fragmentRes) {
+        if (mVertexShader == NO_VERTEX_SHADER) {
+            mVertexShader = loadShader(GL_VERTEX_SHADER,
+                    mShaderLoader.readRaw(R.raw.passthrough_vs));
+        }
         int program = mPrograms.computeIfAbsent(fragmentRes, x -> createProgram(
-                vertexShader, mShaderLoader.readRaw(x)));
+                mVertexShader, mShaderLoader.readRaw(x)));
 
         glLinkProgram(program);
         glUseProgram(program);
@@ -113,12 +116,13 @@ public class GLPrograms implements AutoCloseable {
     }
 
     @Override
-    public void close() {
+    public void release() {
         // Clean everything up
         for (int program : mPrograms.values()) {
             glDeleteProgram(program);
         }
         mPrograms.clear();
+        mVertexShader = NO_VERTEX_SHADER;
     }
 
     protected static int loadShader(int type, String shaderCode) {
