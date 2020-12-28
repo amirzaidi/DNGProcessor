@@ -106,6 +106,7 @@ public class GLPrograms implements AutoCloseable {
                 int glError = glGetError();
                 if (glError != 0) {
                     Log.d("GLPrograms", "GLError: " + glError);
+                    throw new RuntimeException("GLError " + glError);
                 }
             }
         }
