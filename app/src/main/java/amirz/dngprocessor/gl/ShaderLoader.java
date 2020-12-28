@@ -40,7 +40,9 @@ public class ShaderLoader {
     }
 
     private void mapImport(String name, int resId) {
-        mImports.put("#include " + name, readRawInternal(resId, false));
+        mImports.put("#include " + name, readRawInternal(resId, false)
+                .replace('\n', ' ')
+                .replace('\r', ' '));
     }
 
     public String readRaw(int resId) {
