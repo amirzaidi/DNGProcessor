@@ -23,17 +23,6 @@ out float result;
 #include gaussian
 #include sigmoid
 
-float compress(float z, int lvl) {
-    return z / (0.05f * sqrt(sqrt(float(11 - lvl) * abs(z))) + 1.f);
-}
-
-float applyGamma(float x) {
-    if (abs(x) < 0.001) {
-        return x;
-    }
-    return sign(x) * pow(abs(x), 1.f / 2.2f);
-}
-
 void main() {
     ivec2 xyCenter = ivec2(gl_FragCoord.xy);
 
@@ -51,18 +40,19 @@ void main() {
     float gaussOverVal = texelFetch(gaussOver, xyCenter, 0).x;
 
     float gaussUnderValDev = sqrt(
-        unscaledGaussian(applyGamma(gaussUnderVal) - applyGamma(TARGET_Z), GAUSS_Z)
+        unscaledGaussian(gaussUnderVal - TARGET_Z, GAUSS_Z)
     );
     float gaussOverValDev = sqrt(
-        unscaledGaussian(applyGamma(gaussOverVal) - applyGamma(TARGET_Z), GAUSS_Z)
+        unscaledGaussian(gaussOverVal - TARGET_Z, GAUSS_Z)
     );
 
     float blend = gaussOverValDev / (gaussUnderValDev + gaussOverValDev); // [0, 1]
     float blendVal = mix(blendUnderVal, blendOverVal, blend);
-    float res = base + compress(blendVal, level);
+    float res = base + blendVal;
+
     if (level == 0) {
-        res = max(res / compress(1.f, 10), 0.f);
-        res = sigmoid(res, 0.25f);
+        // Invert sqrt curve.
+        res = res * res;
     }
     result = res;
 }
