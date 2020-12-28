@@ -41,7 +41,7 @@ public class MergeDetail extends Stage {
 
         // If there is no bilateral filtered texture, skip this step.
         if (bilateralTex == null) {
-            return;
+            //return;
         }
 
         Analysis sampleHistogram = previousStages.getStage(Analysis.class);
@@ -68,11 +68,11 @@ public class MergeDetail extends Stage {
         converter.setf("histFactor", bilatHistEq * mHistFactor);
 
         converter.setTexture("intermediate", mIntermediate);
-        converter.setTexture("bilateral", bilateralTex);
+        //converter.setTexture("bilateral", bilateralTex);
 
         converter.drawBlocks(mIntermediate);
 
-        bilateralTex.close();
+        //bilateralTex.close();
     }
 
     @Override

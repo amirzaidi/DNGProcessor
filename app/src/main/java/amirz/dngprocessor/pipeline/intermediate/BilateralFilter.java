@@ -25,7 +25,7 @@ public class BilateralFilter extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
-        if (mProcess.histFactor == 0f) {
+        if (mProcess.histFactor == 0f || true) {
             return;
         }
 
