@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static android.opengl.EGL14.*;
 
@@ -33,6 +34,7 @@ public class GLCore {
     private final EGLConfig mConfig;
     private final Map<Pair<Integer, Integer>, EGLSurface> mSurfaces = new HashMap<>();
     private final List<Runnable> mRunOnCloseContext = new ArrayList<>();
+    private final Map<Class<?>, GLResource> mComponents = new HashMap<>();
     private EGLContext mContext;
     private EGLSurface mSurface;
     private Pair<Integer, Integer> mDimens;
@@ -110,6 +112,9 @@ public class GLCore {
             for (Runnable runnable : mRunOnCloseContext) {
                 runnable.run();
             }
+            for (GLResource resource : mComponents.values()) {
+                resource.release();
+            }
 
             eglMakeCurrent(mDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
             eglDestroyContext(mDisplay, mContext);
@@ -119,5 +124,10 @@ public class GLCore {
 
     public void addOnCloseContextRunnable(Runnable onClose) {
         mRunOnCloseContext.add(onClose);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends GLResource> T getComponent(Class<T> cls, Supplier<T> constructor) {
+        return (T) mComponents.computeIfAbsent(cls, x -> constructor.get());
     }
 }

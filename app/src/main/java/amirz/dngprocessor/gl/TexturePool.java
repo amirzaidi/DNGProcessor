@@ -5,28 +5,31 @@ import android.util.Log;
 import java.util.HashSet;
 import java.util.Set;
 
-public class TexturePool {
+public class TexturePool extends GLResource {
     private static final String TAG = "TexturePool";
 
-    private static final Set<Texture> sPool = new HashSet<>();
-    private static final Set<Texture> sUnreturned = new HashSet<>();
-
-    static {
-        GLCore.getInstance().addOnCloseContextRunnable(() -> {
-            for (Texture texture : sPool) {
-                texture.setCloseOverride(null);
-                texture.close();
-            }
-            sPool.clear();
-        });
+    public static TexturePool getInstance() {
+        return GLCore.getInstance().getComponent(TexturePool.class, TexturePool::new);
     }
 
     public static Texture get(int width, int height, int channels, Texture.Format format) {
+        return getInstance().getTex(width, height, channels, format);
+    }
+
+    public static Texture get(Texture texture) {
+        return get(texture.getWidth(), texture.getHeight(), texture.getChannels(),
+                texture.getFormat());
+    }
+
+    private final Set<Texture> mPool = new HashSet<>();
+    private final Set<Texture> mGrants = new HashSet<>();
+
+    private Texture getTex(int width, int height, int channels, Texture.Format format) {
         Texture texture = null;
-        for (Texture tex : sPool) {
+        for (Texture tex : mPool) {
             if (tex.getWidth() == width && tex.getHeight() == height
                     && tex.getChannels() == channels && tex.getFormat() == format) {
-                sPool.remove(tex);
+                mPool.remove(tex);
                 texture = tex;
                 break;
             }
@@ -38,10 +41,10 @@ public class TexturePool {
         }
 
         Texture tex = texture;
-        sUnreturned.add(tex);
+        mGrants.add(tex);
         tex.setCloseOverride(() -> {
-            sUnreturned.remove(tex);
-            sPool.add(tex);
+            mGrants.remove(tex);
+            mPool.add(tex);
             tex.setCloseOverride(() -> {
                 throw new RuntimeException("Attempting to close " + tex + " twice");
             });
@@ -50,13 +53,17 @@ public class TexturePool {
         return tex;
     }
 
-    public static Texture get(Texture texture) {
-        return get(texture.getWidth(), texture.getHeight(), texture.getChannels(),
-                texture.getFormat());
+    @Override
+    public void release() {
+        for (Texture texture : mPool) {
+            texture.setCloseOverride(null);
+            texture.close();
+        }
+        mPool.clear();
     }
 
     public static void logLeaks() {
-        for (Texture tex : sUnreturned) {
+        for (Texture tex : getInstance().mGrants) {
             Log.d(TAG, "Leaked texture: " + tex);
         }
     }
