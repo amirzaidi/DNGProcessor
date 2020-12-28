@@ -43,36 +43,8 @@ out vec4 color;
 #include xyytoxyz
 #include xyztoxyy
 
-float[9] load3x3z(ivec2 xy) {
-    float outputArray[9];
-    for (int i = 0; i < 9; i++) {
-        outputArray[i] = texelFetch(highRes, xy + ivec2((i % 3) - 1, (i / 3) - 1), 0).z;
-    }
-    return outputArray;
-}
-
 vec3 processPatch(ivec2 xyPos) {
     vec3 xyY = texelFetch(highRes, xyPos, 0).xyz;
-
-    /**
-    LUMA SHARPEN
-    **/
-    float[9] impz = load3x3z(xyPos);
-
-    // Sum of difference with all pixels nearby
-    float dz = xyY.z * 13.f;
-    for (int i = 0; i < 9; i++) {
-        if (i % 2 == 0) {
-            dz -= impz[i];
-        } else {
-            dz -= 2.f * impz[i];
-        }
-    }
-
-    // Edge strength
-    float lx = impz[0] - impz[2] + (impz[3] - impz[5]) * 2.f + impz[6] - impz[8];
-    float ly = impz[0] - impz[6] + (impz[1] - impz[7]) * 2.f + impz[2] - impz[8];
-    float l = sqrt(lx * lx + ly * ly);
 
     if (lce) {
         float zMediumBlur = texelFetch(mediumBlur, xyPos, 0).x;
@@ -87,18 +59,7 @@ vec3 processPatch(ivec2 xyPos) {
         }
     }
 
-    xyY.z += min(0.03f + 0.6f * l, 0.4f) * dz;
     return clamp(xyY, 0.f, 1.f);
-}
-
-float tonemapSin(float ch) {
-    return ch < 0.0001f
-        ? ch
-        : 0.5f - 0.5f * cos(pow(ch, 0.8f) * PI);
-}
-
-vec2 tonemapSin(vec2 ch) {
-    return vec2(tonemapSin(ch.x), tonemapSin(ch.y));
 }
 
 vec3 tonemap(vec3 rgb) {
@@ -132,12 +93,10 @@ vec3 tonemap(vec3 rgb) {
     minmax.y = sorted.z;
 
     // Apply tonemapping curve to min, max RGB channel values
-    vec2 minmaxsin = tonemapSin(minmax);
     minmax = pow(minmax, vec2(3.f)) * toneMapCoeffs.x +
         pow(minmax, vec2(2.f)) * toneMapCoeffs.y +
         minmax * toneMapCoeffs.z +
         toneMapCoeffs.w;
-    minmax = mix(minmax, minmaxsin, 0.4f);
 
     // Rescale middle value
     float newMid;
@@ -151,35 +110,35 @@ vec3 tonemap(vec3 rgb) {
     vec3 finalRGB;
     switch (permutation) {
         case 0: // b >= g >= r
-        finalRGB.r = minmax.x;
-        finalRGB.g = newMid;
-        finalRGB.b = minmax.y;
-        break;
+            finalRGB.r = minmax.x;
+            finalRGB.g = newMid;
+            finalRGB.b = minmax.y;
+            break;
         case 1: // g >= b >= r
-        finalRGB.r = minmax.x;
-        finalRGB.b = newMid;
-        finalRGB.g = minmax.y;
-        break;
+            finalRGB.r = minmax.x;
+            finalRGB.b = newMid;
+            finalRGB.g = minmax.y;
+            break;
         case 2: // b >= r >= g
-        finalRGB.g = minmax.x;
-        finalRGB.r = newMid;
-        finalRGB.b = minmax.y;
-        break;
+            finalRGB.g = minmax.x;
+            finalRGB.r = newMid;
+            finalRGB.b = minmax.y;
+            break;
         case 3: // g >= r >= b
-        finalRGB.b = minmax.x;
-        finalRGB.r = newMid;
-        finalRGB.g = minmax.y;
-        break;
+            finalRGB.b = minmax.x;
+            finalRGB.r = newMid;
+            finalRGB.g = minmax.y;
+            break;
         case 6: // r >= b >= g
-        finalRGB.g = minmax.x;
-        finalRGB.b = newMid;
-        finalRGB.r = minmax.y;
-        break;
+            finalRGB.g = minmax.x;
+            finalRGB.b = newMid;
+            finalRGB.r = minmax.y;
+            break;
         case 7: // r >= g >= b
-        finalRGB.b = minmax.x;
-        finalRGB.g = newMid;
-        finalRGB.r = minmax.y;
-        break;
+            finalRGB.b = minmax.x;
+            finalRGB.g = newMid;
+            finalRGB.r = minmax.y;
+            break;
     }
     return finalRGB;
 }
@@ -204,10 +163,9 @@ vec3 hsv2rgb(vec3 c) {
 }
 
 float saturateToneMap(float inSat) {
-    if (inSat < 0.001f) {
-        return inSat;
-    }
-    return max(inSat, 1.03f * pow(inSat, 1.02f));
+    return inSat < 0.001f
+        ? inSat
+        : max(inSat, 1.03f * pow(inSat, 1.02f));
 }
 
 vec3 saturate(vec3 rgb) {
@@ -235,11 +193,7 @@ float gammaEncode(float x) {
 
 // Apply gamma correction to each color channel in RGB pixel
 vec3 gammaCorrectPixel(vec3 rgb) {
-    vec3 ret;
-    ret.r = gammaEncode(rgb.r);
-    ret.g = gammaEncode(rgb.g);
-    ret.b = gammaEncode(rgb.b);
-    return ret;
+    return vec3(gammaEncode(rgb.r), gammaEncode(rgb.g), gammaEncode(rgb.b));
 }
 
 uint hash(uint x) {
