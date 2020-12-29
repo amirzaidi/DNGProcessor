@@ -34,48 +34,15 @@ public class Histogram {
         }
 
         //limitHighlightContrast(histv, f.length / 4);
+        float[] cumulativeHist = buildCumulativeHist(histv);
 
-        float[] cumulativeHist = new float[HIST_BINS + 1];
-        for (int i = 1; i < cumulativeHist.length; i++) {
-            cumulativeHist[i] = cumulativeHist[i - 1] + histv[i - 1];
-        }
+        // Find gamma: Inverse of the average exponent.
+        gamma = findGamma(cumulativeHist);
 
-        float max = cumulativeHist[HIST_BINS];
-        for (int i = 0; i < cumulativeHist.length; i++) {
-            cumulativeHist[i] /= max;
-        }
-
-        float sumExponent = 0.f;
-        int exponentCounted = 0;
-        float maxi = cumulativeHist.length - 1;
-        for (int i = 0; i <= maxi; i++) {
-            float val = cumulativeHist[i];
-            if (val > 0.001f) {
-                // Which power of the input is the output.
-                double exponent = Math.log(cumulativeHist[i]) / Math.log(i / maxi);
-                if (exponent > 0f && exponent < 10f) {
-                    sumExponent += exponent;
-                    exponentCounted++;
-                }
-            }
-        }
-
-        // Blend shadows with linear curve.
-        for (int i = 0; i < cumulativeHist.length; i++) {
-            float og = (float) i / cumulativeHist.length;
-            float heq = cumulativeHist[i];
-            float a = Math.min(1f, 21f * og);
-            if (a == 1f) {
-                break;
-            }
-            cumulativeHist[i] = heq * a + og * (1f - a);
-        }
-
-        // In case we messed up the histogram, flatten it.
-        for (int i = 1; i < cumulativeHist.length; i++) {
-            if (cumulativeHist[i] < cumulativeHist[i - 1]) {
-                cumulativeHist[i] = cumulativeHist[i - 1];
-            }
+        // Compensate for the gamma being applied first.
+        for (int i = 1; i <= HIST_BINS; i++) {
+            double id = (double) i / HIST_BINS;
+            cumulativeHist[i] *= id / Math.pow(id, gamma);
         }
 
         // Limit contrast and banding.
@@ -92,24 +59,50 @@ public class Histogram {
             cumulativeHist = swp;
         }
 
-        // Inverse of the average exponent.
-        gamma = LINEARIZE_PERCEPTION * sumExponent / exponentCounted;
-
-        for (int i = 1; i < cumulativeHist.length; i++) {
-            // Compensate for the gamma being applied first.
-            cumulativeHist[i] *= (i / maxi) / Math.pow(i / maxi, gamma);
-        }
-
         // Crush shadows.
-        for (int i = 0; i < cumulativeHist.length; i++) {
-            float heq = cumulativeHist[i];
-            if (heq > 0.005f) {
-                break;
-            }
-            cumulativeHist[i] *= Math.sqrt(200f * heq);
-        }
+        crushShadows(cumulativeHist);
 
         hist = cumulativeHist;
+    }
+
+    private static float[] buildCumulativeHist(int[] hist) {
+        float[] cumulativeHist = new float[HIST_BINS + 1];
+        for (int i = 1; i < cumulativeHist.length; i++) {
+            cumulativeHist[i] = cumulativeHist[i - 1] + hist[i - 1];
+        }
+        float max = cumulativeHist[HIST_BINS];
+        for (int i = 0; i < cumulativeHist.length; i++) {
+            cumulativeHist[i] /= max;
+        }
+        return cumulativeHist;
+    }
+
+    private static float findGamma(float[] cumulativeHist) {
+        float sumExponent = 0.f;
+        int exponentCounted = 0;
+        for (int i = 0; i <= HIST_BINS; i++) {
+            float val = cumulativeHist[i];
+            if (val > 0.001f) {
+                // Which power of the input is the output.
+                double exponent = Math.log(cumulativeHist[i]) / Math.log((double) i / HIST_BINS);
+                if (exponent > 0f && exponent < 10f) {
+                    sumExponent += exponent;
+                    exponentCounted++;
+                }
+            }
+        }
+        return LINEARIZE_PERCEPTION * sumExponent / exponentCounted;
+    }
+
+    private static void crushShadows(float[] cumulativeHist) {
+        for (int i = 0; i < cumulativeHist.length; i++) {
+            float og = (float) i / cumulativeHist.length;
+            float a = Math.min(1f, og / 0.02f);
+            if (a == 1f) {
+                break;
+            }
+            cumulativeHist[i] *= Math.pow(a, 3.f);
+        }
     }
 
     // Shift highlights down
