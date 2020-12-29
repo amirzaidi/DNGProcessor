@@ -1,7 +1,7 @@
 #version 300 es
 
-#define TARGET_Z 0.5f
-#define GAUSS_Z 0.3f
+#define TARGET_Z 0.6f
+#define GAUSS_Z 0.5f
 
 precision mediump float;
 
@@ -51,13 +51,7 @@ void main() {
     float blend = gaussOverValDev / (gaussUnderValDev + gaussOverValDev); // [0, 1]
     float blendVal = mix(blendUnderVal, blendOverVal, blend);
 
-    if (level == 0) {
-        //blendVal *= 2.5f;
-    } else if (level == 1) {
-        //blendVal *= 1.5f;
-    } else {
-        //blendVal *= max(1.f, 1.22f - 0.022f * float(level));
-    }
+    blendVal *= max(1.f, 1.5f - 0.05f * float(level));
 
     float res = base + blendVal;
     if (level == 0) {
