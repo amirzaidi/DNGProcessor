@@ -17,8 +17,8 @@ public class OnePlus7 extends Generic {
         int[] bl = sensor.blackLevelPattern;
         int maxBlack = Math.max(Math.max(bl[0], bl[1]), Math.max(bl[2], bl[3]));
         sensor.blackLevelPattern = new int[] { maxBlack, maxBlack, maxBlack, maxBlack };
-        sensor.neutralColorPoint[0] *= 0.99f;
-        sensor.neutralColorPoint[2] *= 0.99f;
+        sensor.neutralColorPoint[0] *= 0.985f;
+        sensor.neutralColorPoint[2] *= 0.995f;
 
         if (sensor.gainMap == null) {
             sensor.gainMap = new float[] {
@@ -26,12 +26,5 @@ public class OnePlus7 extends Generic {
             };
             sensor.gainMapSize = new int[] { 17, 13 };
         }
-    }
-
-    @Override
-    void saturationCorrection(float[] saturationMap) {
-        super.saturationCorrection(saturationMap);
-        saturationMap[0] *= 0.94f;
-        saturationMap[1] *= 0.97f;
     }
 }
