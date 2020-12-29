@@ -98,4 +98,9 @@ public class Merge extends Stage {
     public int getShader() {
         return R.raw.stage4_5_merge;
     }
+
+    @Override
+    protected boolean isEnabled() {
+        return false;
+    }
 }

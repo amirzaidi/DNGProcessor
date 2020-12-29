@@ -14,6 +14,7 @@ import amirz.dngprocessor.gl.TexturePool;
 import amirz.dngprocessor.math.Histogram;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
+import amirz.dngprocessor.pipeline.convert.EdgeMirror;
 import amirz.dngprocessor.pipeline.convert.ToIntermediate;
 import amirz.dngprocessor.pipeline.exposefuse.Merge;
 import amirz.dngprocessor.pipeline.noisereduce.NoiseReduce;
@@ -51,6 +52,9 @@ public class Analysis extends Stage {
         GLPrograms converter = getConverter();
 
         Texture intermediate = previousStages.getStage(Merge.class).getMerged();
+        if (intermediate == null) {
+            intermediate = previousStages.getStage(EdgeMirror.class).getIntermediate();
+        }
         converter.useProgram(R.raw.stage2_2_analysis_fs);
 
         converter.setTexture("intermediate", intermediate);

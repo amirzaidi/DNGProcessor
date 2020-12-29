@@ -42,4 +42,9 @@ public class DoubleExpose extends Stage {
     public int getShader() {
         return R.raw.stage4_1_doubleexpose;
     }
+
+    @Override
+    protected boolean isEnabled() {
+        return false;
+    }
 }

@@ -25,7 +25,7 @@ public class BilateralFilter extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
-        if (mProcess.histFactor == 0f || true) {
+        if (mProcess.histFactor == 0f) {
             return;
         }
 
@@ -68,5 +68,10 @@ public class BilateralFilter extends Stage {
     @Override
     public int getShader() {
         return R.raw.stage2_3_median;
+    }
+
+    @Override
+    protected boolean isEnabled() {
+        return false;
     }
 }

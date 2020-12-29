@@ -87,4 +87,9 @@ public class Laplace extends Stage {
     public int getShader() {
         return R.raw.stage4_2_downsample;
     }
+
+    @Override
+    protected boolean isEnabled() {
+        return false;
+    }
 }

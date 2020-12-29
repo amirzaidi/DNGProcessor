@@ -90,10 +90,8 @@ public class StagePipeline implements AutoCloseable {
     }
 
     private void addStage(Stage stage) {
-        if (stage.isEnabled()) {
-            stage.init(mConverter, mSensor, mProcess);
-            mStages.add(stage);
-        }
+        stage.init(mConverter, mSensor, mProcess);
+        mStages.add(stage);
     }
 
     public void execute(OnProgressReporter reporter) {
@@ -101,8 +99,10 @@ public class StagePipeline implements AutoCloseable {
         for (int i = 0; i < stageCount; i++) {
             Stage stage = mStages.get(i);
             reporter.onProgress(i, stageCount, stage.getClass().getSimpleName());
-            mConverter.useProgram(stage.getShader());
-            stage.execute(new StageMap(mStages.subList(0, i)));
+            if (stage.isEnabled()) {
+                mConverter.useProgram(stage.getShader());
+                stage.execute(new StageMap(mStages.subList(0, i)));
+            }
         }
 
         // Assume that last stage set everything but did not render yet.

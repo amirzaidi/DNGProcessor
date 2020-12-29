@@ -10,6 +10,7 @@ import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.params.ProcessParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
+import amirz.dngprocessor.pipeline.convert.EdgeMirror;
 import amirz.dngprocessor.pipeline.exposefuse.Merge;
 
 import static android.opengl.GLES20.*;
@@ -34,15 +35,18 @@ public class MergeDetail extends Stage {
     protected void execute(StagePipeline.StageMap previousStages) {
         GLPrograms converter = getConverter();
 
-        BilateralFilter bilateral = previousStages.getStage(BilateralFilter.class);
-        Texture bilateralTex = bilateral.getBilateral();
+        //BilateralFilter bilateral = previousStages.getStage(BilateralFilter.class);
+        //Texture bilateralTex = bilateral.getBilateral();
 
         mIntermediate = previousStages.getStage(Merge.class).getMerged();
+        if (mIntermediate == null) {
+            mIntermediate = previousStages.getStage(EdgeMirror.class).getIntermediate();
+        }
 
         // If there is no bilateral filtered texture, skip this step.
-        if (bilateralTex == null) {
+        //if (bilateralTex == null) {
             //return;
-        }
+        //}
 
         Analysis sampleHistogram = previousStages.getStage(Analysis.class);
         float[] hist = sampleHistogram.getHist();
