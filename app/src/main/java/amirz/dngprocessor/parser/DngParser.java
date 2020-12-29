@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.support.media.ExifInterface;
 import android.net.Uri;
 import android.util.Log;
+import android.util.Rational;
 import android.util.SparseArray;
 
 import java.io.File;
@@ -128,7 +129,12 @@ public class DngParser {
                 sensor.forwardTransform2 = fm2.getFloatArray();
             }
         }
-        sensor.neutralColorPoint = getTag(tags, TIFF.TAG_AsShotNeutral).getRationalArray();
+        Rational[] asShotNeutral = getTag(tags, TIFF.TAG_AsShotNeutral).getRationalArray();
+        sensor.neutralColorPoint = new float[] {
+                asShotNeutral[0].floatValue(),
+                asShotNeutral[1].floatValue(),
+                asShotNeutral[2].floatValue()
+        };
 
         TIFFTag noiseProfile = tags.get(TIFF.TAG_NoiseProfile);
         if (noiseProfile == null) {

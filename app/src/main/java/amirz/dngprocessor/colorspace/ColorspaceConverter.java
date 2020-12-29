@@ -94,9 +94,9 @@ public class ColorspaceConverter {
                     interpolationFactor, sensorToXYZ_D50);
         } else {
             float[] neutralColorPoint = {
-                    sensor.neutralColorPoint[0].floatValue(),
-                    sensor.neutralColorPoint[1].floatValue(),
-                    sensor.neutralColorPoint[2].floatValue()
+                    sensor.neutralColorPoint[0],
+                    sensor.neutralColorPoint[1],
+                    sensor.neutralColorPoint[2]
             };
 
             float[] XYZ = new float[3];
@@ -227,7 +227,7 @@ public class ColorspaceConverter {
      */
     private static double findDngInterpolationFactor(int referenceIlluminant1,
                                                      int referenceIlluminant2, float[] calibrationTransform1, float[] calibrationTransform2,
-                                                     float[] colorMatrix1, float[] colorMatrix2, Rational[/*3*/] neutralColorPoint,
+                                                     float[] colorMatrix1, float[] colorMatrix2, float[/*3*/] neutralColorPoint,
                                                      float[] interpXYZToCameraInverse) {
         int colorTemperature1 = sStandardIlluminants.get(referenceIlluminant1, NO_ILLUMINANT);
         if (colorTemperature1 == NO_ILLUMINANT) {
@@ -249,8 +249,8 @@ public class ColorspaceConverter {
         float[] XYZToCamera2 = new float[9];
         multiply(calibrationTransform1, colorMatrix1, /*out*/XYZToCamera1);
         multiply(calibrationTransform2, colorMatrix2, /*out*/XYZToCamera2);
-        float[] cameraNeutral = new float[]{neutralColorPoint[0].floatValue(),
-                neutralColorPoint[1].floatValue(), neutralColorPoint[2].floatValue()};
+        float[] cameraNeutral = new float[]{neutralColorPoint[0],
+                neutralColorPoint[1], neutralColorPoint[2]};
         float[] neutralGuess = new float[3];
         float[] interpXYZToCamera = new float[9];
         double lower = Math.min(colorTemperature1, colorTemperature2);
@@ -324,10 +324,10 @@ public class ColorspaceConverter {
      */
     private static void calculateCameraToXYZD50TransformFM(float[] forwardTransform1, float[] forwardTransform2,
                                                            float[] calibrationTransform1, float[] calibrationTransform2,
-                                                           Rational[/*3*/] neutralColorPoint, double interpolationFactor,
+                                                           float[/*3*/] neutralColorPoint, double interpolationFactor,
                                                            float[] outputTransform) {
-        float[] cameraNeutral = new float[]{neutralColorPoint[0].floatValue(),
-                neutralColorPoint[1].floatValue(), neutralColorPoint[2].floatValue()};
+        float[] cameraNeutral = new float[]{neutralColorPoint[0],
+                neutralColorPoint[1], neutralColorPoint[2]};
         if (DEBUG) Log.d(TAG, "Camera neutral: " + Arrays.toString(cameraNeutral));
 
         float[] interpolatedCC = new float[9];

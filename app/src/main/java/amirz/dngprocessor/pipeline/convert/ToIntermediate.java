@@ -41,19 +41,15 @@ public class ToIntermediate extends Stage {
                 converter.setTexture("rawBuffer", sensorTex);
                 converter.setTexture("greenBuffer", sensorGTex);
 
-                Rational[] neutralPoint = getSensorParams().neutralColorPoint;
+                float[] neutralPoint = getSensorParams().neutralColorPoint;
                 byte[] cfaVal = getSensorParams().cfaVal;
                 converter.setf("neutralLevel",
-                        neutralPoint[cfaVal[0]].floatValue(),
-                        neutralPoint[cfaVal[1]].floatValue(),
-                        neutralPoint[cfaVal[2]].floatValue(),
-                        neutralPoint[cfaVal[3]].floatValue());
+                        neutralPoint[cfaVal[0]],
+                        neutralPoint[cfaVal[1]],
+                        neutralPoint[cfaVal[2]],
+                        neutralPoint[cfaVal[3]]);
 
-                converter.setf("neutralPoint",
-                        neutralPoint[0].floatValue(),
-                        neutralPoint[1].floatValue(),
-                        neutralPoint[2].floatValue());
-
+                converter.setf("neutralPoint", neutralPoint);
                 converter.setf("sensorToXYZ", mSensorToXYZ_D50);
                 converter.seti("cfaPattern", preProcess.getCfaPattern());
 
