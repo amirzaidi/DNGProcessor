@@ -186,6 +186,7 @@ public class DngParser {
         };
         process.satLimit = pref.saturationLimit.get();
         process.denoiseFactor = pref.noiseReduce.get() ? 100 : 0;
+        process.exposeFuse = pref.exposeFuse.get();
         process.lce = pref.lce.get();
         process.ahe = pref.ahe.get();
 

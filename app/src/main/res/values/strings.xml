@@ -37,8 +37,10 @@
     <string name="post_processing_boosted">Boosted</string>
     <string name="pref_noise_reduce_title">Noise reduction</string>
     <string name="pref_noise_reduce_desc">Removes chromatic irregularities</string>
+    <string name="pref_expose_fuse_title">Exposure fusion</string>
+    <string name="pref_expose_fuse_desc">Compresses dynamic range</string>
     <string name="pref_lce_title">Local contrast enhancement</string>
-    <string name="pref_lce_desc">Improves details in high dynamic range scenes</string>
+    <string name="pref_lce_desc">Sharpens details for a crunchier look</string>
     <string name="pref_ahe_title">Adaptive histogram equalization</string>
     <string name="pref_ahe_desc">Improves visibility in high dynamic range scenes</string>
     <string name="pref_forward_matrix_title">Forward matrix</string>

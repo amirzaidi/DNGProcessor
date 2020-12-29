@@ -88,6 +88,10 @@ public class Preferences extends GlobalPreferences {
             new BooleanRef(R.string.pref_noise_reduce,
                     R.bool.pref_noise_reduce_default);
 
+    public final BooleanRef exposeFuse =
+            new BooleanRef(R.string.pref_expose_fuse,
+                    R.bool.pref_expose_fuse_default);
+
     public final BooleanRef lce =
             new BooleanRef(R.string.pref_lce,
                     R.bool.pref_lce_default);

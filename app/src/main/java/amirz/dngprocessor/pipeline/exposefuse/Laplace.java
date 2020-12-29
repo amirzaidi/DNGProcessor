@@ -90,6 +90,6 @@ public class Laplace extends Stage {
 
     @Override
     protected boolean isEnabled() {
-        return false;
+        return getProcessParams().exposeFuse;
     }
 }

@@ -45,6 +45,6 @@ public class DoubleExpose extends Stage {
 
     @Override
     protected boolean isEnabled() {
-        return false;
+        return getProcessParams().exposeFuse;
     }
 }

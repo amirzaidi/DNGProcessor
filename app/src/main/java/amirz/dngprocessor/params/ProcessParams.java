@@ -33,6 +33,7 @@ public class ProcessParams {
     public float[] saturationMap;
     public float satLimit;
     public float[] adaptiveSaturation;
+    public boolean exposeFuse;
     public boolean lce;
     public boolean ahe;
 

@@ -22,6 +22,7 @@
 
     <string name="pref_post_process">pref_post_process</string>
     <string name="pref_noise_reduce">pref_noise_reduce</string>
+    <string name="pref_expose_fuse">pref_expose_fuse</string>
     <string name="pref_lce">pref_lce</string>
     <string name="pref_ahe">pref_ahe</string>
     <string name="pref_forward_matrix">pref_forward_matrix</string>

@@ -19,6 +19,7 @@ public class ShaderLoader {
         if (sInstance == null) {
             sInstance = new ShaderLoader(context.getApplicationContext().getResources());
 
+            sInstance.mapImport("gamma", R.raw.import_gamma);
             sInstance.mapImport("gaussian", R.raw.import_gaussian);
             sInstance.mapImport("load3x3", R.raw.import_load3x3);
             sInstance.mapImport("load3x3v2", R.raw.import_load3x3v2);

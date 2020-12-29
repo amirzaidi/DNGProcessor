@@ -129,6 +129,12 @@
             android:defaultValue="@bool/pref_noise_reduce_default" />
 
         <SwitchPreference
+            android:key="@string/pref_expose_fuse"
+            android:title="@string/pref_expose_fuse_title"
+            android:summary="@string/pref_expose_fuse_desc"
+            android:defaultValue="@bool/pref_expose_fuse_default" />
+
+        <SwitchPreference
             android:key="@string/pref_lce"
             android:title="@string/pref_lce_title"
             android:summary="@string/pref_lce_desc"

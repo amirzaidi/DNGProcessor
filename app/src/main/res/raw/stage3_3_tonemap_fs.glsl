@@ -42,6 +42,7 @@ out vec4 color;
 #include sigmoid
 #include xyytoxyz
 #include xyztoxyy
+#include gamma
 
 vec3 processPatch(ivec2 xyPos) {
     vec3 xyY = texelFetch(highRes, xyPos, 0).xyz;
@@ -182,13 +183,6 @@ vec3 saturate(vec3 rgb) {
         rgb = hsv2rgb(hsv);
     }
     return rgb;
-}
-
-// Apply gamma correction using sRGB gamma curve
-float gammaEncode(float x) {
-    return x <= 0.0031308f
-    ? x * 12.92f
-    : 1.055f * pow(x, 0.4166667f) - 0.055f;
 }
 
 // Apply gamma correction to each color channel in RGB pixel
