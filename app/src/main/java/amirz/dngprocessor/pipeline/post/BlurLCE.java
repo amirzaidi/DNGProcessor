@@ -4,22 +4,12 @@ import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.gl.TexturePool;
-import amirz.dngprocessor.params.ProcessParams;
-import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 import amirz.dngprocessor.pipeline.intermediate.MergeDetail;
-import amirz.dngprocessor.pipeline.noisereduce.NoiseReduce;
 
 public class BlurLCE extends Stage {
-    private final SensorParams mSensorParams;
-    private final ProcessParams mProcessParams;
     private Texture mWeakBlur, mMediumBlur, mStrongBlur;
-
-    public BlurLCE(SensorParams sensor, ProcessParams process) {
-        mSensorParams = sensor;
-        mProcessParams = process;
-    }
 
     public Texture getWeakBlur() {
         return mWeakBlur;
@@ -35,7 +25,7 @@ public class BlurLCE extends Stage {
 
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
-        if (!mProcessParams.lce) {
+        if (!getProcessParams().lce) {
             return;
         }
 
@@ -46,8 +36,8 @@ public class BlurLCE extends Stage {
         int h = intermediate.getHeight();
 
         try (Texture tmp = TexturePool.get(w, h, 1, Texture.Format.Float16)) {
-            int offsetX = mSensorParams.outputOffsetX;
-            int offsetY = mSensorParams.outputOffsetY;
+            int offsetX = getSensorParams().outputOffsetX;
+            int offsetY = getSensorParams().outputOffsetY;
             converter.seti("minxy", offsetX, offsetY);
             converter.seti("maxxy", w - offsetX - 1, h - offsetY - 1);
 
@@ -116,7 +106,7 @@ public class BlurLCE extends Stage {
 
     @Override
     public void close() {
-        if (mProcessParams.lce) {
+        if (getProcessParams().lce) {
             mWeakBlur.close();
             mMediumBlur.close();
             mStrongBlur.close();

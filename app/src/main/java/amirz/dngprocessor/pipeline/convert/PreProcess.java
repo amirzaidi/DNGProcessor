@@ -1,6 +1,5 @@
 package amirz.dngprocessor.pipeline.convert;
 
-import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
@@ -15,13 +14,11 @@ import amirz.dngprocessor.pipeline.StagePipeline;
 import static android.opengl.GLES20.*;
 
 public class PreProcess extends Stage {
-    private final SensorParams mSensor;
     private final byte[] mRaw;
 
     private Texture mSensorTex, mGainMapTex;
 
-    public PreProcess(SensorParams sensor, byte[] raw) {
-        mSensor = sensor;
+    public PreProcess(byte[] raw) {
         mRaw = raw;
     }
 
@@ -30,15 +27,15 @@ public class PreProcess extends Stage {
     }
 
     public int getInWidth() {
-        return mSensor.inputWidth;
+        return getSensorParams().inputWidth;
     }
 
     public int getInHeight() {
-        return mSensor.inputHeight;
+        return getSensorParams().inputHeight;
     }
 
     public int getCfaPattern() {
-        return mSensor.cfa;
+        return getSensorParams().cfa;
     }
 
     public Texture getGainMapTex() {
@@ -48,6 +45,7 @@ public class PreProcess extends Stage {
     @Override
     protected void execute(StagePipeline.StageMap previousStages) {
         GLPrograms converter = getConverter();
+        SensorParams sensor = getSensorParams();
 
         // First texture is just for normalization
         mSensorTex = TexturePool.get(getInWidth(), getInHeight(), 1,
@@ -60,10 +58,10 @@ public class PreProcess extends Stage {
             converter.setTexture("rawBuffer", sensorUITex);
             converter.seti("rawWidth", getInWidth());
             converter.seti("rawHeight", getInHeight());
-            converter.seti("cfaPattern", mSensor.cfa);
+            converter.seti("cfaPattern", sensor.cfa);
 
-            float[] gainMap = mSensor.gainMap;
-            int[] gainMapSize = mSensor.gainMapSize;
+            float[] gainMap = sensor.gainMap;
+            int[] gainMapSize = sensor.gainMapSize;
             if (gainMap == null) {
                 gainMap = new float[] { 1f, 1f, 1f, 1f };
                 gainMapSize = new int[] { 1, 1 };
@@ -73,15 +71,15 @@ public class PreProcess extends Stage {
                     FloatBuffer.wrap(gainMap), GL_LINEAR);
             converter.setTexture("gainMap", mGainMapTex);
 
-            int[] blackLevel = mSensor.blackLevelPattern;
+            int[] blackLevel = sensor.blackLevelPattern;
             converter.setf("blackLevel", blackLevel[0], blackLevel[1], blackLevel[2], blackLevel[3]);
-            converter.setf("whiteLevel", mSensor.whiteLevel);
+            converter.setf("whiteLevel", sensor.whiteLevel);
             converter.seti("cfaPattern", getCfaPattern());
-            converter.seti("hotPixelsSize", mSensor.hotPixelsSize);
+            converter.seti("hotPixelsSize", sensor.hotPixelsSize);
 
-            int[] hotPixelsSize = mSensor.hotPixelsSize;
+            int[] hotPixelsSize = sensor.hotPixelsSize;
             try (Texture hotPx = new Texture(hotPixelsSize[0], hotPixelsSize[1], 1, Texture.Format.UInt16,
-                    ShortBuffer.wrap(mSensor.hotPixels), GL_NEAREST, GL_REPEAT)) {
+                    ShortBuffer.wrap(sensor.hotPixels), GL_NEAREST, GL_REPEAT)) {
                 converter.setTexture("hotPixels", hotPx);
                 converter.drawBlocks(mSensorTex);
             }

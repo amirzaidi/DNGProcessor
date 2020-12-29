@@ -22,10 +22,10 @@ public class GreenDemosaic extends Stage {
         // Load old texture
         Texture sensorTex = previousStages.getStage(PreProcess.class).getSensorTex();
         converter.setTexture("rawBuffer", sensorTex);
-        converter.seti("rawWidth", preProcess.getInWidth());
-        converter.seti("rawHeight", preProcess.getInHeight());
+        converter.seti("rawWidth", sensorTex.getWidth());
+        converter.seti("rawHeight", sensorTex.getHeight());
 
-        mSensorG = new Texture(preProcess.getInWidth(), preProcess.getInHeight(), 1,
+        mSensorG = new Texture(sensorTex.getWidth(), sensorTex.getHeight(), 1,
                 Texture.Format.Float16, null);
 
         converter.seti("cfaPattern", preProcess.getCfaPattern());

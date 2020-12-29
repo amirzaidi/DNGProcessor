@@ -3,18 +3,11 @@ package amirz.dngprocessor.pipeline.convert;
 import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
-import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 
 public class EdgeMirror extends Stage {
-    private final SensorParams mSensor;
-
     private Texture mIntermediate;
-
-    public EdgeMirror(SensorParams sensor) {
-        mSensor = sensor;
-    }
 
     public Texture getIntermediate() {
         return mIntermediate;
@@ -31,8 +24,8 @@ public class EdgeMirror extends Stage {
 
         converter.setTexture("intermediateBuffer", mIntermediate);
 
-        int offsetX = mSensor.outputOffsetX;
-        int offsetY = mSensor.outputOffsetY;
+        int offsetX = getSensorParams().outputOffsetX;
+        int offsetY = getSensorParams().outputOffsetY;
         converter.seti("minxy", offsetX, offsetY);
         converter.seti("maxxy", w - offsetX - 1, h - offsetY - 1);
 

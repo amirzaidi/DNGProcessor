@@ -6,18 +6,15 @@ import amirz.dngprocessor.R;
 import amirz.dngprocessor.gl.GLPrograms;
 import amirz.dngprocessor.gl.Texture;
 import amirz.dngprocessor.gl.TexturePool;
-import amirz.dngprocessor.params.SensorParams;
 import amirz.dngprocessor.pipeline.Stage;
 import amirz.dngprocessor.pipeline.StagePipeline;
 
 public class ToIntermediate extends Stage {
-    private final SensorParams mSensor;
     private final float[] mSensorToXYZ_D50;
 
     private Texture mIntermediate;
 
-    public ToIntermediate(SensorParams sensor, float[] sensorToXYZ_D50) {
-        mSensor = sensor;
+    public ToIntermediate(float[] sensorToXYZ_D50) {
         mSensorToXYZ_D50 = sensorToXYZ_D50;
     }
 
@@ -44,8 +41,8 @@ public class ToIntermediate extends Stage {
                 converter.setTexture("rawBuffer", sensorTex);
                 converter.setTexture("greenBuffer", sensorGTex);
 
-                Rational[] neutralPoint = mSensor.neutralColorPoint;
-                byte[] cfaVal = mSensor.cfaVal;
+                Rational[] neutralPoint = getSensorParams().neutralColorPoint;
+                byte[] cfaVal = getSensorParams().cfaVal;
                 converter.setf("neutralLevel",
                         neutralPoint[cfaVal[0]].floatValue(),
                         neutralPoint[cfaVal[1]].floatValue(),

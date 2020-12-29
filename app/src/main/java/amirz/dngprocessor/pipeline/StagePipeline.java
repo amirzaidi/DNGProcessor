@@ -33,11 +33,16 @@ public class StagePipeline implements AutoCloseable {
 
     private final List<Stage> mStages = new ArrayList<>();
 
+    private final SensorParams mSensor;
+    private final ProcessParams mProcess;
     private final GLPrograms mConverter;
     private final GLBlockProcessing mBlockProcessing;
 
     public StagePipeline(SensorParams sensor, ProcessParams process,
                          byte[] raw, Bitmap argbOutput, ShaderLoader loader) {
+        mSensor = sensor;
+        mProcess = process;
+
         int outWidth = argbOutput.getWidth();
         int outHeight = argbOutput.getHeight();
 
@@ -57,10 +62,10 @@ public class StagePipeline implements AutoCloseable {
         ColorspaceConverter colorspace = new ColorspaceConverter(sensor);
 
         // RAW -> XYZ -> xyY
-        addStage(new PreProcess(sensor, raw));
+        addStage(new PreProcess(raw));
         addStage(new GreenDemosaic());
-        addStage(new ToIntermediate(sensor, colorspace.sensorToXYZ_D50));
-        addStage(new EdgeMirror(sensor));
+        addStage(new ToIntermediate(colorspace.sensorToXYZ_D50));
+        addStage(new EdgeMirror());
 
         // Noise Reduce
         //addStage(new Decompose());
@@ -79,14 +84,14 @@ public class StagePipeline implements AutoCloseable {
         addStage(new MergeDetail(process));
 
         // xyY -> XYZ -> sRGB
-        addStage(new BlurLCE(sensor, process));
-        addStage(new ToneMap(sensor, process, colorspace.XYZtoProPhoto,
+        addStage(new BlurLCE());
+        addStage(new ToneMap(colorspace.XYZtoProPhoto,
                 colorspace.proPhotoToSRGB));
     }
 
     private void addStage(Stage stage) {
         if (stage.isEnabled()) {
-            stage.init(mConverter);
+            stage.init(mConverter, mSensor, mProcess);
             mStages.add(stage);
         }
     }
